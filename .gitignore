@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+*.exe
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+
+# Database
+collector/collector_cache.db
+collector/config_cache.db
+*.db
+
+# Binary files
+bin/
+platform/backend/*.exe
+collector/*.exe
+opcua-simulator/*.exe
