@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>布局修复测试 - ProDB Collector</title>
+    <style>
+        /* 修复后的布局样式 */
+        :root {
+            --sidebar-width: 240px;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 修复：sidebar使用fixed定位 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: var(--space-6);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1020;
+        }
+
+        /* 修复：main-content添加正确的宽度计算 */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: var(--space-8);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* 移动端响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1030;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        /* 测试内容样式 */
+        .sidebar h2 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .sidebar nav ul {
+            list-style: none;
+        }
+
+        .sidebar nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar nav a {
+            color: var(--text-primary);
+            text-decoration: none;
+            display: block;
+            padding: 0.75rem;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar nav a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h3 {
+            margin-bottom: 1rem;
+            color: #3b82f6;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .status-item {
+            background-color: rgba(59, 130, 246, 0.1);
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .status-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1040;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+        }
+
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background-color: var(--text-primary);
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- 左侧菜单栏 -->
+        <aside class="sidebar" id="sidebar">
+            <h2>ProDB Collector</h2>
+            <nav>
+                <ul>
+                    <li><a href="#dashboard">📊 仪表板</a></li>
+                    <li><a href="#config">⚙️ 配置管理</a></li>
+                    <li><a href="#protocols">🔌 协议测试</a></li>
+                    <li><a href="#drivers">🔧 驱动管理</a></li>
+                    <li><a href="#monitoring">📈 实时监控</a></li>
+                    <li><a href="#logs">📝 日志查看</a></li>
+                    <li><a href="#settings">⚙️ 系统设置</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 右侧主面板 -->
+        <main class="main-content">
+            <h1>布局修复测试</h1>
+            <p style="margin-bottom: 2rem;">测试左侧菜单栏是否遮挡右侧主面板内容</p>
+
+            <div class="card">
+                <h3>系统状态</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">采集器状态</div>
+                        <div class="status-value">运行中</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">数据点数</div>
+                        <div class="status-value">1,234</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">错误数</div>
+                        <div class="status-value">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">运行时间</div>
+                        <div class="status-value">2h 15m</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>测试内容区域</h3>
+                <p>这是一段测试文本，用于验证内容是否被左侧菜单栏遮挡。</p>
+                <p>如果你能完整看到这段文字，说明布局已经修复成功。</p>
+                <p>请尝试调整浏览器窗口大小，测试响应式布局是否正常。</p>
+            </div>
+
+            <div class="card">
+                <h3>长内容测试</h3>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            </div>
+
+            <div class="card">
+                <h3>布局验证清单</h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li style="margin-bottom: 0.5rem;">✅ 左侧菜单栏固定定位</li>
+                    <li style="margin-bottom: 0.5rem;">✅ 右侧内容区域正确偏移</li>
+                    <li style="margin-bottom: 0.5rem;">✅ 内容不被菜单遮挡</li>
+                    <li style="margin-bottom: 0.5rem;">✅ 响应式布局正常</li>
+                    <li style="margin-bottom: 0.5rem;">✅ 移动端菜单可折叠</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <!-- 移动端汉堡菜单 -->
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // 点击内容区域关闭侧边栏（移动端）
+        document.querySelector('.main-content').addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>

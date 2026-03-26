@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ProDB Collector - Industrial Data Collection and Protocol Testing Tool">
+    <meta name="theme-color" content="#0f172a">
+    
+    <title>ProDB Collector</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="https://esm.sh/preact?no-require" as="script" crossorigin>
+    <link rel="preload" href="https://esm.sh/htm?no-require" as="script" crossorigin>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Favicon and app icons -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+    
+    <!-- Performance optimizations -->
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Security headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://esm.sh https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://esm.sh;">
+</head>
+<body>
+    <!-- Loading screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2>ProDB Collector</h2>
+            <p>Loading application...</p>
+        </div>
+    </div>
+    
+    <!-- Main application container -->
+    <div id="app" class="app-container"></div>
+    
+    <!-- Error boundary fallback -->
+    <div id="error-fallback" class="error-fallback" style="display: none;">
+        <div class="error-content">
+            <h2>Something went wrong</h2>
+            <p>The application encountered an unexpected error. Please refresh the page to try again.</p>
+            <button onclick="window.location.reload()" class="btn btn-primary">Refresh Page</button>
+        </div>
+    </div>
+    
+    <!-- Application scripts -->
+    <script type="module" src="/app.js"></script>
+    
+    <!-- Service worker registration -->
+    <script>
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // Hide loading screen when app loads
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 300);
+                }
+            }, 1000);
+        });
+        
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            const app = document.getElementById('app');
+            const errorFallback = document.getElementById('error-fallback');
+            if (app && errorFallback) {
+                app.style.display = 'none';
+                errorFallback.style.display = 'flex';
+            }
+        });
+        
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+        });
+    </script>
+    
+    <style>
+        /* Critical CSS for loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-primary, #0f172a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: var(--text-primary, #f8fafc);
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color, #334155);
+            border-top: 3px solid var(--color-primary, #2563eb);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-fallback {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-primary, #0f172a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .error-content {
+            text-align: center;
+            color: var(--text-primary, #f8fafc);
+            max-width: 400px;
+            padding: 2rem;
+        }
+        
+        .error-content h2 {
+            color: var(--color-error, #ef4444);
+            margin-bottom: 1rem;
+        }
+        
+        .error-content p {
+            margin-bottom: 2rem;
+            color: var(--text-secondary, #cbd5e1);
+        }
+        
+        .app-container {
+            min-height: 100vh;
+        }
+    </style>
+</body>
+</html>

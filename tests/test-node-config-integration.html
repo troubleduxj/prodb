@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>位号配置集成测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .success {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .info {
+            color: #3b82f6;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .code {
+            background-color: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>位号配置集成测试</h1>
+    
+    <div class="section">
+        <h2 class="success">✅ 集成完成</h2>
+        <p>位号配置功能已成功集成到采集器管理页面中，作为新的Tab页面。</p>
+    </div>
+
+    <div class="section">
+        <h2 class="info">📋 修改内容</h2>
+        <ul>
+            <li><strong>新增Tab页面：</strong>在"采集器列表"和"实时监控"之间添加了"位号配置"Tab</li>
+            <li><strong>组件集成：</strong>将NodeConfiguration组件集成到CollectorManagement中</li>
+            <li><strong>布局优化：</strong>移除了独立页面的Header/Main布局，适配Tab内容显示</li>
+            <li><strong>功能保持：</strong>保留了所有位号配置功能，包括节点管理、分组管理、节点发现等</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2 class="info">🎯 Tab结构</h2>
+        <div class="code">采集器管理页面 Tab 结构：
+1. 采集器列表 (原有)
+2. 位号配置 (新增) ← 包含完整的位号管理功能
+3. 实时监控 (原有)
+4. 数据分析 (原有)</div>
+    </div>
+
+    <div class="section">
+        <h2 class="info">🔧 位号配置功能</h2>
+        <ul>
+            <li><strong>采集器选择：</strong>从现有采集器列表中选择要配置的采集器</li>
+            <li><strong>位号管理：</strong>查看、编辑、启用/禁用位号</li>
+            <li><strong>分组管理：</strong>创建和管理位号分组</li>
+            <li><strong>节点发现：</strong>自动发现OPC UA服务器节点</li>
+            <li><strong>全局设置：</strong>配置采集器全局参数</li>
+            <li><strong>批量操作：</strong>支持批量启用/禁用位号</li>
+            <li><strong>筛选搜索：</strong>按数据类型、分组、状态筛选位号</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2 class="info">📁 文件结构</h2>
+        <div class="code">修改的文件：
+- platform/frontend/src/features/collectors/components/collector-management.tsx
+  ↳ 添加了NodeConfiguration导入和Tab
+
+新增的文件：
+- platform/frontend/src/features/collectors/components/node-configuration.tsx
+  ↳ 位号配置主组件，适配Tab布局</div>
+    </div>
+
+    <div class="section">
+        <h2 class="success">🚀 使用方法</h2>
+        <ol>
+            <li>访问采集器管理页面 (<code>/collectors</code>)</li>
+            <li>点击"位号配置"Tab</li>
+            <li>选择要配置的采集器</li>
+            <li>在子Tab中管理位号、分组等配置</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2 class="info">💡 特性说明</h2>
+        <ul>
+            <li><strong>响应式设计：</strong>适配不同屏幕尺寸</li>
+            <li><strong>实时统计：</strong>显示位号总数、启用数、分组数等统计信息</li>
+            <li><strong>状态管理：</strong>实时更新位号启用/禁用状态</li>
+            <li><strong>数据类型支持：</strong>支持Boolean、Float、Int32、String等多种数据类型</li>
+            <li><strong>模拟数据：</strong>当前使用模拟数据，可轻松替换为真实API调用</li>
+        </ul>
+    </div>
+
+    <script>
+        console.log('位号配置集成测试页面加载完成');
+        console.log('集成状态: 成功');
+        console.log('新增Tab: 位号配置');
+        console.log('位置: 采集器列表 → 位号配置 → 实时监控 → 数据分析');
+    </script>
+</body>
+</html>

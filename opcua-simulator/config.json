@@ -1,0 +1,239 @@
+{
+  "server": {
+    "endpoint": "opc.tcp://localhost:4840/opcua/simulator",
+    "application_name": "ProDB OPC UA Simulator",
+    "application_uri": "urn:prodb:opcua:simulator",
+    "product_uri": "https://github.com/prodb/opcua-simulator",
+    "security_policies": [
+      "None"
+    ],
+    "security_modes": [
+      "None"
+    ],
+    "max_connections": 100,
+    "max_sessions": 50
+  },
+  "simulation": {
+    "update_interval_ms": 1000,
+    "status_print_interval_s": 10,
+    "enable_random_seed": true
+  },
+  "nodes": [
+    {
+      "node_id": "Temperature_Sensor_01",
+      "name": "温度传感器1",
+      "description": "车间1号温度传感器",
+      "data_type": "Float",
+      "initial_value": 20.0,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 0.5,
+      "trend": "sine",
+      "unit": "°C"
+    },
+    {
+      "node_id": "Temperature_Sensor_02",
+      "name": "温度传感器2",
+      "description": "车间2号温度传感器",
+      "data_type": "Float",
+      "initial_value": 25.0,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 0.3,
+      "trend": "random",
+      "unit": "°C"
+    },
+    {
+      "node_id": "Temperature_Sensor_03",
+      "name": "温度传感器3",
+      "description": "车间3号温度传感器",
+      "data_type": "Float",
+      "initial_value": 22.0,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 0.4,
+      "trend": "increasing",
+      "unit": "°C"
+    },
+    {
+      "node_id": "Pressure_Sensor_01",
+      "name": "压力传感器1",
+      "description": "主管道压力传感器",
+      "data_type": "Float",
+      "initial_value": 1.5,
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "change_rate": 0.1,
+      "trend": "decreasing",
+      "unit": "Bar"
+    },
+    {
+      "node_id": "Pressure_Sensor_02",
+      "name": "压力传感器2",
+      "description": "副管道压力传感器",
+      "data_type": "Float",
+      "initial_value": 2.3,
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "change_rate": 0.2,
+      "trend": "sine",
+      "unit": "Bar"
+    },
+    {
+      "node_id": "Flow_Sensor_01",
+      "name": "流量传感器1",
+      "description": "进水流量传感器",
+      "data_type": "Float",
+      "initial_value": 15.5,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 1.0,
+      "trend": "random",
+      "unit": "L/min"
+    },
+    {
+      "node_id": "Flow_Sensor_02",
+      "name": "流量传感器2",
+      "description": "出水流量传感器",
+      "data_type": "Float",
+      "initial_value": 20.2,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 0.8,
+      "trend": "sine",
+      "unit": "L/min"
+    },
+    {
+      "node_id": "Level_Sensor_01",
+      "name": "液位传感器1",
+      "description": "储罐1液位传感器",
+      "data_type": "Float",
+      "initial_value": 75.0,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 0.5,
+      "trend": "decreasing",
+      "unit": "%"
+    },
+    {
+      "node_id": "Level_Sensor_02",
+      "name": "液位传感器2",
+      "description": "储罐2液位传感器",
+      "data_type": "Float",
+      "initial_value": 60.0,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 0.3,
+      "trend": "increasing",
+      "unit": "%"
+    },
+    {
+      "node_id": "Motor_01_Status",
+      "name": "电机1状态",
+      "description": "主泵电机运行状态",
+      "data_type": "Boolean",
+      "initial_value": 1,
+      "min_value": 0,
+      "max_value": 1,
+      "change_rate": 0,
+      "trend": "random",
+      "unit": ""
+    },
+    {
+      "node_id": "Motor_02_Status",
+      "name": "电机2状态",
+      "description": "副泵电机运行状态",
+      "data_type": "Boolean",
+      "initial_value": 0,
+      "min_value": 0,
+      "max_value": 1,
+      "change_rate": 0,
+      "trend": "random",
+      "unit": ""
+    },
+    {
+      "node_id": "Motor_01_Speed",
+      "name": "电机1转速",
+      "description": "主泵电机转速",
+      "data_type": "Int32",
+      "initial_value": 1500,
+      "min_value": 0,
+      "max_value": 3000,
+      "change_rate": 50,
+      "trend": "sine",
+      "unit": "RPM"
+    },
+    {
+      "node_id": "Motor_02_Speed",
+      "name": "电机2转速",
+      "description": "副泵电机转速",
+      "data_type": "Int32",
+      "initial_value": 1200,
+      "min_value": 0,
+      "max_value": 3000,
+      "change_rate": 30,
+      "trend": "random",
+      "unit": "RPM"
+    },
+    {
+      "node_id": "Valve_01_Opening",
+      "name": "阀门1开度",
+      "description": "进水阀门开度",
+      "data_type": "Float",
+      "initial_value": 50.0,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 2.0,
+      "trend": "sine",
+      "unit": "%"
+    },
+    {
+      "node_id": "Valve_02_Opening",
+      "name": "阀门2开度",
+      "description": "出水阀门开度",
+      "data_type": "Float",
+      "initial_value": 75.0,
+      "min_value": 0.0,
+      "max_value": 100.0,
+      "change_rate": 1.5,
+      "trend": "random",
+      "unit": "%"
+    },
+    {
+      "node_id": "Device_Runtime",
+      "name": "设备运行时间",
+      "description": "系统累计运行时间",
+      "data_type": "Int32",
+      "initial_value": 0,
+      "min_value": 0,
+      "max_value": 999999,
+      "change_rate": 1,
+      "trend": "increasing",
+      "unit": "秒"
+    },
+    {
+      "node_id": "Alarm_Temperature_High",
+      "name": "高温报警",
+      "description": "温度超过阈值报警",
+      "data_type": "Boolean",
+      "initial_value": 0,
+      "min_value": 0,
+      "max_value": 1,
+      "change_rate": 0,
+      "trend": "random",
+      "unit": ""
+    },
+    {
+      "node_id": "Alarm_Pressure_Low",
+      "name": "低压报警",
+      "description": "压力低于阈值报警",
+      "data_type": "Boolean",
+      "initial_value": 0,
+      "min_value": 0,
+      "max_value": 1,
+      "change_rate": 0,
+      "trend": "random",
+      "unit": ""
+    }
+  ]
+}

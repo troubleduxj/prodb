@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库依赖页面测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-ok { border-left: 4px solid #4CAF50; }
+        .status-error { border-left: 4px solid #f44336; }
+        .status-warning { border-left: 4px solid #ff9800; }
+        .page-link {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 8px;
+            background: #e3f2fd;
+            color: #1976d2;
+            text-decoration: none;
+            border-radius: 6px;
+            border: 1px solid #bbdefb;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .page-link:hover {
+            background: #bbdefb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .page-link.primary {
+            background: #1976d2;
+            color: white;
+            border-color: #1565c0;
+        }
+        .page-link.primary:hover {
+            background: #1565c0;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+        }
+        .feature-card h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+        }
+        .feature-card p {
+            margin: 0 0 12px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ok { background: #4CAF50; }
+        .status-warning { background: #ff9800; }
+        .status-error { background: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>数据库依赖页面测试</h1>
+    <p>测试需要数据库支持的页面在 TDengine 不可用时是否能正常显示并提供友好的用户体验。</p>
+    
+    <div class="test-card">
+        <h3>测试页面</h3>
+        <p>点击下面的链接测试各个页面的降级体验：</p>
+        <div>
+            <a href="http://localhost:3000/data-visualization" class="page-link primary" target="_blank">
+                数据可视化
+            </a>
+            <a href="http://localhost:3000/database" class="page-link primary" target="_blank">
+                数据库管理
+            </a>
+            <a href="http://localhost:3000/database-apps/query" class="page-link primary" target="_blank">
+                数据查询
+            </a>
+            <a href="http://localhost:3000/database-apps/trends" class="page-link primary" target="_blank">
+                历史趋势
+            </a>
+            <a href="http://localhost:3000/database-apps/process-flow" class="page-link primary" target="_blank">
+                工艺流程图
+            </a>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>预期行为检查</h3>
+        <div class="test-grid">
+            <div class="feature-card">
+                <h4><span class="status-indicator status-ok"></span>数据可视化</h4>
+                <p>应该显示数据库连接错误提示和 TDengine 设置指南</p>
+                <a href="http://localhost:3000/data-visualization" target="_blank">测试页面</a>
+            </div>
+            
+            <div class="feature-card">
+                <h4><span class="status-indicator status-ok"></span>数据库管理</h4>
+                <p>应该显示数据库功能不可用提示和快速启动指南</p>
+                <a href="http://localhost:3000/database" target="_blank">测试页面</a>
+            </div>
+            
+            <div class="feature-card">
+                <h4><span class="status-indicator status-warning"></span>数据查询</h4>
+                <p>应该显示友好的错误提示，不应该出现 500 错误页面</p>
+                <a href="http://localhost:3000/database-apps/query" target="_blank">测试页面</a>
+            </div>
+            
+            <div class="feature-card">
+                <h4><span class="status-indicator status-warning"></span>历史趋势</h4>
+                <p>应该显示友好的错误提示，可能显示模拟数据</p>
+                <a href="http://localhost:3000/database-apps/trends" target="_blank">测试页面</a>
+            </div>
+            
+            <div class="feature-card">
+                <h4><span class="status-indicator status-warning"></span>工艺流程图</h4>
+                <p>应该显示友好的错误提示，可能显示模拟流程图</p>
+                <a href="http://localhost:3000/database-apps/process-flow" target="_blank">测试页面</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>测试步骤</h3>
+        <ol>
+            <li><strong>确保 TDengine 未运行</strong> - 这样可以测试降级体验</li>
+            <li><strong>访问各个页面</strong> - 点击上面的链接</li>
+            <li><strong>检查页面行为</strong>：
+                <ul>
+                    <li>页面应该正常加载，不出现白屏</li>
+                    <li>不应该显示 500 错误页面</li>
+                    <li>应该显示友好的错误提示</li>
+                    <li>应该提供 TDengine 启动指南</li>
+                    <li>应该有重试按钮</li>
+                </ul>
+            </li>
+            <li><strong>测试重试功能</strong> - 点击重试按钮应该重新检查连接</li>
+            <li><strong>启动 TDengine</strong> - 使用 Docker 或本地服务</li>
+            <li><strong>验证恢复</strong> - 页面应该自动检测并启用功能</li>
+        </ol>
+    </div>
+
+    <div class="test-card">
+        <h3>TDengine 快速启动</h3>
+        <p>如果需要测试完整功能，可以启动 TDengine：</p>
+        <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin: 12px 0;">
+            <strong>Docker 方式（推荐）：</strong><br>
+            <code>docker run -d -p 6030:6030 -p 6041:6041 tdengine/tdengine</code>
+        </div>
+        <div style="background: #f5f5f5; padding: 12px; border-radius: 4px; margin: 12px 0;">
+            <strong>Windows 服务方式：</strong><br>
+            <code>net start taosd</code>（需要先安装 TDengine）
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h3>故障排除</h3>
+        <ul>
+            <li><strong>页面仍显示 500 错误</strong> - 检查前端是否重新编译，刷新浏览器缓存</li>
+            <li><strong>错误提示不显示</strong> - 检查 DatabaseFeatureWrapper 组件是否正确导入</li>
+            <li><strong>重试按钮无效</strong> - 检查数据库状态管理 hook 是否正常工作</li>
+            <li><strong>页面加载缓慢</strong> - 检查 React Query 的重试配置是否生效</li>
+        </ul>
+    </div>
+
+    <script>
+        // 自动检查页面状态
+        function checkPageStatus() {
+            const links = document.querySelectorAll('.page-link.primary');
+            links.forEach(async (link) => {
+                try {
+                    const response = await fetch(link.href, { mode: 'no-cors' });
+                    // 由于 no-cors 模式，我们无法检查具体状态
+                    // 但至少可以确认请求没有被阻止
+                } catch (error) {
+                    console.warn(`无法访问 ${link.href}:`, error);
+                }
+            });
+        }
+
+        // 页面加载时检查
+        window.onload = checkPageStatus;
+    </script>
+</body>
+</html>

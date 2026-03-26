@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>ProDB 前端 API 测试</h1>
+    
+    <div class="test-section">
+        <h3>1. 测试采集器列表 API</h3>
+        <button onclick="testCollectorsList()">获取采集器列表</button>
+        <div id="collectors-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. 测试注册新采集器</h3>
+        <button onclick="testRegisterCollector()">注册测试采集器</button>
+        <div id="register-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. 测试旧版采集器 API</h3>
+        <button onclick="testOldCollectorsAPI()">测试旧版 API</button>
+        <div id="old-api-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api/v1';
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                return {
+                    success: response.ok,
+                    status: response.status,
+                    data: data
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+
+        async function testCollectorsList() {
+            const resultDiv = document.getElementById('collectors-result');
+            resultDiv.textContent = '正在测试...';
+            
+            const result = await makeRequest(`${API_BASE}/collectors/list`);
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ 成功获取采集器列表:\n${JSON.stringify(result.data, null, 2)}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 获取失败:\n${JSON.stringify(result, null, 2)}`;
+            }
+        }
+
+        async function testRegisterCollector() {
+            const resultDiv = document.getElementById('register-result');
+            resultDiv.textContent = '正在注册...';
+            
+            const registrationData = {
+                collector_id: 'frontend-test-collector',
+                name: '前端测试采集器',
+                description: '用于前端API测试的采集器',
+                version: '1.0.0',
+                location: '前端测试',
+                environment: 'test',
+                secret_key: 'frontend-test-secret-123',
+                protocols: [{
+                    protocol: 'opcua',
+                    enabled: true,
+                    version: '1.04'
+                }],
+                tags: {
+                    source: 'frontend-test'
+                },
+                capabilities: {
+                    max_data_points: 100
+                }
+            };
+            
+            const result = await makeRequest(`${API_BASE}/collectors/register`, {
+                method: 'POST',
+                body: JSON.stringify(registrationData)
+            });
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ 注册成功:\n${JSON.stringify(result.data, null, 2)}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 注册失败:\n${JSON.stringify(result, null, 2)}`;
+            }
+        }
+
+        async function testOldCollectorsAPI() {
+            const resultDiv = document.getElementById('old-api-result');
+            resultDiv.textContent = '正在测试旧版API...';
+            
+            const result = await makeRequest(`${API_BASE}/collectors`);
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ 旧版API响应:\n${JSON.stringify(result.data, null, 2)}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 旧版API失败:\n${JSON.stringify(result, null, 2)}`;
+            }
+        }
+
+        // 页面加载时自动测试
+        window.onload = function() {
+            console.log('页面加载完成，可以开始测试API');
+        };
+    </script>
+</body>
+</html>

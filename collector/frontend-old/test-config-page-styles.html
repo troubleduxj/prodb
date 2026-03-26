@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConfigPage 样式测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/modern-components.css">
+    <link rel="stylesheet" href="styles/pages.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+    </style>
+</head>
+<body>
+    <h1>ConfigPage 样式测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 页面头部测试</h2>
+        <div class="config-page">
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>
+                        <span class="page-icon">⚙️</span>
+                        接口配置管理
+                    </h1>
+                    <p class="page-description">
+                        管理采集器的接口配置，支持多种工业协议和批量操作
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <div class="action-group">
+                        <button class="btn btn-secondary btn-sm">
+                            <span class="btn-icon">📋</span>
+                            模板
+                        </button>
+                        <button class="btn btn-secondary btn-sm">
+                            <span class="btn-icon">💾</span>
+                            备份
+                        </button>
+                    </div>
+                    <div class="action-group">
+                        <button class="btn btn-primary">
+                            <span class="btn-icon">➕</span>
+                            新建接口
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 接口卡片测试</h2>
+        <div class="interfaces-grid">
+            <div class="modern-card card-hover">
+                <div class="card-selection">
+                    <input type="checkbox" class="selection-checkbox">
+                </div>
+                <div class="card-header">
+                    <div class="interface-info">
+                        <h3 class="interface-name">OPC UA 接口</h3>
+                        <div class="interface-badges">
+                            <span class="badge badge-primary">OPC UA</span>
+                            <span class="badge badge-success">已启用</span>
+                        </div>
+                    </div>
+                    <div class="interface-status">
+                        <span class="status-indicator connected">
+                            ● 已连接
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="config-preview">
+                        <div class="config-item">
+                            <span class="config-key">地址:</span>
+                            <span class="config-value">opc.tcp://localhost:4840</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-key">端口:</span>
+                            <span class="config-value">4840</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-key">协议:</span>
+                            <span class="config-value">OPC UA</span>
+                        </div>
+                    </div>
+                    <div class="interface-actions">
+                        <button class="btn btn-sm btn-secondary">编辑</button>
+                        <button class="btn btn-sm btn-primary">测试</button>
+                        <button class="btn btn-sm btn-warning">禁用</button>
+                        <button class="btn btn-sm btn-error">删除</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card card-hover selected">
+                <div class="card-selection">
+                    <input type="checkbox" class="selection-checkbox" checked>
+                </div>
+                <div class="card-header">
+                    <div class="interface-info">
+                        <h3 class="interface-name">Modbus TCP 接口</h3>
+                        <div class="interface-badges">
+                            <span class="badge badge-primary">Modbus TCP</span>
+                            <span class="badge badge-warning">已禁用</span>
+                        </div>
+                    </div>
+                    <div class="interface-status">
+                        <span class="status-indicator disconnected">
+                            ● 未连接
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="config-preview">
+                        <div class="config-item">
+                            <span class="config-key">地址:</span>
+                            <span class="config-value">192.168.1.100</span>
+                        </div>
+                        <div class="config-item">
+                            <span class="config-key">端口:</span>
+                            <span class="config-value">502</span>
+                        </div>
+                    </div>
+                    <div class="interface-actions">
+                        <button class="btn btn-sm btn-secondary">编辑</button>
+                        <button class="btn btn-sm btn-primary">测试</button>
+                        <button class="btn btn-sm btn-success">启用</button>
+                        <button class="btn btn-sm btn-error">删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. 加载状态测试</h2>
+        <div class="loading-state">
+            <span class="spinner"></span>
+            <p>正在加载接口配置...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 空状态测试</h2>
+        <div class="modern-card" style="text-align: center; padding: 3rem;">
+            <div class="empty-icon">📡</div>
+            <h3>暂无接口配置</h3>
+            <p style="color: var(--text-secondary); margin: 16px 0;">
+                开始创建您的第一个接口配置
+            </p>
+            <div class="empty-actions">
+                <button class="btn btn-primary">新建接口</button>
+                <button class="btn btn-secondary">导入配置</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. 状态指示器测试</h2>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <span class="status-indicator connected">● 已连接</span>
+            <span class="status-indicator disconnected">● 未连接</span>
+            <span class="status-indicator error">● 错误</span>
+            <span class="status-indicator unknown">● 未知</span>
+        </div>
+    </div>
+
+    <script>
+        console.log('ConfigPage 样式测试页面已加载');
+        console.log('请检查以下元素的样式:');
+        console.log('1. 页面头部是否有渐变背景和玻璃态效果');
+        console.log('2. 接口卡片是否有悬停光晕效果');
+        console.log('3. 选中的卡片是否有特殊边框');
+        console.log('4. 状态指示器是否有对应的颜色和发光效果');
+        console.log('5. 加载状态是否有旋转动画');
+        console.log('6. 空状态图标是否有脉冲动画');
+    </script>
+</body>
+</html>

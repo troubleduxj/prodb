@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Perfect Fix - ProDB Collector</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Color System */
+            --color-primary: #2563eb;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            
+            /* Background Colors */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-card: #1e293b;
+            --bg-hover: #475569;
+            
+            /* Text Colors */
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            
+            /* Border and Shadow */
+            --border-color: #334155;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            
+            /* Spacing */
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            
+            /* Typography */
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-2xl: 1.5rem;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+            
+            /* Transitions */
+            --transition-normal: 0.2s ease;
+            
+            /* Z-Index */
+            --z-sticky: 1020;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Layout Structure */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+        }
+
+        .layout.sidebar-collapsed .main-content {
+            margin-left: 60px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            min-width: 320px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: var(--z-sticky);
+            transition: all var(--transition-normal);
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+            min-width: 60px;
+        }
+
+        .sidebar-header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .logo-icon {
+            font-size: var(--font-size-2xl);
+        }
+
+        .logo-text {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+            margin: 0;
+            transition: opacity var(--transition-normal);
+        }
+
+        .sidebar.collapsed .logo-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar-collapse-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--space-2);
+            transition: all var(--transition-normal);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-collapse-toggle:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .nav-section {
+            flex: 1;
+            padding: var(--space-2) 0;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: var(--space-2);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            margin: 0 var(--space-2);
+            transition: all var(--transition-normal);
+            min-height: 44px;
+        }
+
+        .nav-link:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: var(--font-size-lg);
+            flex-shrink: 0;
+        }
+
+        .nav-label {
+            flex: 1;
+            font-weight: var(--font-weight-medium);
+            transition: opacity var(--transition-normal);
+        }
+
+        .sidebar.collapsed .nav-label {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: var(--space-3);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 320px;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+            transition: margin-left var(--transition-normal);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* PERFECT HEADER FIX */
+        .content-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: var(--z-sticky);
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            
+            /* 关键修复：确保header高度和内容对齐 */
+            height: 72px; /* 固定高度 */
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-6);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* 关键：垂直居中 */
+            width: 100%;
+            height: 100%; /* 占满header高度 */
+        }
+
+        .page-title-section {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .page-title {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+            margin: 0 0 2px 0;
+            line-height: 1.2;
+        }
+
+        .breadcrumbs {
+            margin: 0;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* PERFECT HEADER ACTIONS FIX */
+        .header-actions {
+            display: flex;
+            align-items: center; /* 关键：垂直居中 */
+            gap: var(--space-3);
+            flex-shrink: 0;
+            height: 40px; /* 固定高度 */
+        }
+
+        .auto-refresh-control {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            height: 40px; /* 与header-actions同高 */
+        }
+
+        .refresh-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            font-weight: var(--font-weight-medium);
+            white-space: nowrap;
+        }
+
+        .refresh-interval {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+            padding: 0 var(--space-3);
+            height: 40px; /* 统一高度 */
+            min-width: 80px;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .refresh-interval:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .refresh-button {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: var(--font-size-base);
+            transition: all var(--transition-normal);
+            width: 40px;
+            height: 40px; /* 统一高度 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-button:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0 var(--space-3);
+            font-size: var(--font-size-sm);
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            height: 40px; /* 统一高度 */
+            white-space: nowrap;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        /* Content Wrapper */
+        .content-wrapper {
+            flex: 1;
+            padding: var(--space-6);
+            overflow-y: auto;
+        }
+
+        /* Demo Content */
+        .demo-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .demo-section h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .demo-section p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-3);
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: var(--space-4) 0;
+        }
+
+        .feature-list li {
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            color: var(--color-success);
+            font-weight: bold;
+        }
+
+        .scroll-test {
+            height: 300px;
+            background: linear-gradient(45deg, var(--color-primary), var(--color-success));
+            border-radius: var(--border-radius);
+            margin: var(--space-4) 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+        }
+
+        .success-message {
+            padding: var(--space-4);
+            background-color: var(--color-success);
+            color: white;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: var(--font-weight-bold);
+            margin-top: var(--space-4);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .content-header {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout" id="layout">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🔧</span>
+                    <h2 class="logo-text">ProDB Collector</h2>
+                </div>
+                <button class="sidebar-collapse-toggle" id="sidebarCollapseToggle" title="折叠侧边栏">
+                    «
+                </button>
+            </div>
+
+            <div class="nav-section">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active">
+                            <span class="nav-icon">📊</span>
+                            <span class="nav-label">仪表盘</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🔗</span>
+                            <span class="nav-label">接口管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🧪</span>
+                            <span class="nav-label">协议测试</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-label">驱动管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-label">系统配置</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- PERFECT HEADER -->
+            <header class="content-header">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">仪表盘</h1>
+                        <nav class="breadcrumbs">
+                            <ol class="breadcrumb-list">
+                                <li class="breadcrumb-item">
+                                    <span class="breadcrumb-current">仪表盘</span>
+                                </li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="header-actions">
+                        <div class="auto-refresh-control">
+                            <label class="refresh-label">自动刷新</label>
+                            <select class="refresh-interval">
+                                <option value="0">关闭</option>
+                                <option value="5000" selected>5秒</option>
+                                <option value="10000">10秒</option>
+                                <option value="30000">30秒</option>
+                            </select>
+                        </div>
+                        <button class="refresh-button" title="手动刷新数据">
+                            🔄
+                        </button>
+                        <button class="theme-toggle" title="切换主题">
+                            <span>🌙</span>
+                            <span>Dark</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-wrapper">
+                <div class="demo-content">
+                    <div class="demo-section">
+                        <h3>🎯 Perfect Header Fix - 完美header对齐修复</h3>
+                        <p>这个版本实现了完美的header对齐，所有控件都精确对齐。</p>
+                        
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">✓</span> <strong>固定高度:</strong> content-header设为72px固定高度</li>
+                            <li><span class="feature-icon">✓</span> <strong>完美居中:</strong> 所有元素使用align-items: center</li>
+                            <li><span class="feature-icon">✓</span> <strong>统一尺寸:</strong> 所有控件高度统一为40px</li>
+                            <li><span class="feature-icon">✓</span> <strong>精确对齐:</strong> header-actions高度固定为40px</li>
+                            <li><span class="feature-icon">✓</span> <strong>无缝适配:</strong> 侧边栏折叠时完美适配</li>
+                        </ul>
+                    </div>
+
+                    <div class="demo-section">
+                        <h3>🔍 验证要点</h3>
+                        <p>请检查以下对齐效果：</p>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">✓</span> Header右侧所有控件完美水平对齐</li>
+                            <li><span class="feature-icon">✓</span> 控件高度完全一致</li>
+                            <li><span class="feature-icon">✓</span> 垂直居中效果完美</li>
+                            <li><span class="feature-icon">✓</span> 滚动时sticky定位正常</li>
+                            <li><span class="feature-icon">✓</span> 侧边栏折叠适配良好</li>
+                        </ul>
+                    </div>
+
+                    <div class="success-message">
+                        🎉 Header对齐问题已完美解决！所有控件精确对齐！
+                    </div>
+                </div>
+
+                <div class="demo-content">
+                    <h3>📏 滚动测试</h3>
+                    <p>滚动页面验证header的sticky效果和对齐稳定性。</p>
+                    
+                    <div class="scroll-test">
+                        滚动测试区域 1 - Header保持完美对齐
+                    </div>
+                </div>
+
+                <div class="demo-content">
+                    <h3>✨ 技术要点</h3>
+                    <ul class="feature-list">
+                        <li><span class="feature-icon">✓</span> 使用固定高度避免布局抖动</li>
+                        <li><span class="feature-icon">✓</span> Flexbox确保完美居中对齐</li>
+                        <li><span class="feature-icon">✓</span> 统一控件尺寸保证视觉一致性</li>
+                        <li><span class="feature-icon">✓</span> Sticky定位配合z-index层级管理</li>
+                    </ul>
+
+                    <div class="scroll-test" style="background: linear-gradient(135deg, var(--color-warning), var(--color-error));">
+                        滚动测试区域 2 - 验证对齐持续性
+                    </div>
+                </div>
+
+                <div class="demo-content">
+                    <h3>🎊 修复完成</h3>
+                    <p>Header布局问题已彻底解决，所有元素完美对齐！</p>
+                    
+                    <div class="scroll-test" style="background: linear-gradient(225deg, var(--color-success), var(--color-primary));">
+                        最终验证区域 - Perfect Alignment Achieved!
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Perfect Header Fix JavaScript
+        class PerfectHeaderManager {
+            constructor() {
+                this.layout = document.getElementById('layout');
+                this.sidebar = document.getElementById('sidebar');
+                this.sidebarCollapseToggle = document.getElementById('sidebarCollapseToggle');
+                
+                this.sidebarCollapsed = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                // Sidebar collapse toggle
+                this.sidebarCollapseToggle?.addEventListener('click', () => {
+                    this.toggleSidebarCollapse();
+                });
+
+                // Navigation links
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.handleNavigation(link);
+                    });
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                        e.preventDefault();
+                        this.toggleSidebarCollapse();
+                    }
+                });
+            }
+
+            toggleSidebarCollapse() {
+                this.sidebarCollapsed = !this.sidebarCollapsed;
+                
+                if (this.sidebarCollapsed) {
+                    this.sidebar.classList.add('collapsed');
+                    this.layout.classList.add('sidebar-collapsed');
+                    this.sidebarCollapseToggle.textContent = '»';
+                    this.sidebarCollapseToggle.title = '展开侧边栏';
+                } else {
+                    this.sidebar.classList.remove('collapsed');
+                    this.layout.classList.remove('sidebar-collapsed');
+                    this.sidebarCollapseToggle.textContent = '«';
+                    this.sidebarCollapseToggle.title = '折叠侧边栏';
+                }
+            }
+
+            handleNavigation(link) {
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+                
+                // Add active class to clicked link
+                link.classList.add('active');
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new PerfectHeaderManager();
+        });
+
+        console.log('Perfect Header Fix loaded successfully!');
+        console.log('Key improvements:');
+        console.log('- Fixed header height: 72px');
+        console.log('- Perfect center alignment with flexbox');
+        console.log('- Unified control heights: 40px');
+        console.log('- Precise header-actions alignment');
+        console.log('- Seamless sidebar collapse adaptation');
+    </script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端数据库API测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; white-space: pre-wrap; }
+        .error { background: #ffe6e6; color: #d00; }
+        .success { background: #e6ffe6; color: #060; }
+        .loading { background: #fff3cd; color: #856404; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>前端数据库API测试</h1>
+    
+    <div class="section">
+        <h2>1. 测试useDefaultConnection Hook逻辑</h2>
+        <button onclick="testDefaultConnectionLogic()">测试默认连接逻辑</button>
+        <div id="default-logic-result" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. 测试TDengine API调用</h2>
+        <button onclick="testTDengineAPI()">测试TDengine API</button>
+        <div id="tdengine-api-result" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. 测试数据库列表获取</h2>
+        <button onclick="testDatabaseList()">测试数据库列表</button>
+        <div id="database-list-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001';
+
+        // 模拟前端的API调用逻辑
+        const tdengineApi = {
+            async getConnections(params = {}) {
+                const response = await fetch(`${API_BASE_URL}/api/v1/database/connections`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Transform backend data to frontend format
+                const connections = (data.connections || []).map((conn) => ({
+                    id: conn.id,
+                    name: conn.name,
+                    host: conn.host,
+                    port: conn.port,
+                    username: conn.username,
+                    password: '', // Don't expose password
+                    database: conn.database,
+                    timeout: (conn.conn_timeout || 30) * 1000, // Convert seconds to ms
+                    maxConnections: conn.max_open_conns,
+                    isDefault: conn.is_default,
+                    status: conn.status,
+                    lastConnected: conn.last_connected,
+                    description: conn.description,
+                    createdAt: conn.created_at,
+                    updatedAt: conn.updated_at,
+                }));
+                
+                return {
+                    connections,
+                    total: data.total || 0,
+                    page: params.page || 1,
+                    size: params.size || 10,
+                };
+            },
+
+            async getDatabases(connectionId) {
+                const params = connectionId ? `?connection_id=${connectionId}` : '';
+                const response = await fetch(`${API_BASE_URL}/api/v1/database/databases${params}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                return data.databases || [];
+            }
+        };
+
+        async function testDefaultConnectionLogic() {
+            const resultDiv = document.getElementById('default-logic-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在测试默认连接逻辑...';
+
+            try {
+                // 模拟useDefaultConnection hook的逻辑
+                const response = await tdengineApi.getConnections({});
+                const defaultConn = response.connections.find(conn => conn.isDefault);
+                
+                let selectedConnection = null;
+                if (defaultConn) {
+                    selectedConnection = defaultConn;
+                } else if (response.connections.length > 0) {
+                    selectedConnection = response.connections[0];
+                }
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `
+测试结果:
+- 总连接数: ${response.connections.length}
+- 默认连接: ${defaultConn ? defaultConn.name : '无'}
+- 选择的连接: ${selectedConnection ? selectedConnection.name : '无'}
+- 连接详情: ${JSON.stringify(selectedConnection, null, 2)}
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testTDengineAPI() {
+            const resultDiv = document.getElementById('tdengine-api-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在测试TDengine API...';
+
+            try {
+                // 先获取连接
+                const connectionsResponse = await tdengineApi.getConnections({});
+                const connection = connectionsResponse.connections[0];
+
+                if (!connection) {
+                    throw new Error('没有找到可用的连接');
+                }
+
+                // 测试数据库API
+                const databases = await tdengineApi.getDatabases(connection.id);
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `
+测试结果:
+- 使用连接: ${connection.name} (${connection.host}:${connection.port})
+- 数据库数量: ${databases.length}
+- 数据库列表: ${databases.map(db => db.name).join(', ')}
+- 详细信息: ${JSON.stringify(databases, null, 2)}
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testDatabaseList() {
+            const resultDiv = document.getElementById('database-list-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在测试数据库列表组件逻辑...';
+
+            try {
+                // 模拟DatabaseList组件的逻辑
+                const connectionsResponse = await tdengineApi.getConnections({});
+                const defaultConnection = connectionsResponse.connections.find(conn => conn.isDefault) || connectionsResponse.connections[0];
+
+                if (!defaultConnection) {
+                    throw new Error('没有找到可用的连接');
+                }
+
+                const databases = await tdengineApi.getDatabases(defaultConnection.id);
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `
+DatabaseList组件测试结果:
+- 默认连接: ${defaultConnection.name}
+- 连接ID: ${defaultConnection.id}
+- 数据库数量: ${databases.length}
+- 数据库详情:
+${databases.map(db => `  - ${db.name} (${db.ntables} 表, 创建时间: ${db.created_time})`).join('\n')}
+
+完整数据:
+${JSON.stringify({ connection: defaultConnection, databases }, null, 2)}
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}\n\n堆栈: ${error.stack}`;
+            }
+        }
+
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            console.log('开始自动测试...');
+            testDefaultConnectionLogic();
+        };
+    </script>
+</body>
+</html>

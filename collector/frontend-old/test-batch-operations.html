@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量操作和快速配置测试 - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/themes.css">
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState } from 'https://esm.sh/preact/hooks';
+        import BatchOperations from './components/BatchOperations.js';
+        import ConfigClipboard from './components/ConfigClipboard.js';
+        import QuickCreateDialog from './components/QuickCreateDialog.js';
+
+        const TestApp = () => {
+            const [interfaces, setInterfaces] = useState([
+                {
+                    id: 'opc-ua-001',
+                    name: '生产线OPC UA服务器',
+                    protocol: 'OPC_UA',
+                    enabled: true,
+                    status: 'connected',
+                    config: {
+                        endpoint: 'opc.tcp://192.168.1.100:4840',
+                        securityPolicy: 'None',
+                        securityMode: 'None'
+                    },
+                    createdAt: '2024-01-15T10:00:00Z',
+                    updatedAt: '2024-01-15T10:30:00Z'
+                },
+                {
+                    id: 'modbus-001',
+                    name: 'PLC Modbus TCP',
+                    protocol: 'MODBUS_TCP',
+                    enabled: true,
+                    status: 'disconnected',
+                    config: {
+                        host: '192.168.1.101',
+                        port: 502,
+                        slaveId: 1
+                    },
+                    createdAt: '2024-01-15T09:00:00Z',
+                    updatedAt: '2024-01-15T09:15:00Z'
+                },
+                {
+                    id: 'mqtt-001',
+                    name: 'MQTT 传感器数据',
+                    protocol: 'MQTT',
+                    enabled: false,
+                    status: 'error',
+                    config: {
+                        broker: 'mqtt://192.168.1.102',
+                        port: 1883,
+                        clientId: 'collector-001',
+                        topic: 'sensors/+/data'
+                    },
+                    createdAt: '2024-01-14T15:00:00Z',
+                    updatedAt: '2024-01-14T15:30:00Z'
+                }
+            ]);
+
+            const [selectedIds, setSelectedIds] = useState([]);
+            const [clipboardConfig, setClipboardConfig] = useState(null);
+            const [showQuickCreate, setShowQuickCreate] = useState(false);
+            const [message, setMessage] = useState('');
+
+            const handleBatchOperation = async (action, ids) => {
+                console.log('Batch operation:', action, ids);
+                
+                switch (action) {
+                    case 'start':
+                        setInterfaces(prev => prev.map(iface => 
+                            ids.includes(iface.id) ? { ...iface, status: 'connected' } : iface
+                        ));
+                        setMessage(`已启动 ${ids.length} 个接口`);
+                        break;
+                        
+                    case 'stop':
+                        setInterfaces(prev => prev.map(iface => 
+                            ids.includes(iface.id) ? { ...iface, status: 'disconnected' } : iface
+                        ));
+                        setMessage(`已停止 ${ids.length} 个接口`);
+                        break;
+                        
+                    case 'enable':
+                        setInterfaces(prev => prev.map(iface => 
+                            ids.includes(iface.id) ? { ...iface, enabled: true } : iface
+                        ));
+                        setMessage(`已启用 ${ids.length} 个接口`);
+                        break;
+                        
+                    case 'disable':
+                        setInterfaces(prev => prev.map(iface => 
+                            ids.includes(iface.id) ? { ...iface, enabled: false } : iface
+                        ));
+                        setMessage(`已禁用 ${ids.length} 个接口`);
+                        break;
+                        
+                    case 'copy':
+                        const selectedInterfaces = interfaces.filter(iface => ids.includes(iface.id));
+                        if (selectedInterfaces.length === 1) {
+                            const { id, status, createdAt, updatedAt, ...config } = selectedInterfaces[0];
+                            setClipboardConfig(config);
+                            setMessage('配置已复制到剪贴板');
+                        }
+                        break;
+                        
+                    case 'delete':
+                        setInterfaces(prev => prev.filter(iface => !ids.includes(iface.id)));
+                        setMessage(`已删除 ${ids.length} 个接口`);
+                        break;
+                        
+                    default:
+                        setMessage(`执行操作: ${action}`);
+                }
+                
+                // Clear message after 3 seconds
+                setTimeout(() => setMessage(''), 3000);
+            };
+
+            const handleQuickCreate = () => {
+                setShowQuickCreate(true);
+            };
+
+            const handleQuickCreateFromExisting = (templateInterface) => {
+                console.log('Quick create from existing:', templateInterface);
+                setShowQuickCreate(true);
+            };
+
+            const handleQuickCreateComplete = (config) => {
+                const newInterface = {
+                    id: `interface-${Date.now()}`,
+                    ...config,
+                    status: 'disconnected',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                setInterfaces(prev => [...prev, newInterface]);
+                setMessage('接口配置已创建');
+                setShowQuickCreate(false);
+            };
+
+            const handleConfigPaste = (config) => {
+                const newInterface = {
+                    id: `interface-${Date.now()}`,
+                    ...config,
+                    name: `${config.name} (粘贴)`,
+                    status: 'disconnected',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                setInterfaces(prev => [...prev, newInterface]);
+                setMessage('接口配置已粘贴');
+            };
+
+            const handleClearClipboard = () => {
+                setClipboardConfig(null);
+                setMessage('剪贴板已清除');
+            };
+
+            return html`
+                <div class="test-app">
+                    <div class="test-header">
+                        <h1>批量操作和快速配置测试</h1>
+                        <p>测试增强的批量操作、配置复制粘贴和快速创建功能</p>
+                    </div>
+
+                    ${message && html`
+                        <div class="message-banner success">
+                            ${message}
+                            <button 
+                                class="message-close"
+                                onClick=${() => setMessage('')}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    `}
+
+                    <!-- Configuration Clipboard -->
+                    ${clipboardConfig && html`
+                        <${ConfigClipboard}
+                            clipboardConfig=${clipboardConfig}
+                            onPasteConfig=${handleConfigPaste}
+                            onClearClipboard=${handleClearClipboard}
+                        />
+                    `}
+
+                    <!-- Batch Operations -->
+                    <${BatchOperations}
+                        interfaces=${interfaces}
+                        selectedIds=${selectedIds}
+                        onSelectionChange=${setSelectedIds}
+                        onBatchOperation=${handleBatchOperation}
+                        onQuickCreate=${handleQuickCreate}
+                        onQuickCreateFromExisting=${handleQuickCreateFromExisting}
+                        clipboardConfig=${clipboardConfig}
+                        onConfigPaste=${handleConfigPaste}
+                    />
+
+                    <!-- Interface List -->
+                    <div class="interfaces-section">
+                        <div class="interfaces-grid">
+                            ${interfaces.map(iface => html`
+                                <div class="interface-card ${iface.status} ${selectedIds.includes(iface.id) ? 'selected' : ''}" key=${iface.id}>
+                                    <!-- Selection Checkbox -->
+                                    <div class="card-selection">
+                                        <input
+                                            type="checkbox"
+                                            class="selection-checkbox"
+                                            checked=${selectedIds.includes(iface.id)}
+                                            onChange=${(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedIds(prev => [...prev, iface.id]);
+                                                } else {
+                                                    setSelectedIds(prev => prev.filter(id => id !== iface.id));
+                                                }
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div class="card-header">
+                                        <div class="interface-info">
+                                            <h3 class="interface-name">${iface.name}</h3>
+                                            <div class="interface-badges">
+                                                <span class="protocol-badge">${iface.protocol}</span>
+                                                ${!iface.enabled && html`
+                                                    <span class="disabled-badge">已禁用</span>
+                                                `}
+                                            </div>
+                                        </div>
+                                        <div class="interface-status">
+                                            <span class="status-indicator ${iface.status}">
+                                                ${iface.status === 'connected' ? '🟢 已连接' : 
+                                                  iface.status === 'disconnected' ? '🟡 未连接' : '🔴 错误'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-body">
+                                        <div class="config-preview">
+                                            ${Object.entries(iface.config).slice(0, 3).map(([key, value]) => html`
+                                                <div class="config-item" key=${key}>
+                                                    <span class="config-key">${key}:</span>
+                                                    <span class="config-value">${value}</span>
+                                                </div>
+                                            `)}
+                                        </div>
+                                    </div>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+
+                    <!-- Quick Create Dialog -->
+                    ${showQuickCreate && html`
+                        <${QuickCreateDialog}
+                            onClose=${() => setShowQuickCreate(false)}
+                            onCreate=${handleQuickCreateComplete}
+                            existingInterfaces=${interfaces}
+                        />
+                    `}
+                </div>
+            `;
+        };
+
+        render(html`<${TestApp} />`, document.getElementById('app'));
+    </script>
+
+    <style>
+        .test-app {
+            padding: var(--space-6);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .test-header {
+            margin-bottom: var(--space-8);
+            text-align: center;
+        }
+
+        .test-header h1 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .test-header p {
+            color: var(--text-secondary);
+        }
+
+        .message-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            margin-bottom: var(--space-4);
+            border-radius: var(--border-radius);
+            background-color: var(--color-success);
+            color: white;
+        }
+
+        .message-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: var(--space-1);
+        }
+
+        .interfaces-section {
+            margin-top: var(--space-6);
+        }
+
+        .interfaces-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .interface-card {
+            position: relative;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-4);
+            transition: all 0.2s ease;
+        }
+
+        .interface-card.selected {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        .card-selection {
+            position: absolute;
+            top: var(--space-2);
+            left: var(--space-2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-3);
+            margin-left: var(--space-6);
+        }
+
+        .interface-name {
+            margin: 0 0 var(--space-1) 0;
+            color: var(--text-primary);
+        }
+
+        .interface-badges {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .protocol-badge {
+            font-size: var(--font-size-sm);
+            background-color: var(--color-primary);
+            color: white;
+            padding: var(--space-1) var(--space-2);
+            border-radius: calc(var(--border-radius) / 2);
+        }
+
+        .disabled-badge {
+            font-size: var(--font-size-sm);
+            color: var(--color-warning);
+            background-color: rgba(245, 158, 11, 0.1);
+            padding: var(--space-1) var(--space-2);
+            border-radius: calc(var(--border-radius) / 2);
+        }
+
+        .status-indicator {
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+        }
+
+        .config-preview {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .config-item {
+            display: flex;
+            gap: var(--space-2);
+            font-size: var(--font-size-sm);
+        }
+
+        .config-key {
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .config-value {
+            color: var(--text-primary);
+            font-family: monospace;
+        }
+    </style>
+</body>
+</html>

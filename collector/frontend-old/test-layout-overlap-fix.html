@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>布局遮挡问题修复测试</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <link rel="stylesheet" href="/styles/themes.css">
+    <style>
+        /* 测试样式 */
+        .test-marker {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ff4757;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 0 8px 8px 0;
+            font-weight: bold;
+            z-index: 100;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .test-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .edge-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #ffd93d;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .grid-test {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .grid-item {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .width-indicator {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+        }
+        
+        .status-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .status-error {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- 左侧菜单栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>ProDB Collector</h2>
+                <p class="version">v1.0.0</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#dashboard" class="nav-link active">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">仪表板</span>
+                    </a></li>
+                    <li><a href="#config" class="nav-link">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">配置管理</span>
+                    </a></li>
+                    <li><a href="#protocols" class="nav-link">
+                        <span class="nav-icon">🔌</span>
+                        <span class="nav-text">协议测试</span>
+                    </a></li>
+                    <li><a href="#drivers" class="nav-link">
+                        <span class="nav-icon">🔧</span>
+                        <span class="nav-text">驱动管理</span>
+                    </a></li>
+                    <li><a href="#monitoring" class="nav-link">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-text">实时监控</span>
+                    </a></li>
+                    <li><a href="#logs" class="nav-link">
+                        <span class="nav-icon">📝</span>
+                        <span class="nav-text">日志查看</span>
+                    </a></li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="status-dot online"></span>
+                    <span>在线</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧主面板 -->
+        <main class="main-content">
+            <header class="page-header">
+                <h1>🔧 布局遮挡问题修复测试</h1>
+                <p class="page-description">验证左侧菜单栏是否遮挡右侧主面板内容</p>
+            </header>
+
+            <!-- 宽度指示器 -->
+            <div class="width-indicator">
+                <strong>当前容器信息：</strong><br>
+                窗口宽度: <span id="windowWidth"></span>px<br>
+                主内容区宽度: <span id="contentWidth"></span>px<br>
+                侧边栏宽度: <span id="sidebarWidth"></span>px<br>
+                计算的margin-left: <span id="marginLeft"></span>px<br>
+                <br>
+                <strong>状态：</strong>
+                <span id="layoutStatus" class="status-badge"></span>
+            </div>
+
+            <!-- 左边缘测试 -->
+            <div class="test-content">
+                <div class="edge-indicator"></div>
+                <div class="test-marker">← 左边缘</div>
+                <h2>🎯 左边缘可见性测试</h2>
+                <p>如果你能看到左侧的黄色边缘指示器和红色标记，说明内容没有被遮挡！</p>
+                <p>这个彩色区域应该完全可见，左边缘不应该被侧边栏遮挡。</p>
+            </div>
+
+            <!-- 网格布局测试 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📐 网格布局测试</h3>
+                </div>
+                <div class="card-body">
+                    <p>以下网格应该完整显示，左侧第一列不应该被遮挡：</p>
+                    <div class="grid-test">
+                        <div class="grid-item">
+                            <h4>第1列</h4>
+                            <p>这是第一列的内容，应该完全可见</p>
+                        </div>
+                        <div class="grid-item">
+                            <h4>第2列</h4>
+                            <p>这是第二列的内容</p>
+                        </div>
+                        <div class="grid-item">
+                            <h4>第3列</h4>
+                            <p>这是第三列的内容</p>
+                        </div>
+                        <div class="grid-item">
+                            <h4>第4列</h4>
+                            <p>这是第四列的内容</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表格测试 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📊 表格布局测试</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>名称</th>
+                                <th>状态</th>
+                                <th>类型</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>001</td>
+                                <td>测试设备1</td>
+                                <td><span class="status-badge status-success">在线</span></td>
+                                <td>OPC UA</td>
+                                <td><button class="btn btn-sm">查看</button></td>
+                            </tr>
+                            <tr>
+                                <td>002</td>
+                                <td>测试设备2</td>
+                                <td><span class="status-badge status-warning">离线</span></td>
+                                <td>Modbus</td>
+                                <td><button class="btn btn-sm">查看</button></td>
+                            </tr>
+                            <tr>
+                                <td>003</td>
+                                <td>测试设备3</td>
+                                <td><span class="status-badge status-success">在线</span></td>
+                                <td>MQTT</td>
+                                <td><button class="btn btn-sm">查看</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 响应式测试说明 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📱 响应式测试说明</h3>
+                </div>
+                <div class="card-body">
+                    <h4>测试步骤：</h4>
+                    <ol>
+                        <li><strong>桌面端 (> 1024px)</strong>: 侧边栏宽度240px，主内容区应该有正确的margin-left和width</li>
+                        <li><strong>平板端 (768px - 1024px)</strong>: 侧边栏宽度200px，主内容区应该相应调整</li>
+                        <li><strong>移动端 (< 768px)</strong>: 侧边栏隐藏，主内容区占满全宽</li>
+                    </ol>
+                    
+                    <h4>验证清单：</h4>
+                    <ul>
+                        <li>✅ 左边缘的红色标记完全可见</li>
+                        <li>✅ 黄色边缘指示器完全可见</li>
+                        <li>✅ 网格第一列完全可见</li>
+                        <li>✅ 表格第一列完全可见</li>
+                        <li>✅ 没有水平滚动条（除非内容确实超宽）</li>
+                        <li>✅ 调整窗口大小时布局正确响应</li>
+                    </ul>
+                    
+                    <h4>修复内容：</h4>
+                    <div class="alert alert-info">
+                        <strong>问题：</strong> 在平板端(max-width: 1024px)，侧边栏宽度改为200px，但主内容区的width没有相应更新。<br>
+                        <strong>修复：</strong> 添加了 <code>width: calc(100% - 200px)</code> 到平板端的 .main-content 样式中。
+                    </div>
+                </div>
+            </div>
+
+            <!-- CSS修复详情 -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>🔧 CSS修复详情</h3>
+                </div>
+                <div class="card-body">
+                    <h4>修复前：</h4>
+                    <pre><code>@media (max-width: 1024px) {
+    .sidebar {
+        width: 200px;
+    }
+    
+    .main-content {
+        margin-left: 200px;
+        padding: var(--space-6);
+        /* ❌ 缺少 width 设置 */
+    }
+}</code></pre>
+                    
+                    <h4>修复后：</h4>
+                    <pre><code>@media (max-width: 1024px) {
+    .sidebar {
+        width: 200px;
+    }
+    
+    .main-content {
+        margin-left: 200px;
+        width: calc(100% - 200px);  /* ✅ 添加了正确的宽度计算 */
+        padding: var(--space-6);
+    }
+}</code></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 移动端汉堡菜单 -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <script>
+        // 实时显示尺寸信息
+        function updateDimensions() {
+            const windowWidth = window.innerWidth;
+            const mainContent = document.querySelector('.main-content');
+            const sidebar = document.querySelector('.sidebar');
+            const contentWidth = mainContent ? mainContent.offsetWidth : 0;
+            const sidebarWidth = sidebar ? sidebar.offsetWidth : 0;
+            const marginLeft = mainContent ? parseInt(window.getComputedStyle(mainContent).marginLeft) : 0;
+            
+            document.getElementById('windowWidth').textContent = windowWidth;
+            document.getElementById('contentWidth').textContent = contentWidth;
+            document.getElementById('sidebarWidth').textContent = sidebarWidth;
+            document.getElementById('marginLeft').textContent = marginLeft;
+            
+            // 检查布局状态
+            const statusBadge = document.getElementById('layoutStatus');
+            const expectedWidth = windowWidth - marginLeft;
+            const widthDiff = Math.abs(contentWidth - expectedWidth);
+            
+            if (widthDiff < 5) {
+                statusBadge.textContent = '✅ 布局正确';
+                statusBadge.className = 'status-badge status-success';
+            } else if (widthDiff < 20) {
+                statusBadge.textContent = '⚠️ 轻微偏差';
+                statusBadge.className = 'status-badge status-warning';
+            } else {
+                statusBadge.textContent = '❌ 布局错误';
+                statusBadge.className = 'status-badge status-error';
+            }
+        }
+        
+        // 初始化和窗口大小改变时更新
+        updateDimensions();
+        window.addEventListener('resize', updateDimensions);
+        
+        // 每秒更新一次（用于调试）
+        setInterval(updateDimensions, 1000);
+        
+        // 移动端菜单切换
+        const menuToggle = document.getElementById('mobileMenuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+            });
+        }
+        
+        // 点击内容区域关闭侧边栏（移动端）
+        document.querySelector('.main-content').addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+            }
+        });
+        
+        // 导航链接点击处理
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

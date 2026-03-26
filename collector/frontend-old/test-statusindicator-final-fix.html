@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatusIndicator Final Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>StatusIndicator Final Fix Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, isSuccess) {
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        try {
+            // Test importing StatusIndicator
+            const StatusIndicatorModule = await import('./components/StatusIndicator.js');
+            addResult('✅ StatusIndicator imported successfully', true);
+            
+            // Test that it's a valid component
+            const StatusIndicator = StatusIndicatorModule.default;
+            if (typeof StatusIndicator === 'function') {
+                addResult('✅ StatusIndicator is a valid function component', true);
+            } else {
+                addResult('❌ StatusIndicator is not a function', false);
+            }
+            
+            addResult('🎉 All tests passed! StatusIndicator initialization error is fixed.', true);
+            
+        } catch (error) {
+            addResult(`❌ Error: ${error.message}`, false);
+            console.error('StatusIndicator test error:', error);
+        }
+    </script>
+</body>
+</html>

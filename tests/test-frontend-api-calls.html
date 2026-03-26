@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端API调用测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .test-section {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 前端API调用测试</h1>
+    <div class="info">
+        <strong>测试目标:</strong> 模拟前端组件的API调用，验证参数传递是否正确
+    </div>
+    
+    <div class="test-section">
+        <h3>📊 数据库连接测试</h3>
+        <button onclick="testGetConnections()">获取连接列表</button>
+        <button onclick="testGetDefaultConnection()">获取默认连接</button>
+    </div>
+
+    <div class="test-section">
+        <h3>🏗️ 超级表API测试</h3>
+        <button onclick="testSuperTablesWithoutConnection()">无连接ID测试</button>
+        <button onclick="testSuperTablesWithConnection()">有连接ID测试</button>
+        <button onclick="testSuperTablesAllDatabases()">测试所有数据库</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📋 表API测试</h3>
+        <button onclick="testTablesAPI()">测试表API</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        let defaultConnectionId = null;
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResult(content) {
+            const resultDiv = document.getElementById('result');
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+
+        // 模拟前端的axios API调用
+        async function apiCall(method, url, params = {}, data = null) {
+            try {
+                let fullUrl = `${API_BASE}${url}`;
+                
+                if (method === 'GET' && Object.keys(params).length > 0) {
+                    const searchParams = new URLSearchParams();
+                    Object.entries(params).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null) {
+                            searchParams.append(key, value);
+                        }
+                    });
+                    fullUrl += '?' + searchParams.toString();
+                }
+
+                console.log(`API调用: ${method} ${fullUrl}`);
+
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(fullUrl, options);
+                const responseData = await response.json();
+
+                return {
+                    status: response.status,
+                    ok: response.ok,
+                    data: responseData
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    ok: false,
+                    error: error.message
+                };
+            }
+        }
+
+        async function testGetConnections() {
+            showStatus('测试获取连接列表...', 'info');
+            
+            const result = await apiCall('GET', '/database/connections');
+            
+            if (result.ok) {
+                const connections = result.data.connections || [];
+                const defaultConn = connections.find(conn => conn.is_default);
+                
+                if (defaultConn) {
+                    defaultConnectionId = defaultConn.id;
+                    showStatus(`✅ 找到默认连接: ${defaultConn.name} (ID: ${defaultConn.id})`, 'success');
+                } else {
+                    showStatus(`⚠️ 找到 ${connections.length} 个连接，但没有默认连接`, 'info');
+                }
+                
+                showResult(result.data);
+                return connections;
+            } else {
+                showStatus(`❌ 获取连接失败: ${result.error || result.data?.message}`, 'error');
+                showResult(result);
+                return null;
+            }
+        }
+
+        async function testGetDefaultConnection() {
+            const connections = await testGetConnections();
+            if (connections && connections.length > 0) {
+                const defaultConn = connections.find(conn => conn.is_default);
+                if (defaultConn) {
+                    showStatus(`✅ 默认连接: ${defaultConn.name}`, 'success');
+                    showResult(defaultConn);
+                    return defaultConn;
+                } else {
+                    showStatus('❌ 没有找到默认连接', 'error');
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        async function testSuperTablesWithoutConnection() {
+            showStatus('测试超级表API（无连接ID）...', 'info');
+            
+            const result = await apiCall('GET', '/database/supertables', {
+                database: 'industrial_data'
+            });
+            
+            if (result.ok) {
+                const superTables = result.data.supertables || [];
+                showStatus(`✅ 无连接ID测试成功，找到 ${superTables.length} 个超级表`, 'success');
+                showResult(result.data);
+                return result.data;
+            } else {
+                showStatus(`❌ 无连接ID测试失败: ${result.error || result.data?.message}`, 'error');
+                showResult(result);
+                return null;
+            }
+        }
+
+        async function testSuperTablesWithConnection() {
+            showStatus('测试超级表API（有连接ID）...', 'info');
+            
+            if (!defaultConnectionId) {
+                await testGetDefaultConnection();
+            }
+            
+            if (!defaultConnectionId) {
+                showStatus('❌ 没有可用的连接ID', 'error');
+                return null;
+            }
+            
+            const result = await apiCall('GET', '/database/supertables', {
+                database: 'industrial_data',
+                connectionId: defaultConnectionId
+            });
+            
+            if (result.ok) {
+                const superTables = result.data.supertables || [];
+                showStatus(`✅ 有连接ID测试成功，找到 ${superTables.length} 个超级表`, 'success');
+                showResult(result.data);
+                return result.data;
+            } else {
+                showStatus(`❌ 有连接ID测试失败: ${result.error || result.data?.message}`, 'error');
+                showResult(result);
+                return null;
+            }
+        }
+
+        async function testSuperTablesAllDatabases() {
+            showStatus('测试所有数据库的超级表...', 'info');
+            
+            const databases = ['industrial_data', 'sensor_data', 'test_db'];
+            let totalSuperTables = 0;
+            let results = {};
+            
+            for (const dbName of databases) {
+                const result = await apiCall('GET', '/database/supertables', {
+                    database: dbName,
+                    connectionId: defaultConnectionId
+                });
+                
+                if (result.ok) {
+                    const superTables = result.data.supertables || [];
+                    totalSuperTables += superTables.length;
+                    results[dbName] = {
+                        success: true,
+                        count: superTables.length,
+                        data: result.data
+                    };
+                } else {
+                    results[dbName] = {
+                        success: false,
+                        error: result.error || result.data?.message
+                    };
+                }
+                
+                // 添加延迟避免请求过快
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            showStatus(`✅ 所有数据库测试完成，总计 ${totalSuperTables} 个超级表`, 'success');
+            showResult(results);
+            return results;
+        }
+
+        async function testTablesAPI() {
+            showStatus('测试表API...', 'info');
+            
+            const result = await apiCall('GET', '/database/tables', {
+                database: 'industrial_data',
+                connection_id: defaultConnectionId
+            });
+            
+            if (result.ok) {
+                const tables = result.data.data?.tables || [];
+                showStatus(`✅ 表API测试成功，找到 ${tables.length} 个表`, 'success');
+                showResult(result.data);
+                return result.data;
+            } else {
+                showStatus(`❌ 表API测试失败: ${result.error || result.data?.message}`, 'error');
+                showResult(result);
+                return null;
+            }
+        }
+
+        // 页面加载时自动获取连接信息
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testGetDefaultConnection();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+{
+  "collector_id": "opcua-collector-001",
+  "name": "ProDB OPC UA采集器位号配置",
+  "description": "从100个位号中选择90个进行采集的配置示例",
+  "global_settings": {
+    "default_sampling_interval": 1000,
+    "max_nodes_per_subscription": 50,
+    "subscription_priority": 1,
+    "publishing_enabled": true
+  },
+  "node_groups": [
+    {
+      "id": "temperature_sensors",
+      "name": "温度传感器组",
+      "description": "所有温度相关传感器",
+      "enabled": true,
+      "sampling_interval": 1000,
+      "priority": 1
+    },
+    {
+      "id": "pressure_sensors", 
+      "name": "压力传感器组",
+      "description": "所有压力相关传感器",
+      "enabled": true,
+      "sampling_interval": 500,
+      "priority": 2
+    },
+    {
+      "id": "flow_sensors",
+      "name": "流量传感器组", 
+      "description": "所有流量相关传感器",
+      "enabled": true,
+      "sampling_interval": 1000,
+      "priority": 3
+    },
+    {
+      "id": "level_sensors",
+      "name": "液位传感器组",
+      "description": "所有液位相关传感器", 
+      "enabled": true,
+      "sampling_interval": 2000,
+      "priority": 4
+    },
+    {
+      "id": "motor_devices",
+      "name": "电机设备组",
+      "description": "所有电机相关设备",
+      "enabled": true,
+      "sampling_interval": 1000,
+      "priority": 5
+    },
+    {
+      "id": "valve_devices",
+      "name": "阀门设备组", 
+      "description": "所有阀门相关设备",
+      "enabled": true,
+      "sampling_interval": 2000,
+      "priority": 6
+    },
+    {
+      "id": "alarm_signals",
+      "name": "报警信号组",
+      "description": "所有报警相关信号",
+      "enabled": false,
+      "sampling_interval": 500,
+      "priority": 7,
+      "comment": "暂时禁用报警信号采集"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "ns=2;s=Temperature_Sensor_01",
+      "name": "温度传感器1",
+      "description": "车间1号温度传感器",
+      "data_type": "Float",
+      "unit": "°C",
+      "enabled": true,
+      "group": "temperature_sensors",
+      "sampling_interval": 1000,
+      "deadband": 0.1,
+      "scaling": {
+        "enabled": false
+      },
+      "alarm": {
+        "enabled": true,
+        "high_limit": 80,
+        "low_limit": 10,
+        "priority": "high"
+      }
+    },
+    {
+      "node_id": "ns=2;s=Temperature_Sensor_02",
+      "name": "温度传感器2", 
+      "description": "车间2号温度传感器",
+      "data_type": "Float",
+      "unit": "°C",
+      "enabled": true,
+      "group": "temperature_sensors",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Temperature_Sensor_03",
+      "name": "温度传感器3",
+      "description": "车间3号温度传感器", 
+      "data_type": "Float",
+      "unit": "°C",
+      "enabled": true,
+      "group": "temperature_sensors",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Pressure_Sensor_01",
+      "name": "压力传感器1",
+      "description": "主管道压力传感器",
+      "data_type": "Float", 
+      "unit": "Bar",
+      "enabled": true,
+      "group": "pressure_sensors",
+      "sampling_interval": 500
+    },
+    {
+      "node_id": "ns=2;s=Pressure_Sensor_02",
+      "name": "压力传感器2",
+      "description": "副管道压力传感器",
+      "data_type": "Float",
+      "unit": "Bar", 
+      "enabled": true,
+      "group": "pressure_sensors",
+      "sampling_interval": 500
+    },
+    {
+      "node_id": "ns=2;s=Flow_Sensor_01",
+      "name": "流量传感器1",
+      "description": "进水流量传感器",
+      "data_type": "Float",
+      "unit": "L/min",
+      "enabled": true,
+      "group": "flow_sensors",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Flow_Sensor_02", 
+      "name": "流量传感器2",
+      "description": "出水流量传感器",
+      "data_type": "Float",
+      "unit": "L/min",
+      "enabled": true,
+      "group": "flow_sensors",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Level_Sensor_01",
+      "name": "液位传感器1",
+      "description": "储罐1液位传感器",
+      "data_type": "Float",
+      "unit": "%",
+      "enabled": true,
+      "group": "level_sensors", 
+      "sampling_interval": 2000
+    },
+    {
+      "node_id": "ns=2;s=Level_Sensor_02",
+      "name": "液位传感器2",
+      "description": "储罐2液位传感器",
+      "data_type": "Float",
+      "unit": "%",
+      "enabled": true,
+      "group": "level_sensors",
+      "sampling_interval": 2000
+    },
+    {
+      "node_id": "ns=2;s=Motor_01_Status",
+      "name": "电机1状态",
+      "description": "主泵电机运行状态",
+      "data_type": "Boolean",
+      "enabled": true,
+      "group": "motor_devices",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Motor_02_Status",
+      "name": "电机2状态", 
+      "description": "副泵电机运行状态",
+      "data_type": "Boolean",
+      "enabled": true,
+      "group": "motor_devices",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Motor_01_Speed",
+      "name": "电机1转速",
+      "description": "主泵电机转速",
+      "data_type": "Int32",
+      "unit": "RPM",
+      "enabled": true,
+      "group": "motor_devices",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Motor_02_Speed",
+      "name": "电机2转速",
+      "description": "副泵电机转速", 
+      "data_type": "Int32",
+      "unit": "RPM",
+      "enabled": true,
+      "group": "motor_devices",
+      "sampling_interval": 1000
+    },
+    {
+      "node_id": "ns=2;s=Valve_01_Opening",
+      "name": "阀门1开度",
+      "description": "进水阀门开度",
+      "data_type": "Float",
+      "unit": "%",
+      "enabled": true,
+      "group": "valve_devices",
+      "sampling_interval": 2000
+    },
+    {
+      "node_id": "ns=2;s=Valve_02_Opening",
+      "name": "阀门2开度",
+      "description": "出水阀门开度",
+      "data_type": "Float",
+      "unit": "%", 
+      "enabled": true,
+      "group": "valve_devices",
+      "sampling_interval": 2000
+    },
+    {
+      "node_id": "ns=2;s=Device_Runtime",
+      "name": "设备运行时间",
+      "description": "系统累计运行时间",
+      "data_type": "Int32",
+      "unit": "秒",
+      "enabled": true,
+      "group": "motor_devices",
+      "sampling_interval": 5000
+    },
+    {
+      "node_id": "ns=2;s=Alarm_Temperature_High",
+      "name": "高温报警",
+      "description": "温度超过阈值报警",
+      "data_type": "Boolean",
+      "enabled": false,
+      "group": "alarm_signals",
+      "sampling_interval": 500,
+      "comment": "暂时禁用此报警信号"
+    },
+    {
+      "node_id": "ns=2;s=Alarm_Pressure_Low",
+      "name": "低压报警",
+      "description": "压力低于阈值报警",
+      "data_type": "Boolean", 
+      "enabled": false,
+      "group": "alarm_signals",
+      "sampling_interval": 500,
+      "comment": "暂时禁用此报警信号"
+    }
+  ],
+  "disabled_nodes": [
+    {
+      "node_id": "ns=2;s=Spare_Sensor_01",
+      "name": "备用传感器1",
+      "reason": "设备未安装"
+    },
+    {
+      "node_id": "ns=2;s=Spare_Sensor_02", 
+      "name": "备用传感器2",
+      "reason": "设备未安装"
+    },
+    {
+      "node_id": "ns=2;s=Test_Signal_01",
+      "name": "测试信号1",
+      "reason": "仅用于调试"
+    },
+    {
+      "node_id": "ns=2;s=Test_Signal_02",
+      "name": "测试信号2", 
+      "reason": "仅用于调试"
+    },
+    {
+      "node_id": "ns=2;s=Maintenance_Mode",
+      "name": "维护模式",
+      "reason": "不需要采集"
+    },
+    {
+      "node_id": "ns=2;s=Debug_Counter",
+      "name": "调试计数器",
+      "reason": "不需要采集"
+    },
+    {
+      "node_id": "ns=2;s=System_Version",
+      "name": "系统版本",
+      "reason": "静态信息"
+    },
+    {
+      "node_id": "ns=2;s=License_Info",
+      "name": "许可证信息",
+      "reason": "静态信息"
+    },
+    {
+      "node_id": "ns=2;s=Unused_Output_01",
+      "name": "未使用输出1",
+      "reason": "未连接设备"
+    },
+    {
+      "node_id": "ns=2;s=Unused_Output_02",
+      "name": "未使用输出2", 
+      "reason": "未连接设备"
+    }
+  ],
+  "statistics": {
+    "total_available_nodes": 100,
+    "enabled_nodes": 16,
+    "disabled_nodes": 10,
+    "not_configured_nodes": 74,
+    "enabled_percentage": 16
+  },
+  "configuration_notes": [
+    "从100个可用位号中选择了16个关键位号进行采集",
+    "报警信号组暂时禁用，可根据需要启用",
+    "备用传感器和测试信号未启用采集",
+    "采样间隔根据信号重要性和变化频率设置",
+    "可通过位号配置管理界面随时调整配置"
+  ]
+}

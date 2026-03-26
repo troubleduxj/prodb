@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>真实后端API测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.loading { background: #cce7ff; color: #004085; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 2px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .result-box {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .connection-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .connection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .connection-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+        }
+        .detail-item {
+            padding: 5px;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .detail-value {
+            color: #212529;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 真实后端API连接测试</h1>
+    
+    <div class="test-section">
+        <h2>🔧 API端点测试</h2>
+        <p>测试后端API的各个端点是否正常工作</p>
+        
+        <div style="margin-bottom: 15px;">
+            <button onclick="testBackendStatus()">🏥 测试后端状态</button>
+            <button onclick="testGetConnections()">📋 获取连接列表</button>
+            <button onclick="testCreateConnection()">➕ 创建测试连接</button>
+            <button onclick="testConnectionTest()">🧪 测试连接功能</button>
+            <button onclick="testGetStatuses()">📊 获取连接状态</button>
+        </div>
+        
+        <div id="apiResults">
+            <div class="result-box">
+                <div>等待测试...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 连接数据展示</h2>
+        <p>显示从后端获取的真实连接数据</p>
+        
+        <div style="margin-bottom: 15px;">
+            <button onclick="loadConnections()">🔄 加载连接数据</button>
+            <button onclick="refreshStatuses()">📈 刷新状态</button>
+        </div>
+        
+        <div id="connectionsDisplay">
+            <div class="connection-item">
+                <div style="text-align: center; color: #6c757d;">
+                    点击"加载连接数据"按钮获取真实数据
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ API功能验证</h2>
+        <div id="validationResults">
+            <div><span class="status loading">⏳</span> 后端服务状态检查</div>
+            <div><span class="status loading">⏳</span> 连接列表API测试</div>
+            <div><span class="status loading">⏳</span> 连接创建API测试</div>
+            <div><span class="status loading">⏳</span> 连接测试API验证</div>
+            <div><span class="status loading">⏳</span> 状态监控API测试</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api/v1';
+        let testConnectionId = null;
+
+        function updateResult(content) {
+            document.getElementById('apiResults').innerHTML = `
+                <div class="result-box">
+                    <pre>${content}</pre>
+                </div>
+            `;
+        }
+
+        function updateValidation(index, status, message) {
+            const validationDiv = document.getElementById('validationResults');
+            const items = validationDiv.children;
+            if (items[index]) {
+                const statusClass = status === 'success' ? 'success' : 
+                                  status === 'error' ? 'error' : 'warning';
+                const icon = status === 'success' ? '✅' : 
+                           status === 'error' ? '❌' : '⚠️';
+                items[index].innerHTML = `<span class="status ${statusClass}">${icon}</span> ${message}`;
+            }
+        }
+
+        async function testBackendStatus() {
+            updateResult('测试后端状态中...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult(`后端状态检查成功:\n${JSON.stringify(data, null, 2)}`);
+                    updateValidation(0, 'success', '后端服务运行正常');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                updateResult(`后端状态检查失败:\n${error.message}`);
+                updateValidation(0, 'error', `后端服务连接失败: ${error.message}`);
+            }
+        }
+
+        async function testGetConnections() {
+            updateResult('获取连接列表中...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/database/connections`);
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult(`连接列表获取成功:\n${JSON.stringify(data, null, 2)}`);
+                    updateValidation(1, 'success', `获取到 ${data.total || 0} 个连接配置`);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                updateResult(`连接列表获取失败:\n${error.message}`);
+                updateValidation(1, 'error', `连接列表API失败: ${error.message}`);
+            }
+        }
+
+        async function testCreateConnection() {
+            updateResult('创建测试连接中...');
+            try {
+                const testConnection = {
+                    name: `测试连接_${Date.now()}`,
+                    host: 'localhost',
+                    port: 6041,
+                    username: 'root',
+                    password: 'taosdata',
+                    database: 'test',
+                    max_open_conns: 20,
+                    max_idle_conns: 10,
+                    conn_timeout: 30,
+                    is_default: false,
+                    description: '自动化测试创建的连接'
+                };
+
+                const response = await fetch(`${API_BASE_URL}/database/connections`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testConnection)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    testConnectionId = data.data.id;
+                    updateResult(`测试连接创建成功:\n${JSON.stringify(data, null, 2)}`);
+                    updateValidation(2, 'success', '连接创建功能正常');
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
+                }
+            } catch (error) {
+                updateResult(`测试连接创建失败:\n${error.message}`);
+                updateValidation(2, 'error', `连接创建失败: ${error.message}`);
+            }
+        }
+
+        async function testConnectionTest() {
+            updateResult('测试连接功能中...');
+            try {
+                const testData = {
+                    name: '连接测试',
+                    host: 'localhost',
+                    port: 6041,
+                    username: 'root',
+                    password: 'taosdata',
+                    database: '',
+                    max_open_conns: 20,
+                    max_idle_conns: 10,
+                    conn_timeout: 30,
+                    is_default: false
+                };
+
+                const response = await fetch(`${API_BASE_URL}/database/connections/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult(`连接测试成功:\n${JSON.stringify(data, null, 2)}`);
+                    updateValidation(3, 'success', '连接测试功能正常');
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
+                }
+            } catch (error) {
+                updateResult(`连接测试失败:\n${error.message}`);
+                updateValidation(3, 'error', `连接测试失败: ${error.message}`);
+            }
+        }
+
+        async function testGetStatuses() {
+            updateResult('获取连接状态中...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/database/connections/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    updateResult(`连接状态获取成功:\n${JSON.stringify(data, null, 2)}`);
+                    updateValidation(4, 'success', '状态监控功能正常');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                updateResult(`连接状态获取失败:\n${error.message}`);
+                updateValidation(4, 'error', `状态监控失败: ${error.message}`);
+            }
+        }
+
+        async function loadConnections() {
+            const displayDiv = document.getElementById('connectionsDisplay');
+            displayDiv.innerHTML = '<div class="connection-item"><div style="text-align: center;">加载中...</div></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/database/connections`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const connections = data.connections || [];
+                    
+                    if (connections.length === 0) {
+                        displayDiv.innerHTML = `
+                            <div class="connection-item">
+                                <div style="text-align: center; color: #6c757d;">
+                                    暂无连接配置，请先创建连接
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = '';
+                    connections.forEach(conn => {
+                        const statusClass = conn.status === 'connected' ? 'success' : 
+                                          conn.status === 'disconnected' ? 'error' : 'warning';
+                        const statusText = conn.status === 'connected' ? '已连接' : 
+                                         conn.status === 'disconnected' ? '未连接' : '未知';
+
+                        html += `
+                            <div class="connection-item">
+                                <div class="connection-header">
+                                    <div>
+                                        <h4>${conn.name}</h4>
+                                        <p style="color: #6c757d; margin: 0;">${conn.host}:${conn.port}</p>
+                                    </div>
+                                    <div>
+                                        <span class="status ${statusClass}">${statusText}</span>
+                                        ${conn.is_default ? '<span class="status" style="background: #e7f3ff; color: #0066cc;">默认</span>' : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="connection-details">
+                                    <div class="detail-item">
+                                        <div class="detail-label">ID</div>
+                                        <div class="detail-value">${conn.id}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">用户名</div>
+                                        <div class="detail-value">${conn.username}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">数据库</div>
+                                        <div class="detail-value">${conn.database || '未指定'}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">最大连接数</div>
+                                        <div class="detail-value">${conn.max_open_conns}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">超时时间</div>
+                                        <div class="detail-value">${conn.conn_timeout}秒</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">最后连接</div>
+                                        <div class="detail-value">${conn.last_connected ? new Date(conn.last_connected).toLocaleString() : '从未连接'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    displayDiv.innerHTML = html;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                displayDiv.innerHTML = `
+                    <div class="connection-item">
+                        <div style="text-align: center; color: #dc3545;">
+                            加载失败: ${error.message}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function refreshStatuses() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/database/connections/status`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('连接状态:', data);
+                    alert(`状态刷新成功，获取到 ${data.data?.length || 0} 个连接状态`);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                alert(`状态刷新失败: ${error.message}`);
+            }
+        }
+
+        // 页面加载时自动测试后端状态
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                testBackendStatus();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

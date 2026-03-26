@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Redesign - ProDB Collector</title>
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Colors */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-hover: #475569;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border-color: #334155;
+            --color-primary: #2563eb;
+            --color-success: #10b981;
+            
+            /* Spacing */
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            
+            /* Typography */
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-2xl: 1.5rem;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+            
+            /* Border */
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            
+            /* Transitions */
+            --transition: 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Layout */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar-header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .logo-icon {
+            font-size: var(--font-size-2xl);
+        }
+
+        .logo-text {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            transition: opacity var(--transition);
+        }
+
+        .sidebar.collapsed .logo-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .collapse-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--space-2);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .collapse-btn:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .nav-section {
+            padding: var(--space-4) 0;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: var(--space-2);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            margin: 0 var(--space-2);
+            transition: all var(--transition);
+            min-height: 44px;
+        }
+
+        .nav-link:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: var(--font-size-lg);
+            flex-shrink: 0;
+        }
+
+        .nav-label {
+            font-weight: var(--font-weight-medium);
+            transition: opacity var(--transition);
+        }
+
+        .sidebar.collapsed .nav-label {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: var(--space-3);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 320px;
+            transition: margin-left var(--transition);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .layout.sidebar-collapsed .main-content {
+            margin-left: 60px;
+        }
+
+        /* REDESIGNED HEADER - 简化版本 */
+        .app-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-6);
+            height: 64px; /* 固定高度 */
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page-title {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+            margin: 0 0 2px 0;
+            line-height: 1.2;
+        }
+
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-weight: var(--font-weight-medium);
+        }
+
+        /* REDESIGNED HEADER ACTIONS - 完全重新设计 */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex-shrink: 0;
+        }
+
+        /* 统一的控件基础样式 */
+        .header-control {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            transition: all var(--transition);
+            cursor: pointer;
+            
+            /* 关键：统一高度和对齐 */
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-control:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .header-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        /* 自动刷新控件组 */
+        .refresh-group {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            height: 36px; /* 与其他控件同高 */
+        }
+
+        .refresh-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            font-weight: var(--font-weight-medium);
+            white-space: nowrap;
+        }
+
+        .refresh-select {
+            padding: 0 var(--space-3);
+            min-width: 80px;
+        }
+
+        .refresh-btn {
+            width: 36px;
+            padding: 0;
+        }
+
+        .refresh-btn:hover {
+            transform: rotate(90deg);
+        }
+
+        .theme-btn {
+            padding: 0 var(--space-3);
+            gap: var(--space-2);
+            white-space: nowrap;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: var(--space-6);
+            overflow-y: auto;
+        }
+
+        /* Demo Content */
+        .demo-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .demo-card h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .demo-card p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-3);
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: var(--space-4) 0;
+        }
+
+        .feature-list li {
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            color: var(--color-success);
+            font-weight: bold;
+        }
+
+        .demo-area {
+            height: 200px;
+            background: linear-gradient(45deg, var(--color-primary), var(--color-success));
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            margin: var(--space-4) 0;
+        }
+
+        .success-message {
+            padding: var(--space-4);
+            background-color: var(--color-success);
+            color: white;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: var(--font-weight-bold);
+            margin-top: var(--space-4);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .refresh-group .refresh-label {
+                display: none;
+            }
+
+            .theme-btn span:last-child {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout" id="layout">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🔧</span>
+                    <h2 class="logo-text">ProDB Collector</h2>
+                </div>
+                <button class="collapse-btn" id="collapseBtn" title="折叠侧边栏">
+                    «
+                </button>
+            </div>
+
+            <div class="nav-section">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active">
+                            <span class="nav-icon">📊</span>
+                            <span class="nav-label">仪表盘</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🔗</span>
+                            <span class="nav-label">接口管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">🧪</span>
+                            <span class="nav-label">协议测试</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-label">驱动管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-label">系统配置</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- REDESIGNED HEADER -->
+            <header class="app-header">
+                <div class="header-container">
+                    <div class="header-left">
+                        <h1 class="page-title">仪表盘</h1>
+                        <div class="breadcrumbs">
+                            <span class="breadcrumb-current">仪表盘</span>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <div class="refresh-group">
+                            <label class="refresh-label">自动刷新</label>
+                            <select class="header-control refresh-select">
+                                <option value="0">关闭</option>
+                                <option value="5000" selected>5秒</option>
+                                <option value="10000">10秒</option>
+                                <option value="30000">30秒</option>
+                            </select>
+                        </div>
+                        <button class="header-control refresh-btn" title="手动刷新">
+                            🔄
+                        </button>
+                        <button class="header-control theme-btn">
+                            <span>🌙</span>
+                            <span>Dark</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-area">
+                <div class="demo-card">
+                    <h3>🎯 Header Redesign - 重新设计的header布局</h3>
+                    <p>这个版本采用了全新的、简化的header设计方法，确保所有控件完美对齐。</p>
+                    
+                    <ul class="feature-list">
+                        <li><span class="feature-icon">✓</span> <strong>简化结构:</strong> 减少嵌套层级，使用更直接的布局</li>
+                        <li><span class="feature-icon">✓</span> <strong>统一基类:</strong> 所有控件使用相同的.header-control基类</li>
+                        <li><span class="feature-icon">✓</span> <strong>固定高度:</strong> header容器64px，所有控件36px</li>
+                        <li><span class="feature-icon">✓</span> <strong>Flexbox对齐:</strong> 使用简单的flex布局确保对齐</li>
+                        <li><span class="feature-icon">✓</span> <strong>一致样式:</strong> 统一的padding、border、background</li>
+                    </ul>
+
+                    <div class="demo-area">
+                        Header重新设计验证区域 - 检查上方header对齐效果
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h3>🔧 技术改进</h3>
+                    <ul class="feature-list">
+                        <li><span class="feature-icon">✓</span> 移除复杂的嵌套结构</li>
+                        <li><span class="feature-icon">✓</span> 使用统一的控件基类</li>
+                        <li><span class="feature-icon">✓</span> 简化CSS选择器</li>
+                        <li><span class="feature-icon">✓</span> 确保所有控件相同高度</li>
+                        <li><span class="feature-icon">✓</span> 优化flexbox对齐方式</li>
+                    </ul>
+
+                    <div class="demo-area" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                        滚动测试区域 - Header应保持完美对齐
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h3>✅ 验证要点</h3>
+                    <ul class="feature-list">
+                        <li><span class="feature-icon">✓</span> 所有header控件高度一致（36px）</li>
+                        <li><span class="feature-icon">✓</span> 垂直居中对齐完美</li>
+                        <li><span class="feature-icon">✓</span> 控件间距均匀</li>
+                        <li><span class="feature-icon">✓</span> hover效果一致</li>
+                        <li><span class="feature-icon">✓</span> 侧边栏折叠适配正常</li>
+                    </ul>
+
+                    <div class="success-message">
+                        🎉 Header重新设计完成！所有控件完美对齐！
+                    </div>
+
+                    <div class="demo-area" style="background: linear-gradient(225deg, #10b981, #2563eb);">
+                        最终验证区域 - Redesigned Header Success!
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Header Redesign JavaScript
+        class HeaderRedesignManager {
+            constructor() {
+                this.layout = document.getElementById('layout');
+                this.sidebar = document.getElementById('sidebar');
+                this.collapseBtn = document.getElementById('collapseBtn');
+                
+                this.sidebarCollapsed = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                // Sidebar collapse
+                this.collapseBtn?.addEventListener('click', () => {
+                    this.toggleSidebar();
+                });
+
+                // Navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.handleNavigation(link);
+                    });
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                        e.preventDefault();
+                        this.toggleSidebar();
+                    }
+                });
+
+                // Refresh button
+                document.querySelector('.refresh-btn')?.addEventListener('click', () => {
+                    this.handleRefresh();
+                });
+
+                // Theme button
+                document.querySelector('.theme-btn')?.addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+            }
+
+            toggleSidebar() {
+                this.sidebarCollapsed = !this.sidebarCollapsed;
+                
+                if (this.sidebarCollapsed) {
+                    this.sidebar.classList.add('collapsed');
+                    this.layout.classList.add('sidebar-collapsed');
+                    this.collapseBtn.textContent = '»';
+                    this.collapseBtn.title = '展开侧边栏';
+                } else {
+                    this.sidebar.classList.remove('collapsed');
+                    this.layout.classList.remove('sidebar-collapsed');
+                    this.collapseBtn.textContent = '«';
+                    this.collapseBtn.title = '折叠侧边栏';
+                }
+            }
+
+            handleNavigation(link) {
+                document.querySelectorAll('.nav-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+                link.classList.add('active');
+            }
+
+            handleRefresh() {
+                const btn = document.querySelector('.refresh-btn');
+                btn.style.transform = 'rotate(360deg)';
+                setTimeout(() => {
+                    btn.style.transform = '';
+                }, 300);
+                console.log('Refreshing...');
+            }
+
+            toggleTheme() {
+                console.log('Theme toggled');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            new HeaderRedesignManager();
+        });
+
+        console.log('Header Redesign loaded successfully!');
+        console.log('Key improvements:');
+        console.log('- Simplified header structure');
+        console.log('- Unified .header-control base class');
+        console.log('- Fixed 64px header height');
+        console.log('- Consistent 36px control height');
+        console.log('- Perfect flexbox alignment');
+    </script>
+</body>
+</html>

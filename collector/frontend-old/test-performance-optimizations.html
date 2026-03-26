@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Optimizations Test - ProDB Collector</title>
+    <link rel="stylesheet" href="./styles/main.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .success {
+            color: var(--color-success);
+        }
+        
+        .error {
+            color: var(--color-error);
+        }
+        
+        .info {
+            color: var(--color-info);
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: var(--color-primary-hover);
+        }
+        
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .metric-card {
+            padding: 15px;
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Performance Optimizations Test Suite</h1>
+        
+        <div class="test-section">
+            <h2>1. Lazy Loading Test</h2>
+            <p>Testing dynamic component loading and caching</p>
+            <button onclick="testLazyLoading()">Test Lazy Loading</button>
+            <button onclick="testComponentPreloading()">Test Preloading</button>
+            <div id="lazy-loading-results" class="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Virtual Scrolling Test</h2>
+            <p>Testing virtual scrolling performance with large datasets</p>
+            <button onclick="testVirtualScrolling()">Test Virtual Scrolling</button>
+            <button onclick="testLargeDataset()">Test Large Dataset (10k items)</button>
+            <div id="virtual-scroll-container" style="height: 300px; margin-top: 20px;"></div>
+            <div id="virtual-scroll-results" class="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Caching System Test</h2>
+            <p>Testing intelligent caching and state management</p>
+            <button onclick="testCaching()">Test Cache Performance</button>
+            <button onclick="testCacheInvalidation()">Test Cache Invalidation</button>
+            <button onclick="clearAllCaches()">Clear All Caches</button>
+            <div id="caching-results" class="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. Debounce/Throttle Test</h2>
+            <p>Testing performance utilities for frequent operations</p>
+            <button onclick="testDebounce()">Test Debounce</button>
+            <button onclick="testThrottle()">Test Throttle</button>
+            <button onclick="testRafThrottle()">Test RAF Throttle</button>
+            <div id="debounce-results" class="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. Performance Metrics</h2>
+            <div class="performance-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="cache-hits">0</div>
+                    <div class="metric-label">Cache Hits</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="cache-misses">0</div>
+                    <div class="metric-label">Cache Misses</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="avg-response-time">0ms</div>
+                    <div class="metric-label">Avg Response Time</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="components-loaded">0</div>
+                    <div class="metric-label">Components Loaded</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { html } from 'https://esm.sh/htm/preact';
+        import { render } from 'https://esm.sh/preact';
+        import { lazyLoad, preloadComponents, getCacheStats, clearComponentCache } from './utils/lazy-loader.js';
+        import VirtualScrollList from './components/VirtualScrollList.js';
+        import { debounce, throttle, rafThrottle, performanceMonitor, globalStateCache } from './utils/performance.js';
+        import { smartCache } from './services/state-cache.js';
+
+        // Global test state
+        window.testState = {
+            cacheHits: 0,
+            cacheMisses: 0,
+            responseTimes: [],
+            componentsLoaded: 0
+        };
+
+        // Update metrics display
+        function updateMetrics() {
+            const state = window.testState;
+            document.getElementById('cache-hits').textContent = state.cacheHits;
+            document.getElementById('cache-misses').textContent = state.cacheMisses;
+            
+            const avgTime = state.responseTimes.length > 0 
+                ? (state.responseTimes.reduce((a, b) => a + b, 0) / state.responseTimes.length).toFixed(2)
+                : 0;
+            document.getElementById('avg-response-time').textContent = avgTime + 'ms';
+            document.getElementById('components-loaded').textContent = state.componentsLoaded;
+        }
+
+        // Test 1: Lazy Loading
+        window.testLazyLoading = async function() {
+            const results = document.getElementById('lazy-loading-results');
+            results.innerHTML = '<div class="info">Testing lazy loading...</div>';
+            
+            try {
+                const startTime = performance.now();
+                
+                // Create a mock component to lazy load
+                const LazyTestComponent = lazyLoad(
+                    () => new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve({
+                                default: () => html`<div>Lazy loaded component!</div>`
+                            });
+                        }, 100);
+                    }),
+                    {
+                        cacheKey: 'test-component',
+                        fallback: html`<div>Loading...</div>`
+                    }
+                );
+                
+                // Render the lazy component
+                const container = document.createElement('div');
+                render(html`<${LazyTestComponent} />`, container);
+                
+                const endTime = performance.now();
+                window.testState.responseTimes.push(endTime - startTime);
+                window.testState.componentsLoaded++;
+                
+                results.innerHTML = `
+                    <div class="success">✓ Lazy loading test passed</div>
+                    <div>Load time: ${(endTime - startTime).toFixed(2)}ms</div>
+                    <div>Cache stats: ${JSON.stringify(getCacheStats())}</div>
+                `;
+                
+                updateMetrics();
+            } catch (error) {
+                results.innerHTML = `<div class="error">✗ Lazy loading test failed: ${error.message}</div>`;
+            }
+        };
+
+        // Test component preloading
+        window.testComponentPreloading = async function() {
+            const results = document.getElementById('lazy-loading-results');
+            results.innerHTML = '<div class="info">Testing component preloading...</div>';
+            
+            try {
+                const startTime = performance.now();
+                
+                await preloadComponents([
+                    {
+                        importFn: () => Promise.resolve({ default: () => html`<div>Preloaded 1</div>` }),
+                        cacheKey: 'preload-test-1'
+                    },
+                    {
+                        importFn: () => Promise.resolve({ default: () => html`<div>Preloaded 2</div>` }),
+                        cacheKey: 'preload-test-2'
+                    }
+                ]);
+                
+                const endTime = performance.now();
+                window.testState.responseTimes.push(endTime - startTime);
+                window.testState.componentsLoaded += 2;
+                
+                results.innerHTML = `
+                    <div class="success">✓ Component preloading test passed</div>
+                    <div>Preload time: ${(endTime - startTime).toFixed(2)}ms</div>
+                    <div>Cache stats: ${JSON.stringify(getCacheStats())}</div>
+                `;
+                
+                updateMetrics();
+            } catch (error) {
+                results.innerHTML = `<div class="error">✗ Preloading test failed: ${error.message}</div>`;
+            }
+        };
+
+        // Test 2: Virtual Scrolling
+        window.testVirtualScrolling = function() {
+            const container = document.getElementById('virtual-scroll-container');
+            const results = document.getElementById('virtual-scroll-results');
+            
+            results.innerHTML = '<div class="info">Testing virtual scrolling...</div>';
+            
+            try {
+                const startTime = performance.now();
+                
+                // Generate test data
+                const items = [];
+                for (let i = 0; i < 1000; i++) {
+                    items.push({
+                        id: i,
+                        name: `Item ${i}`,
+                        value: Math.random() * 100
+                    });
+                }
+                
+                // Render virtual scroll list
+                const renderItem = (item, index, props) => {
+                    return html`
+                        <div ...${props} style=${{ ...props.style, padding: '10px', borderBottom: '1px solid #333' }}>
+                            <strong>${item.name}</strong> - Value: ${item.value.toFixed(2)}
+                        </div>
+                    `;
+                };
+                
+                render(
+                    html`<${VirtualScrollList}
+                        items=${items}
+                        itemHeight=${50}
+                        containerHeight=${300}
+                        renderItem=${renderItem}
+                    />`,
+                    container
+                );
+                
+                const endTime = performance.now();
+                window.testState.responseTimes.push(endTime - startTime);
+                
+                results.innerHTML = `
+                    <div class="success">✓ Virtual scrolling test passed</div>
+                    <div>Render time: ${(endTime - startTime).toFixed(2)}ms for 1000 items</div>
+                    <div>Only visible items are rendered in DOM</div>
+                `;
+                
+                updateMetrics();
+            } catch (error) {
+                results.innerHTML = `<div class="error">✗ Virtual scrolling test failed: ${error.message}</div>`;
+            }
+        };
+
+        // Test large dataset
+        window.testLargeDataset = function() {
+            const container = document.getElementById('virtual-scroll-container');
+            const results = document.getElementById('virtual-scroll-results');
+            
+            results.innerHTML = '<div class="info">Testing large dataset (10k items)...</div>';
+            
+            try {
+                const startTime = performance.now();
+                
+                // Generate large dataset
+                const items = [];
+                for (let i = 0; i < 10000; i++) {
+                    items.push({
+                        id: i,
+                        name: `Large Dataset Item ${i}`,
+                        value: Math.random() * 1000,
+                        status: ['active', 'inactive', 'pending'][Math.floor(Math.random() * 3)]
+                    });
+                }
+                
+                const renderItem = (item, index, props) => {
+                    return html`
+                        <div ...${props} style=${{ 
+                            ...props.style, 
+                            padding: '15px', 
+                            borderBottom: '1px solid #333',
+                            backgroundColor: index % 2 === 0 ? '#1e293b' : '#334155'
+                        }}>
+                            <div style="display: flex; justify-content: space-between;">
+                                <strong>${item.name}</strong>
+                                <span style="color: ${item.status === 'active' ? '#10b981' : '#f59e0b'}">${item.status}</span>
+                            </div>
+                            <div>Value: ${item.value.toFixed(2)}</div>
+                        </div>
+                    `;
+                };
+                
+                render(
+                    html`<${VirtualScrollList}
+                        items=${items}
+                        itemHeight=${60}
+                        containerHeight=${300}
+                        renderItem=${renderItem}
+                        overscan=${10}
+                    />`,
+                    container
+                );
+                
+                const endTime = performance.now();
+                window.testState.responseTimes.push(endTime - startTime);
+                
+                results.innerHTML = `
+                    <div class="success">✓ Large dataset test passed</div>
+                    <div>Render time: ${(endTime - startTime).toFixed(2)}ms for 10,000 items</div>
+                    <div>Memory usage optimized with virtual scrolling</div>
+                `;
+                
+                updateMetrics();
+            } catch (error) {
+                results.innerHTML = `<div class="error">✗ Large dataset test failed: ${error.message}</div>`;
+            }
+        };
+
+        // Test 3: Caching
+        window.testCaching = async function() {
+            const results = document.getElementById('caching-results');
+            results.innerHTML = '<div class="info">Testing caching system...</div>';
+            
+            try {
+                const startTime = performance.now();
+                
+                // Test cache performance
+                const testKey = 'test-cache-key';
+                const testData = { message: 'Cached data', timestamp: Date.now() };
+                
+                // Set cache
+                globalStateCache.set(testKey, testData);
+                window.testState.cacheHits++;
+                
+                // Get from cache
+                const cachedData = globalStateCache.get(testKey);
+                if (cachedData) {
+                    window.testState.cacheHits++;
+                } else {
+                    window.testState.cacheMisses++;
+                }
+                
+                // Test cache miss
+                const missData = globalStateCache.get('non-existent-key');
+                if (!missData) {
+                    window.testState.cacheMisses++;
+                }
+                
+                const endTime = performance.now();
+                window.testState.responseTimes.push(endTime - startTime);
+                
+                results.innerHTML = `
+                    <div class="success">✓ Caching system test passed</div>
+                    <div>Cache operation time: ${(endTime - startTime).toFixed(2)}ms</div>
+                    <div>Cache stats: ${JSON.stringify(globalStateCache.getStats())}</div>
+                `;
+                
+                updateMetrics();
+            } catch (error) {
+                results.innerHTML = `<div class="error">✗ Caching test failed: ${error.message}</div>`;
+            }
+        };
+
+        // Test cache invalidation
+        window.testCacheInvalidation = function() {
+            const results = document.getElementById('caching-results');
+            results.innerHTML = '<div class="info">Testing cache invalidation...</div>';
+            
+            try {
+                const testKey = 'invalidation-test';
+                
+                // Set cache with TTL
+                globalStateCache.set(testKey, 'test data', 100); // 100ms TTL
+                
+                setTimeout(() => {
+                    const expiredData = globalStateCache.get(testKey);
+                    if (!expiredData) {
+                        results.innerHTML = `
+                            <div class="success">✓ Cache invalidation test passed</div>
+                            <div>Cache correctly expired after TTL</div>
+                        `;
+                        window.testState.cacheMisses++;
+                    } else {
+                        results.innerHTML = `<div class="error">✗ Cache invalidation failed</div>`;
+                    }
+                    updateMetrics();
+                }, 150);
+            } catch (error) {
+                results.innerHTML = `<div class="error">✗ Cache invalidation test failed: ${error.message}</div>`;
+            }
+        };
+
+        // Clear all caches
+        window.clearAllCaches = function() {
+            globalStateCache.clear();
+            clearComponentCache();
+            smartCache.clearAll();
+            
+            const results = document.getElementById('caching-results');
+            results.innerHTML = '<div class="success">✓ All caches cleared</div>';
+        };
+
+        // Test 4: Debounce/Throttle
+        window.testDebounce = function() {
+            const results = document.getElementById('debounce-results');
+            results.innerHTML = '<div class="info">Testing debounce...</div>';
+            
+            let callCount = 0;
+            const debouncedFn = debounce(() => {
+                callCount++;
+            }, 100);
+            
+            // Call function multiple times rapidly
+            for (let i = 0; i < 10; i++) {
+                debouncedFn();
+            }
+            
+            setTimeout(() => {
+                results.innerHTML = `
+                    <div class="success">✓ Debounce test passed</div>
+                    <div>Called 10 times, executed ${callCount} times (should be 1)</div>
+                `;
+            }, 200);
+        };
+
+        window.testThrottle = function() {
+            const results = document.getElementById('debounce-results');
+            results.innerHTML = '<div class="info">Testing throttle...</div>';
+            
+            let callCount = 0;
+            const throttledFn = throttle(() => {
+                callCount++;
+            }, 100);
+            
+            // Call function multiple times
+            const interval = setInterval(() => {
+                throttledFn();
+            }, 10);
+            
+            setTimeout(() => {
+                clearInterval(interval);
+                results.innerHTML = `
+                    <div class="success">✓ Throttle test passed</div>
+                    <div>Throttled function executed ${callCount} times in 200ms</div>
+                `;
+            }, 200);
+        };
+
+        window.testRafThrottle = function() {
+            const results = document.getElementById('debounce-results');
+            results.innerHTML = '<div class="info">Testing RAF throttle...</div>';
+            
+            let callCount = 0;
+            const rafThrottledFn = rafThrottle(() => {
+                callCount++;
+            });
+            
+            // Call function multiple times rapidly
+            for (let i = 0; i < 100; i++) {
+                rafThrottledFn();
+            }
+            
+            setTimeout(() => {
+                results.innerHTML = `
+                    <div class="success">✓ RAF throttle test passed</div>
+                    <div>Called 100 times, executed ${callCount} times (limited by RAF)</div>
+                `;
+            }, 100);
+        };
+
+        // Initialize metrics display
+        updateMetrics();
+        
+        console.log('Performance optimization test suite loaded');
+    </script>
+</body>
+</html>

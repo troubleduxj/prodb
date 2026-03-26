@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组件加载测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #e6ffe6; border-color: #4caf50; }
+        .error { background: #ffe6e6; border-color: #f44336; }
+        .loading { background: #fff3cd; border-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>前端组件加载测试</h1>
+    <p>测试前端是否能正确访问数据库管理页面</p>
+
+    <div class="test-item loading">
+        <h3>🔍 测试前端页面访问</h3>
+        <p>正在测试前端页面是否可以访问...</p>
+        <div id="frontend-test"></div>
+    </div>
+
+    <div class="test-item loading">
+        <h3>🔍 测试数据库管理页面</h3>
+        <p>正在测试数据库管理页面是否可以加载...</p>
+        <div id="database-management-test"></div>
+    </div>
+
+    <div class="test-item loading">
+        <h3>🔍 测试表结构管理页面</h3>
+        <p>正在测试表结构管理页面是否可以加载...</p>
+        <div id="table-management-test"></div>
+    </div>
+
+    <script>
+        async function testFrontendAccess() {
+            const testDiv = document.getElementById('frontend-test');
+            const parentDiv = testDiv.parentElement;
+            
+            try {
+                const response = await fetch('http://localhost:3000/');
+                if (response.ok) {
+                    parentDiv.className = 'test-item success';
+                    testDiv.innerHTML = '✅ 前端服务正常运行在 http://localhost:3000/';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                parentDiv.className = 'test-item error';
+                testDiv.innerHTML = `❌ 前端服务访问失败: ${error.message}`;
+            }
+        }
+
+        async function testDatabaseManagementPage() {
+            const testDiv = document.getElementById('database-management-test');
+            const parentDiv = testDiv.parentElement;
+            
+            try {
+                const response = await fetch('http://localhost:3000/database/management');
+                if (response.ok) {
+                    parentDiv.className = 'test-item success';
+                    testDiv.innerHTML = '✅ 数据库管理页面可以访问<br><a href="http://localhost:3000/database/management" target="_blank">点击打开页面</a>';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                parentDiv.className = 'test-item error';
+                testDiv.innerHTML = `❌ 数据库管理页面访问失败: ${error.message}`;
+            }
+        }
+
+        async function testTableManagementPage() {
+            const testDiv = document.getElementById('table-management-test');
+            const parentDiv = testDiv.parentElement;
+            
+            try {
+                const response = await fetch('http://localhost:3000/database/tables');
+                if (response.ok) {
+                    parentDiv.className = 'test-item success';
+                    testDiv.innerHTML = '✅ 表结构管理页面可以访问<br><a href="http://localhost:3000/database/tables" target="_blank">点击打开页面</a>';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                parentDiv.className = 'test-item error';
+                testDiv.innerHTML = `❌ 表结构管理页面访问失败: ${error.message}`;
+            }
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            await testFrontendAccess();
+            await testDatabaseManagementPage();
+            await testTableManagementPage();
+        }
+
+        // 页面加载时运行测试
+        window.onload = function() {
+            setTimeout(runAllTests, 1000);
+        };
+    </script>
+</body>
+</html>

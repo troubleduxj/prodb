@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  opcua-simulator:
+    build: .
+    container_name: prodb-opcua-simulator
+    ports:
+      - "8080:8080"   # HTTP API 端口
+      - "4840:4840"   # OPC UA 端口
+    volumes:
+      - ./config.json:/root/config.json:ro
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    networks:
+      - prodb-network
+
+networks:
+  prodb-network:
+    driver: bridge

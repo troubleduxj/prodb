@@ -1,0 +1,5 @@
+{
+  "name": "TDengine Real-time Platform",
+  "description": "A comprehensive real-time database management platform based on TDengine, featuring data ingestion, stream computing, SQL querying with Gemini AI assistance, and cluster operations.",
+  "requestFramePermissions": []
+}

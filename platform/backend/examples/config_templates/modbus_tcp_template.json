@@ -1,0 +1,49 @@
+{
+  "name": "Standard Modbus TCP Template",
+  "description": "Standard template for Modbus TCP data collection from PLCs and industrial devices",
+  "protocol": "modbus_tcp",
+  "template_config": {
+    "connection": {
+      "host": "{{host}}",
+      "port": 502,
+      "slave_id": 1,
+      "timeout": 3000,
+      "retry_count": 3,
+      "retry_interval": 1000
+    },
+    "schedule": {
+      "interval": 5,
+      "unit": "seconds"
+    },
+    "data_points": [
+      {
+        "name": "{{point_name}}",
+        "address": "{{address}}",
+        "data_type": "{{data_type}}",
+        "scale": 1.0,
+        "offset": 0.0,
+        "unit": "{{unit}}",
+        "description": "{{description}}"
+      }
+    ],
+    "target": {
+      "database": "industrial_data",
+      "super_table": "modbus_metrics",
+      "tags": {
+        "collector_id": "{{collector_id}}",
+        "device_id": "{{device_id}}",
+        "location": "{{location}}",
+        "device_type": "plc",
+        "protocol": "modbus_tcp"
+      }
+    },
+    "quality_control": {
+      "enable_validation": true,
+      "min_value": "{{min_value}}",
+      "max_value": "{{max_value}}",
+      "deadband": 0.1
+    }
+  },
+  "version": "1.0.0",
+  "tags": ["modbus", "plc", "industrial", "tcp"]
+}

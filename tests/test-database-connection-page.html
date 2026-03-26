@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库配置页面测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .header {
+            border-bottom: 1px solid #e5e5e5;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            color: #1a1a1a;
+        }
+        .description {
+            color: #666;
+            margin: 0;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .btn:hover {
+            background: #f9fafb;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .tabs {
+            margin: 20px 0;
+        }
+        .tab-list {
+            display: flex;
+            border-bottom: 1px solid #e5e5e5;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: #666;
+        }
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        .connection-form {
+            background: #f9fafb;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status-error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 6px;
+        }
+        .test-success {
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+        .test-error {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="header">
+            <h1 class="title">数据库配置</h1>
+            <p class="description">管理TDengine数据库连接配置，测试连接状态和性能</p>
+            <div class="actions">
+                <button class="btn" onclick="refreshConnections()">
+                    🔄 刷新
+                </button>
+                <button class="btn" onclick="batchTest()">
+                    🧪 批量测试
+                </button>
+                <button class="btn" onclick="exportConfig()">
+                    📥 导出配置
+                </button>
+                <button class="btn btn-primary" onclick="showNewConnectionForm()">
+                    ➕ 新建连接
+                </button>
+            </div>
+        </div>
+
+        <!-- 标签页 -->
+        <div class="tabs">
+            <div class="tab-list">
+                <button class="tab active" onclick="switchTab('connections')">连接管理</button>
+                <button class="tab" onclick="switchTab('monitoring')">连接监控</button>
+                <button class="tab" onclick="switchTab('settings')">高级设置</button>
+            </div>
+
+            <!-- 连接管理标签页 -->
+            <div id="connections-tab" class="tab-content">
+                <!-- 搜索和筛选 -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" class="form-input" placeholder="搜索连接名称或主机地址..." style="max-width: 300px;">
+                    <select class="form-input" style="max-width: 150px;">
+                        <option value="all">全部状态</option>
+                        <option value="connected">已连接</option>
+                        <option value="disconnected">未连接</option>
+                        <option value="error">连接错误</option>
+                    </select>
+                </div>
+
+                <!-- 连接列表 -->
+                <div id="connection-list">
+                    <!-- 示例连接项 -->
+                    <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: between; align-items: center;">
+                            <div>
+                                <h3 style="margin: 0 0 8px 0; font-size: 16px;">生产环境连接</h3>
+                                <p style="margin: 0; color: #666; font-size: 14px;">localhost:6041 (root)</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="status-badge status-success">✅ 连接正常</span>
+                                <button class="btn" onclick="testConnection('prod')">🧪 测试</button>
+                                <button class="btn" onclick="editConnection('prod')">✏️ 编辑</button>
+                                <button class="btn" onclick="deleteConnection('prod')" style="color: #dc2626;">🗑️ 删除</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: between; align-items: center;">
+                            <div>
+                                <h3 style="margin: 0 0 8px 0; font-size: 16px;">测试环境连接</h3>
+                                <p style="margin: 0; color: #666; font-size: 14px;">test-server:6041 (testuser)</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="status-badge status-error">❌ 连接失败</span>
+                                <button class="btn" onclick="testConnection('test')">🧪 测试</button>
+                                <button class="btn" onclick="editConnection('test')">✏️ 编辑</button>
+                                <button class="btn" onclick="deleteConnection('test')" style="color: #dc2626;">🗑️ 删除</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 连接监控标签页 -->
+            <div id="monitoring-tab" class="tab-content" style="display: none;">
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <h3>连接监控</h3>
+                    <p>实时监控数据库连接状态和性能指标</p>
+                    <p style="font-size: 12px; color: #999;">此功能正在开发中...</p>
+                </div>
+            </div>
+
+            <!-- 高级设置标签页 -->
+            <div id="settings-tab" class="tab-content" style="display: none;">
+                <div class="empty-state">
+                    <div class="empty-icon">⚙️</div>
+                    <h3>高级设置</h3>
+                    <p>配置连接池、超时设置和其他高级选项</p>
+                    <p style="font-size: 12px; color: #999;">此功能正在开发中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新建连接表单（隐藏） -->
+        <div id="connection-form" class="connection-form" style="display: none;">
+            <h3 style="margin-top: 0;">新建连接配置</h3>
+            <form>
+                <div class="form-group">
+                    <label class="form-label">连接名称</label>
+                    <input type="text" class="form-input" placeholder="输入连接名称" value="">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">主机地址</label>
+                        <input type="text" class="form-input" placeholder="localhost" value="localhost">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">端口</label>
+                        <input type="number" class="form-input" placeholder="6041" value="6041">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-input" placeholder="root" value="root">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-input" placeholder="输入密码" value="">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">默认数据库</label>
+                        <input type="text" class="form-input" placeholder="可选" value="">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">超时时间 (ms)</label>
+                        <input type="number" class="form-input" placeholder="5000" value="5000">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn" onclick="testNewConnection()">🧪 测试连接</button>
+                    <button type="button" class="btn btn-primary" onclick="saveConnection()">💾 保存连接</button>
+                    <button type="button" class="btn" onclick="hideConnectionForm()">❌ 取消</button>
+                </div>
+
+                <!-- 测试结果 -->
+                <div id="test-result" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 标签页切换
+        function switchTab(tabName) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // 移除所有标签的active类
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签页内容
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            
+            // 添加active类到选中的标签
+            event.target.classList.add('active');
+        }
+
+        // 显示新建连接表单
+        function showNewConnectionForm() {
+            document.getElementById('connection-form').style.display = 'block';
+            document.getElementById('connection-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 隐藏连接表单
+        function hideConnectionForm() {
+            document.getElementById('connection-form').style.display = 'none';
+            document.getElementById('test-result').style.display = 'none';
+        }
+
+        // 测试新连接
+        function testNewConnection() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="test-results test-success">✅ 连接测试成功！<br>延迟: 25ms<br>服务器版本: TDengine 3.0.5.0<br>可用数据库: test, log, power</div>';
+        }
+
+        // 保存连接
+        function saveConnection() {
+            alert('连接配置已保存！默认端口已设置为6041。');
+            hideConnectionForm();
+            
+            // 模拟添加新连接到列表
+            const connectionList = document.getElementById('connection-list');
+            const newConnection = document.createElement('div');
+            newConnection.style.cssText = 'border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 15px;';
+            newConnection.innerHTML = `
+                <div style="display: flex; justify-content: between; align-items: center;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 16px;">新建连接</h3>
+                        <p style="margin: 0; color: #666; font-size: 14px;">localhost:6041 (root)</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="status-badge status-success">✅ 连接正常</span>
+                        <button class="btn" onclick="testConnection('new')">🧪 测试</button>
+                        <button class="btn" onclick="editConnection('new')">✏️ 编辑</button>
+                        <button class="btn" onclick="deleteConnection('new')" style="color: #dc2626;">🗑️ 删除</button>
+                    </div>
+                </div>
+            `;
+            connectionList.appendChild(newConnection);
+        }
+
+        // 其他功能函数
+        function refreshConnections() {
+            alert('连接列表已刷新');
+        }
+
+        function batchTest() {
+            alert('批量测试连接中...');
+        }
+
+        function exportConfig() {
+            alert('导出连接配置...');
+        }
+
+        function testConnection(id) {
+            alert('测试连接: ' + id);
+        }
+
+        function editConnection(id) {
+            alert('编辑连接: ' + id);
+        }
+
+        function deleteConnection(id) {
+            if (confirm('确定要删除此连接吗？')) {
+                alert('连接已删除: ' + id);
+            }
+        }
+    </script>
+</body>
+</html>

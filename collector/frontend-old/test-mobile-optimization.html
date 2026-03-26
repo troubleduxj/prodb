@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mobile Optimization Test - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        .test-section {
+            margin-bottom: var(--space-8);
+            padding: var(--space-6);
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+        }
+        
+        .test-title {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+            margin-bottom: var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--space-2);
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+            margin-top: var(--space-4);
+        }
+        
+        .demo-item {
+            padding: var(--space-4);
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+        
+        .sample-table {
+            width: 100%;
+            min-width: 600px;
+        }
+        
+        .device-info {
+            position: fixed;
+            top: var(--space-4);
+            right: var(--space-4);
+            background-color: var(--bg-overlay);
+            color: var(--text-primary);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--border-radius);
+            font-size: var(--font-size-xs);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-info" id="deviceInfo">
+        Loading device info...
+    </div>
+
+    <div class="layout">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="hamburger-menu" id="hamburgerMenu">
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+            </button>
+            <h1>Mobile Test</h1>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <h2>Navigation</h2>
+            <nav>
+                <a href="#forms">Forms</a>
+                <a href="#tables">Tables</a>
+                <a href="#buttons">Buttons</a>
+                <a href="#modals">Modals</a>
+            </nav>
+        </div>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="container">
+                <h1>Mobile Optimization Test</h1>
+                <p>This page demonstrates the mobile-optimized components and responsive design.</p>
+
+                <!-- Touch-Friendly Buttons Section -->
+                <div class="test-section" id="buttons">
+                    <h2 class="test-title">Touch-Friendly Buttons</h2>
+                    <div class="demo-grid">
+                        <div class="demo-item">
+                            <h3>Primary Buttons</h3>
+                            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                                <button class="touch-button touch-btn-primary touch-btn-sm">Small</button>
+                                <button class="touch-button touch-btn-primary touch-btn-md">Medium</button>
+                                <button class="touch-button touch-btn-primary touch-btn-lg">Large</button>
+                            </div>
+                        </div>
+                        <div class="demo-item">
+                            <h3>Button Variants</h3>
+                            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                                <button class="touch-button touch-btn-secondary touch-btn-md">Secondary</button>
+                                <button class="touch-button touch-btn-success touch-btn-md">Success</button>
+                                <button class="touch-button touch-btn-warning touch-btn-md">Warning</button>
+                                <button class="touch-button touch-btn-error touch-btn-md">Error</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Forms Section -->
+                <div class="test-section" id="forms">
+                    <h2 class="test-title">Mobile-Optimized Forms</h2>
+                    <div id="mobileFormDemo"></div>
+                </div>
+
+                <!-- Mobile Tables Section -->
+                <div class="test-section" id="tables">
+                    <h2 class="test-title">Responsive Tables</h2>
+                    <div id="mobileTableDemo"></div>
+                </div>
+
+                <!-- Touch Tabs Section -->
+                <div class="test-section">
+                    <h2 class="test-title">Touch-Friendly Tabs</h2>
+                    <div id="touchTabsDemo"></div>
+                </div>
+
+                <!-- Horizontal Scroll Section -->
+                <div class="test-section">
+                    <h2 class="test-title">Horizontal Scroll with Indicators</h2>
+                    <div class="horizontal-scroll-wrapper">
+                        <div class="scroll-indicator left">‹</div>
+                        <div class="scroll-indicator right">›</div>
+                        <div class="horizontal-scroll-container">
+                            <div style="display: flex; gap: var(--space-4); padding: var(--space-4); min-width: 800px;">
+                                <div class="card" style="min-width: 200px;">Card 1</div>
+                                <div class="card" style="min-width: 200px;">Card 2</div>
+                                <div class="card" style="min-width: 200px;">Card 3</div>
+                                <div class="card" style="min-width: 200px;">Card 4</div>
+                                <div class="card" style="min-width: 200px;">Card 5</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Test Section -->
+                <div class="test-section" id="modals">
+                    <h2 class="test-title">Mobile Modals</h2>
+                    <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                        <button class="touch-button touch-btn-primary touch-btn-md" onclick="openModal('small')">
+                            Small Modal
+                        </button>
+                        <button class="touch-button touch-btn-primary touch-btn-md" onclick="openModal('medium')">
+                            Medium Modal
+                        </button>
+                        <button class="touch-button touch-btn-primary touch-btn-md" onclick="openModal('large')">
+                            Large Modal
+                        </button>
+                        <button class="touch-button touch-btn-primary touch-btn-md" onclick="openModal('fullscreen')">
+                            Fullscreen Modal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import MobileForm from './components/MobileForm.js';
+        import MobileTable from './components/MobileTable.js';
+        import MobileUtils from './components/MobileUtils.js';
+
+        const { TouchTabs, MobileModal, useMobileDetection } = MobileUtils;
+
+        // Update device info
+        function updateDeviceInfo() {
+            const info = document.getElementById('deviceInfo');
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const isMobile = width <= 768;
+            const isTablet = width > 768 && width <= 1024;
+            const orientation = width > height ? 'Landscape' : 'Portrait';
+            
+            info.textContent = `${width}×${height} | ${isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | ${orientation}`;
+        }
+
+        // Mobile navigation
+        function setupMobileNav() {
+            const hamburger = document.getElementById('hamburgerMenu');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+                hamburger.classList.toggle('active');
+            }
+
+            hamburger.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+        }
+
+        // Sample form data
+        const sampleFormFields = [
+            {
+                name: 'protocol',
+                label: 'Protocol Type',
+                type: 'select',
+                required: true,
+                section: 'Connection',
+                options: [
+                    { value: 'opcua', label: 'OPC UA' },
+                    { value: 'modbus', label: 'Modbus TCP' },
+                    { value: 'mqtt', label: 'MQTT' }
+                ]
+            },
+            {
+                name: 'host',
+                label: 'Host Address',
+                type: 'text',
+                required: true,
+                section: 'Connection',
+                placeholder: 'Enter IP address or hostname'
+            },
+            {
+                name: 'port',
+                label: 'Port',
+                type: 'number',
+                required: true,
+                section: 'Connection',
+                placeholder: '502'
+            },
+            {
+                name: 'username',
+                label: 'Username',
+                type: 'text',
+                section: 'Authentication',
+                placeholder: 'Optional username'
+            },
+            {
+                name: 'password',
+                label: 'Password',
+                type: 'password',
+                section: 'Authentication',
+                placeholder: 'Optional password'
+            },
+            {
+                name: 'timeout',
+                label: 'Timeout (ms)',
+                type: 'number',
+                section: 'Advanced',
+                placeholder: '5000'
+            },
+            {
+                name: 'enabled',
+                label: 'Enable connection',
+                type: 'checkbox',
+                section: 'Advanced'
+            }
+        ];
+
+        // Sample table data
+        const sampleTableData = [
+            {
+                id: 1,
+                name: 'Temperature Sensor',
+                protocol: 'OPC UA',
+                status: 'connected',
+                value: '23.5°C',
+                lastUpdate: '2024-01-15 10:30:00',
+                quality: 'Good'
+            },
+            {
+                id: 2,
+                name: 'Pressure Gauge',
+                protocol: 'Modbus TCP',
+                status: 'connected',
+                value: '1.2 bar',
+                lastUpdate: '2024-01-15 10:29:58',
+                quality: 'Good'
+            },
+            {
+                id: 3,
+                name: 'Flow Meter',
+                protocol: 'MQTT',
+                status: 'error',
+                value: 'N/A',
+                lastUpdate: '2024-01-15 10:25:12',
+                quality: 'Bad'
+            }
+        ];
+
+        const sampleTableColumns = [
+            {
+                key: 'name',
+                label: 'Name',
+                priority: 'critical',
+                render: (value) => html`<strong>${value}</strong>`
+            },
+            {
+                key: 'status',
+                label: 'Status',
+                priority: 'high',
+                render: (value) => html`
+                    <span class="status-indicator ${value}">${value}</span>
+                `
+            },
+            {
+                key: 'protocol',
+                label: 'Protocol',
+                priority: 'medium'
+            },
+            {
+                key: 'value',
+                label: 'Current Value',
+                priority: 'high'
+            },
+            {
+                key: 'lastUpdate',
+                label: 'Last Update',
+                priority: 'low'
+            },
+            {
+                key: 'quality',
+                label: 'Quality',
+                priority: 'medium'
+            }
+        ];
+
+        // Render mobile form demo
+        function renderMobileFormDemo() {
+            const container = document.getElementById('mobileFormDemo');
+            
+            render(html`
+                <${MobileForm}
+                    fields=${sampleFormFields}
+                    title="Connection Configuration"
+                    collapsible=${true}
+                    onSubmit=${(data) => {
+                        alert('Form submitted: ' + JSON.stringify(data, null, 2));
+                    }}
+                    onCancel=${() => {
+                        alert('Form cancelled');
+                    }}
+                />
+            `, container);
+        }
+
+        // Render mobile table demo
+        function renderMobileTableDemo() {
+            const container = document.getElementById('mobileTableDemo');
+            
+            render(html`
+                <${MobileTable}
+                    data=${sampleTableData}
+                    columns=${sampleTableColumns}
+                    showCardView=${true}
+                    onRowClick=${(row) => {
+                        alert('Clicked row: ' + row.name);
+                    }}
+                />
+            `, container);
+        }
+
+        // Render touch tabs demo
+        function renderTouchTabsDemo() {
+            const container = document.getElementById('touchTabsDemo');
+            const [activeTab, setActiveTab] = React.useState('overview');
+            
+            const tabs = [
+                { id: 'overview', label: 'Overview', icon: '📊' },
+                { id: 'config', label: 'Configuration', icon: '⚙️' },
+                { id: 'monitoring', label: 'Monitoring', icon: '📈', badge: '3' },
+                { id: 'logs', label: 'Logs', icon: '📝' },
+                { id: 'settings', label: 'Settings', icon: '🔧' }
+            ];
+            
+            render(html`
+                <${TouchTabs}
+                    tabs=${tabs}
+                    activeTab=${activeTab}
+                    onTabChange=${setActiveTab}
+                />
+                <div style="margin-top: var(--space-4); padding: var(--space-4); background-color: var(--bg-secondary); border-radius: var(--border-radius);">
+                    <h3>Active Tab: ${activeTab}</h3>
+                    <p>Content for the ${activeTab} tab would go here.</p>
+                </div>
+            `, container);
+        }
+
+        // Modal functions
+        window.openModal = function(size) {
+            const container = document.getElementById('modalContainer');
+            
+            const modalContent = html`
+                <div>
+                    <h3>This is a ${size} modal</h3>
+                    <p>Modal content goes here. This demonstrates how modals adapt to different screen sizes.</p>
+                    <div style="margin-top: var(--space-4);">
+                        <button class="touch-button touch-btn-primary touch-btn-md" onclick="closeModal()">
+                            Close Modal
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            render(html`
+                <${MobileModal}
+                    isOpen=${true}
+                    onClose=${() => closeModal()}
+                    title="${size.charAt(0).toUpperCase() + size.slice(1)} Modal"
+                    size=${size === 'fullscreen' ? 'medium' : size}
+                    className=${size === 'fullscreen' ? 'mobile-modal-fullscreen' : ''}
+                >
+                    ${modalContent}
+                </${MobileModal}>
+            `, container);
+        };
+
+        window.closeModal = function() {
+            const container = document.getElementById('modalContainer');
+            render(null, container);
+        };
+
+        // Initialize everything
+        function init() {
+            updateDeviceInfo();
+            setupMobileNav();
+            renderMobileFormDemo();
+            renderMobileTableDemo();
+            renderTouchTabsDemo();
+            
+            // Update device info on resize
+            window.addEventListener('resize', updateDeviceInfo);
+            window.addEventListener('orientationchange', updateDeviceInfo);
+        }
+
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>

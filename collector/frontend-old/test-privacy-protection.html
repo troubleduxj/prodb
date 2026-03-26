@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隐私保护功能测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-card);
+        }
+        
+        .test-section h2 {
+            margin-bottom: 20px;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-primary);
+            padding-bottom: 10px;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .test-item {
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-secondary);
+        }
+        
+        .test-item h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+        
+        .demo-data {
+            background-color: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .result-display {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 100px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .stat-card {
+            background-color: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-primary);
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        
+        .privacy-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .privacy-indicator.compliant {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+        
+        .privacy-indicator.non-compliant {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--color-error);
+        }
+        
+        .privacy-indicator.warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--color-warning);
+        }
+        
+        .masking-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        
+        .comparison-item {
+            background-color: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+        
+        .comparison-item h4 {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        
+        .violation-alert {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--color-error);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 15px 0;
+            color: var(--color-error);
+        }
+        
+        .compliance-score {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+        }
+        
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .score-circle.high {
+            background-color: var(--color-success);
+        }
+        
+        .score-circle.medium {
+            background-color: var(--color-warning);
+        }
+        
+        .score-circle.low {
+            background-color: var(--color-error);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>隐私保护功能测试</h1>
+        
+        <!-- 数据脱敏测试 -->
+        <div class="test-section">
+            <h2>数据脱敏和隐私保护测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>高级数据脱敏</h3>
+                    <div id="advanced-masking-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>脱敏级别对比</h3>
+                    <div id="masking-levels-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>特殊字段脱敏</h3>
+                    <div id="special-fields-test"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 隐私合规测试 -->
+        <div class="test-section">
+            <h2>隐私合规性检查测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>合规性仪表板</h3>
+                    <div id="compliance-dashboard-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>隐私违规检测</h3>
+                    <div id="privacy-violations-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>隐私影响评估</h3>
+                    <div id="privacy-assessment-test"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 安全导出测试 -->
+        <div class="test-section">
+            <h2>安全导出和数据保护测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>隐私保护导出</h3>
+                    <div id="secure-export-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>数据泄露检测</h3>
+                    <div id="data-leakage-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>导出审计</h3>
+                    <div id="export-audit-test"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用户教育测试 -->
+        <div class="test-section">
+            <h2>安全教育和用户提示测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>安全教育系统</h3>
+                    <div id="security-education-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>教育记录管理</h3>
+                    <div id="education-history-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>上下文相关提示</h3>
+                    <div id="contextual-tips-test"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState, useEffect } from 'https://esm.sh/preact/hooks';
+        import securityService from './services/security.js';
+        import { 
+            PrivacyComplianceDashboard,
+            DataMaskingConfig,
+            SecureExportDialog,
+            SecurityEducationPanel
+        } from './components/PrivacyProtection.js';
+
+        // 高级数据脱敏测试
+        const AdvancedMaskingTest = () => {
+            const [testData] = useState({
+                user: {
+                    username: 'administrator',
+                    password: 'SuperSecretPassword123!',
+                    email: 'admin@company.com',
+                    phone: '+86-138-1234-5678',
+                    apiKey: 'sk-1234567890abcdef1234567890abcdef',
+                    creditCard: '4111-1111-1111-1111'
+                },
+                server: {
+                    host: '192.168.1.100',
+                    port: 4840,
+                    username: 'opcuser',
+                    password: 'opcpass123',
+                    certificate: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...'
+                }
+            });
+            
+            const [maskedResults, setMaskedResults] = useState({});
+
+            useEffect(() => {
+                const levels = ['minimal', 'standard', 'strict'];
+                const results = {};
+                
+                levels.forEach(level => {
+                    results[level] = securityService.advancedDataMasking(testData, level);
+                });
+                
+                setMaskedResults(results);
+            }, []);
+
+            return html`
+                <div>
+                    <div class="demo-data">
+                        <strong>原始数据:</strong>
+                        ${JSON.stringify(testData, null, 2)}
+                    </div>
+                    
+                    ${Object.entries(maskedResults).map(([level, data]) => html`
+                        <div key=${level} class="masking-comparison">
+                            <div class="comparison-item">
+                                <h4>${level === 'minimal' ? '最小脱敏' : level === 'standard' ? '标准脱敏' : '严格脱敏'}</h4>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </div>
+                        </div>
+                    `)}
+                </div>
+            `;
+        };
+
+        // 脱敏级别对比测试
+        const MaskingLevelsTest = () => {
+            const [selectedField, setSelectedField] = useState('password');
+            const [testValues] = useState({
+                password: 'MyVerySecretPassword123!',
+                email: 'john.doe@company.com',
+                phone: '+1-555-123-4567',
+                apiKey: 'sk-abcdef1234567890abcdef1234567890',
+                ipAddress: '192.168.1.100'
+            });
+            
+            const [comparisonResults, setComparisonResults] = useState({});
+
+            useEffect(() => {
+                const levels = ['minimal', 'standard', 'strict'];
+                const results = {};
+                
+                levels.forEach(level => {
+                    results[level] = securityService.maskFieldValue(
+                        testValues[selectedField], 
+                        selectedField, 
+                        level
+                    );
+                });
+                
+                setComparisonResults(results);
+            }, [selectedField]);
+
+            return html`
+                <div>
+                    <div class="field-selector">
+                        <label>选择字段类型:</label>
+                        <select 
+                            value=${selectedField}
+                            onChange=${(e) => setSelectedField(e.target.value)}
+                        >
+                            ${Object.keys(testValues).map(field => html`
+                                <option key=${field} value=${field}>${field}</option>
+                            `)}
+                        </select>
+                    </div>
+                    
+                    <div class="demo-data">
+                        <strong>原始值:</strong> ${testValues[selectedField]}
+                    </div>
+                    
+                    <div class="stats-grid">
+                        ${Object.entries(comparisonResults).map(([level, masked]) => html`
+                            <div key=${level} class="stat-card">
+                                <div class="stat-label">${level}</div>
+                                <div class="stat-value" style="font-size: 14px; word-break: break-all;">
+                                    ${masked}
+                                </div>
+                            </div>
+                        `)}
+                    </div>
+                </div>
+            `;
+        };
+
+        // 特殊字段脱敏测试
+        const SpecialFieldsTest = () => {
+            const [testResults, setTestResults] = useState({});
+
+            const runSpecialFieldsTest = () => {
+                const specialData = {
+                    email: 'john.doe@company.com',
+                    phone: '+86-138-1234-5678',
+                    ipAddress: '192.168.1.100',
+                    creditCard: '4111-1111-1111-1111',
+                    socialSecurity: '123-45-6789'
+                };
+
+                const results = {};
+                Object.entries(specialData).forEach(([field, value]) => {
+                    results[field] = {
+                        original: value,
+                        email: field === 'email' ? securityService.maskEmail(value) : 'N/A',
+                        phone: field === 'phone' ? securityService.maskPhone(value) : 'N/A',
+                        ip: field === 'ipAddress' ? securityService.maskIPAddress(value) : 'N/A',
+                        partial: securityService.partialMask(value, 0.3)
+                    };
+                });
+
+                setTestResults(results);
+            };
+
+            useEffect(() => {
+                runSpecialFieldsTest();
+            }, []);
+
+            return html`
+                <div>
+                    <div class="action-buttons">
+                        <button class="btn-primary" onClick=${runSpecialFieldsTest}>
+                            测试特殊字段脱敏
+                        </button>
+                    </div>
+                    
+                    <div class="result-display">
+                        ${Object.entries(testResults).map(([field, result]) => html`
+                            <div key=${field} style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 4px;">
+                                <strong>${field}:</strong>
+                                <div style="margin-left: 15px; font-family: monospace; font-size: 13px;">
+                                    <div>原始: ${result.original}</div>
+                                    <div>邮箱脱敏: ${result.email}</div>
+                                    <div>电话脱敏: ${result.phone}</div>
+                                    <div>IP脱敏: ${result.ip}</div>
+                                    <div>部分脱敏: ${result.partial}</div>
+                                </div>
+                            </div>
+                        `)}
+                    </div>
+                </div>
+            `;
+        };
+
+        // 隐私违规检测测试
+        const PrivacyViolationsTest = () => {
+            const [violations, setViolations] = useState([]);
+            const [isSimulating, setIsSimulating] = useState(false);
+
+            const simulateViolations = async () => {
+                setIsSimulating(true);
+                
+                // 模拟频繁的敏感数据访问
+                for (let i = 0; i < 12; i++) {
+                    securityService.logOperation('reveal_sensitive_data', 'password_field', {
+                        sensitive: true,
+                        fieldName: 'password'
+                    });
+                }
+                
+                // 模拟大量数据导出
+                for (let i = 0; i < 6; i++) {
+                    securityService.logOperation('data_export', 'config_data', {
+                        recordCount: 100 + i * 50
+                    });
+                }
+                
+                // 模拟非工作时间访问
+                const nightTime = new Date();
+                nightTime.setHours(2); // 凌晨2点
+                for (let i = 0; i < 4; i++) {
+                    securityService.logOperation('config_access', 'sensitive_config', {
+                        timestamp: nightTime.toISOString()
+                    });
+                }
+                
+                // 检测违规
+                setTimeout(() => {
+                    const detected = securityService.detectPrivacyViolations();
+                    setViolations(detected);
+                    setIsSimulating(false);
+                }, 1000);
+            };
+
+            return html`
+                <div>
+                    <div class="action-buttons">
+                        <button 
+                            class="btn-warning" 
+                            onClick=${simulateViolations}
+                            disabled=${isSimulating}
+                        >
+                            ${isSimulating ? '模拟中...' : '模拟隐私违规'}
+                        </button>
+                        <button 
+                            class="btn-secondary" 
+                            onClick=${() => setViolations(securityService.detectPrivacyViolations())}
+                        >
+                            检测当前违规
+                        </button>
+                    </div>
+                    
+                    <div class="result-display">
+                        ${violations.length > 0 ? html`
+                            <h4>检测到的违规 (${violations.length})</h4>
+                            ${violations.map((violation, index) => html`
+                                <div key=${index} class="violation-alert">
+                                    <div><strong>类型:</strong> ${violation.type}</div>
+                                    <div><strong>消息:</strong> ${violation.message}</div>
+                                    <div><strong>次数:</strong> ${violation.count}</div>
+                                    <div><strong>严重程度:</strong> ${violation.severity}</div>
+                                    <div><strong>建议:</strong> ${violation.recommendation}</div>
+                                </div>
+                            `)}
+                        ` : html`
+                            <div class="privacy-indicator compliant">
+                                ✓ 未检测到隐私违规
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        };
+
+        // 隐私影响评估测试
+        const PrivacyAssessmentTest = () => {
+            const [assessment, setAssessment] = useState(null);
+            const [isGenerating, setIsGenerating] = useState(false);
+
+            const generateAssessment = async () => {
+                setIsGenerating(true);
+                try {
+                    const pia = securityService.generatePrivacyImpactAssessment();
+                    setAssessment(pia);
+                } catch (error) {
+                    console.error('Assessment generation failed:', error);
+                } finally {
+                    setIsGenerating(false);
+                }
+            };
+
+            const exportAssessment = () => {
+                if (!assessment) return;
+                
+                const blob = new Blob([JSON.stringify(assessment, null, 2)], {
+                    type: 'application/json'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `privacy-assessment-${assessment.assessmentId}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            return html`
+                <div>
+                    <div class="action-buttons">
+                        <button 
+                            class="btn-primary" 
+                            onClick=${generateAssessment}
+                            disabled=${isGenerating}
+                        >
+                            ${isGenerating ? '生成中...' : '生成隐私影响评估'}
+                        </button>
+                        ${assessment && html`
+                            <button class="btn-secondary" onClick=${exportAssessment}>
+                                导出评估报告
+                            </button>
+                        `}
+                    </div>
+                    
+                    ${assessment && html`
+                        <div class="result-display">
+                            <div class="compliance-score">
+                                <div class="score-circle ${assessment.riskAssessment.riskLevel === 'low' ? 'high' : assessment.riskAssessment.riskLevel === 'medium' ? 'medium' : 'low'}">
+                                    ${assessment.riskAssessment.riskLevel === 'low' ? 'L' : assessment.riskAssessment.riskLevel === 'medium' ? 'M' : 'H'}
+                                </div>
+                                <div>风险级别: ${assessment.riskAssessment.riskLevel === 'low' ? '低' : assessment.riskAssessment.riskLevel === 'medium' ? '中' : '高'}</div>
+                            </div>
+                            
+                            <div style="margin-top: 15px;">
+                                <strong>评估ID:</strong> ${assessment.assessmentId}<br/>
+                                <strong>生成时间:</strong> ${new Date(assessment.timestamp).toLocaleString()}<br/>
+                                <strong>识别风险:</strong> ${assessment.riskAssessment.identifiedRisks.length} 个<br/>
+                                <strong>建议措施:</strong> ${assessment.recommendations.length} 项
+                            </div>
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+
+        // 安全导出测试
+        const SecureExportTest = () => {
+            const [showExportDialog, setShowExportDialog] = useState(false);
+            const [exportHistory, setExportHistory] = useState([]);
+            
+            const testData = {
+                interfaces: [
+                    {
+                        id: 'opc-001',
+                        name: 'Production Line OPC Server',
+                        host: '192.168.1.100',
+                        port: 4840,
+                        username: 'opcuser',
+                        password: 'secret123',
+                        apiKey: 'sk-1234567890abcdef'
+                    },
+                    {
+                        id: 'modbus-001',
+                        name: 'Temperature Sensor',
+                        host: '192.168.1.101',
+                        port: 502,
+                        slaveId: 1,
+                        username: 'admin',
+                        password: 'admin123'
+                    }
+                ]
+            };
+
+            const handleExport = (exportPackage) => {
+                setExportHistory(prev => [...prev, {
+                    id: exportPackage.metadata?.exportId || Date.now(),
+                    timestamp: new Date().toISOString(),
+                    maskingLevel: exportPackage.metadata?.maskingLevel || 'standard',
+                    recordCount: exportPackage.metadata?.recordCount || 0
+                }]);
+            };
+
+            const testQuickExport = () => {
+                const exported = securityService.privacyProtectedExport(testData, {
+                    maskingLevel: 'standard',
+                    includeMetadata: true
+                });
+                
+                console.log('Quick export result:', exported);
+                alert('快速导出完成，请查看控制台');
+            };
+
+            return html`
+                <div>
+                    <div class="action-buttons">
+                        <button class="btn-primary" onClick=${() => setShowExportDialog(true)}>
+                            打开安全导出对话框
+                        </button>
+                        <button class="btn-secondary" onClick=${testQuickExport}>
+                            快速导出测试
+                        </button>
+                    </div>
+                    
+                    <div class="demo-data">
+                        <strong>测试数据:</strong>
+                        ${JSON.stringify(testData, null, 2)}
+                    </div>
+                    
+                    ${exportHistory.length > 0 && html`
+                        <div class="result-display">
+                            <h4>导出历史</h4>
+                            ${exportHistory.map(exp => html`
+                                <div key=${exp.id} style="padding: 10px; margin: 5px 0; background: var(--bg-secondary); border-radius: 4px;">
+                                    <div><strong>导出ID:</strong> ${exp.id}</div>
+                                    <div><strong>时间:</strong> ${new Date(exp.timestamp).toLocaleString()}</div>
+                                    <div><strong>脱敏级别:</strong> ${exp.maskingLevel}</div>
+                                </div>
+                            `)}
+                        </div>
+                    `}
+                    
+                    ${showExportDialog && html`
+                        <${SecureExportDialog}
+                            data=${testData}
+                            onExport=${handleExport}
+                            onClose=${() => setShowExportDialog(false)}
+                        />
+                    `}
+                </div>
+            `;
+        };
+
+        // 数据泄露检测测试
+        const DataLeakageTest = () => {
+            const [leakageIndicators, setLeakageIndicators] = useState([]);
+
+            const simulateLeakage = () => {
+                // 模拟快速敏感数据访问
+                for (let i = 0; i < 8; i++) {
+                    securityService.logOperation('reveal_sensitive_data', 'password', {
+                        fieldName: 'password',
+                        timestamp: new Date(Date.now() - i * 30000).toISOString() // 30秒间隔
+                    });
+                }
+                
+                // 模拟异常复制操作
+                for (let i = 0; i < 12; i++) {
+                    securityService.logOperation('clipboard_copy', 'sensitive_data', {
+                        dataType: 'credential'
+                    });
+                }
+                
+                // 检测泄露指标
+                const indicators = securityService.detectDataLeakage();
+                setLeakageIndicators(indicators);
+            };
+
+            return html`
+                <div>
+                    <div class="action-buttons">
+                        <button class="btn-warning" onClick=${simulateLeakage}>
+                            模拟数据泄露行为
+                        </button>
+                        <button class="btn-secondary" onClick=${() => setLeakageIndicators(securityService.detectDataLeakage())}>
+                            检测当前风险
+                        </button>
+                    </div>
+                    
+                    <div class="result-display">
+                        ${leakageIndicators.length > 0 ? html`
+                            <h4>泄露风险指标</h4>
+                            ${leakageIndicators.map((indicator, index) => html`
+                                <div key=${index} class="violation-alert">
+                                    <div><strong>类型:</strong> ${indicator.type}</div>
+                                    <div><strong>严重程度:</strong> ${indicator.severity}</div>
+                                    <div><strong>次数:</strong> ${indicator.count}</div>
+                                    <div><strong>消息:</strong> ${indicator.message}</div>
+                                </div>
+                            `)}
+                        ` : html`
+                            <div class="privacy-indicator compliant">
+                                ✓ 未检测到数据泄露风险
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        };
+
+        // 安全教育测试
+        const SecurityEducationTest = () => {
+            const [selectedContext, setSelectedContext] = useState('general');
+            const [educationStats, setEducationStats] = useState({});
+
+            const showEducation = (context) => {
+                securityService.showSecurityEducation(context);
+                updateStats();
+            };
+
+            const updateStats = () => {
+                const logs = securityService.getOperationLogs({});
+                const educationLogs = logs.filter(log => 
+                    log.operation === 'security_education_shown' || 
+                    log.operation === 'security_education_acknowledged'
+                );
+                
+                const stats = {
+                    totalShown: educationLogs.filter(log => log.operation === 'security_education_shown').length,
+                    totalAcknowledged: educationLogs.filter(log => log.operation === 'security_education_acknowledged').length,
+                    contexts: {}
+                };
+                
+                educationLogs.forEach(log => {
+                    const context = log.details?.context || 'general';
+                    if (!stats.contexts[context]) {
+                        stats.contexts[context] = { shown: 0, acknowledged: 0 };
+                    }
+                    if (log.operation === 'security_education_shown') {
+                        stats.contexts[context].shown++;
+                    } else {
+                        stats.contexts[context].acknowledged++;
+                    }
+                });
+                
+                setEducationStats(stats);
+            };
+
+            useEffect(() => {
+                updateStats();
+            }, []);
+
+            return html`
+                <div>
+                    <div style="margin-bottom: 15px;">
+                        <label>选择教育内容:</label>
+                        <select 
+                            value=${selectedContext}
+                            onChange=${(e) => setSelectedContext(e.target.value)}
+                            style="margin-left: 10px; padding: 5px;"
+                        >
+                            <option value="general">一般安全提示</option>
+                            <option value="sensitive_data">敏感数据处理</option>
+                            <option value="export">数据导出安全</option>
+                            <option value="privacy">隐私保护提醒</option>
+                        </select>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-primary" onClick=${() => showEducation(selectedContext)}>
+                            显示教育内容
+                        </button>
+                        <button class="btn-secondary" onClick=${updateStats}>
+                            更新统计
+                        </button>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-value">${educationStats.totalShown || 0}</span>
+                            <span class="stat-label">总显示次数</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-value">${educationStats.totalAcknowledged || 0}</span>
+                            <span class="stat-label">总确认次数</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-value">${Object.keys(educationStats.contexts || {}).length}</span>
+                            <span class="stat-label">教育类型</span>
+                        </div>
+                    </div>
+                    
+                    ${Object.keys(educationStats.contexts || {}).length > 0 && html`
+                        <div class="result-display">
+                            <h4>各类型统计</h4>
+                            ${Object.entries(educationStats.contexts).map(([context, stats]) => html`
+                                <div key=${context} style="padding: 8px; margin: 4px 0; background: var(--bg-secondary); border-radius: 4px;">
+                                    <strong>${context}:</strong> 显示 ${stats.shown} 次, 确认 ${stats.acknowledged} 次
+                                </div>
+                            `)}
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+
+        // 渲染所有测试组件
+        render(html`<${AdvancedMaskingTest} />`, document.getElementById('advanced-masking-test'));
+        render(html`<${MaskingLevelsTest} />`, document.getElementById('masking-levels-test'));
+        render(html`<${SpecialFieldsTest} />`, document.getElementById('special-fields-test'));
+        render(html`<${PrivacyComplianceDashboard} />`, document.getElementById('compliance-dashboard-test'));
+        render(html`<${PrivacyViolationsTest} />`, document.getElementById('privacy-violations-test'));
+        render(html`<${PrivacyAssessmentTest} />`, document.getElementById('privacy-assessment-test'));
+        render(html`<${SecureExportTest} />`, document.getElementById('secure-export-test'));
+        render(html`<${DataLeakageTest} />`, document.getElementById('data-leakage-test'));
+        render(html`<${SecurityEducationTest} />`, document.getElementById('security-education-test'));
+
+        // 简单的导出审计测试
+        const ExportAuditTest = () => {
+            const [auditLogs, setAuditLogs] = useState([]);
+
+            const loadAuditLogs = () => {
+                const logs = securityService.getOperationLogs({});
+                const exportLogs = logs.filter(log => 
+                    log.operation.includes('export') || 
+                    log.operation.includes('privacy_protected_export')
+                );
+                setAuditLogs(exportLogs.slice(0, 10));
+            };
+
+            useEffect(() => {
+                loadAuditLogs();
+            }, []);
+
+            return html`
+                <div>
+                    <div class="action-buttons">
+                        <button class="btn-secondary" onClick=${loadAuditLogs}>
+                            刷新审计日志
+                        </button>
+                    </div>
+                    
+                    <div class="result-display">
+                        ${auditLogs.length > 0 ? html`
+                            <h4>导出审计记录</h4>
+                            ${auditLogs.map(log => html`
+                                <div key=${log.id} style="padding: 10px; margin: 5px 0; background: var(--bg-secondary); border-radius: 4px; font-size: 13px;">
+                                    <div><strong>时间:</strong> ${new Date(log.timestamp).toLocaleString()}</div>
+                                    <div><strong>操作:</strong> ${log.operation}</div>
+                                    <div><strong>用户:</strong> ${log.user?.name || 'System'}</div>
+                                    <div><strong>资源:</strong> ${log.resource}</div>
+                                    ${log.details && html`
+                                        <div><strong>详情:</strong> ${JSON.stringify(log.details)}</div>
+                                    `}
+                                </div>
+                            `)}
+                        ` : html`
+                            <div>暂无导出审计记录</div>
+                        `}
+                    </div>
+                </div>
+            `;
+        };
+
+        render(html`<${ExportAuditTest} />`, document.getElementById('export-audit-test'));
+        render(html`<${SecurityEducationPanel} />`, document.getElementById('education-history-test'));
+
+        // 上下文相关提示测试
+        const ContextualTipsTest = () => {
+            const [currentContext, setCurrentContext] = useState('general');
+
+            const triggerContextualTip = (context) => {
+                setCurrentContext(context);
+                if (securityService.shouldShowEducation(context)) {
+                    securityService.showSecurityEducation(context);
+                } else {
+                    alert(`${context} 教育内容已被标记为不再显示`);
+                }
+            };
+
+            return html`
+                <div>
+                    <div class="action-buttons">
+                        <button class="btn-primary" onClick=${() => triggerContextualTip('sensitive_data')}>
+                            触发敏感数据提示
+                        </button>
+                        <button class="btn-secondary" onClick=${() => triggerContextualTip('export')}>
+                            触发导出安全提示
+                        </button>
+                        <button class="btn-info" onClick=${() => triggerContextualTip('privacy')}>
+                            触发隐私保护提示
+                        </button>
+                    </div>
+                    
+                    <div class="result-display">
+                        <h4>上下文提示说明</h4>
+                        <div style="padding: 15px; background: var(--bg-secondary); border-radius: 4px;">
+                            <p><strong>敏感数据提示:</strong> 当用户访问敏感信息时显示</p>
+                            <p><strong>导出安全提示:</strong> 当用户导出数据时显示</p>
+                            <p><strong>隐私保护提示:</strong> 当涉及隐私操作时显示</p>
+                            <p><strong>当前上下文:</strong> ${currentContext}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        render(html`<${ContextualTipsTest} />`, document.getElementById('contextual-tips-test'));
+
+        // 记录页面加载
+        securityService.logOperation('page_load', 'privacy_protection_test', {
+            page: 'privacy-protection-test',
+            timestamp: new Date().toISOString()
+        });
+
+        console.log('Privacy protection features test page loaded');
+        console.log('Security service:', securityService);
+    </script>
+</body>
+</html>

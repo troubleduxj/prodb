@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConfigPage 样式诊断</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #10b981;
+            color: white;
+        }
+        .error {
+            background: #ef4444;
+            color: white;
+        }
+        .warning {
+            background: #f59e0b;
+            color: white;
+        }
+        .info {
+            background: #3b82f6;
+            color: white;
+        }
+        pre {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 ConfigPage 样式诊断工具</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        async function diagnose() {
+            addResult('开始诊断...', 'info');
+
+            // 1. 检查 pages.css 是否加载
+            addResult('<h3>1. 检查 CSS 文件加载</h3>', 'info');
+            
+            try {
+                const response = await fetch('/styles/pages.css');
+                if (response.ok) {
+                    const css = await response.text();
+                    const size = (css.length / 1024).toFixed(2);
+                    addResult(`✅ pages.css 加载成功 (${size} KB)`, 'success');
+                    
+                    // 检查是否包含 ConfigPage 样式
+                    if (css.includes('接口管理页面')) {
+                        addResult('✅ pages.css 包含 ConfigPage 样式', 'success');
+                        
+                        // 显示部分样式内容
+                        const match = css.match(/\/\* ={40,}\s+接口管理页面[\s\S]{0,500}/);
+                        if (match) {
+                            addResult(`<pre>${match[0]}</pre>`, 'info');
+                        }
+                    } else {
+                        addResult('❌ pages.css 不包含 ConfigPage 样式！', 'error');
+                    }
+                    
+                    // 检查关键样式类
+                    const keyClasses = [
+                        '.config-page',
+                        '.interfaces-grid',
+                        '.interface-name',
+                        '.status-indicator',
+                        '.selection-checkbox'
+                    ];
+                    
+                    keyClasses.forEach(cls => {
+                        if (css.includes(cls)) {
+                            addResult(`✅ 找到样式类: ${cls}`, 'success');
+                        } else {
+                            addResult(`❌ 缺少样式类: ${cls}`, 'error');
+                        }
+                    });
+                    
+                } else {
+                    addResult(`❌ pages.css 加载失败: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 无法加载 pages.css: ${error.message}`, 'error');
+            }
+
+            // 2. 检查 index.html 中的引用
+            addResult('<h3>2. 检查 index.html 中的 CSS 引用</h3>', 'info');
+            
+            try {
+                const response = await fetch('/');
+                if (response.ok) {
+                    const html = await response.text();
+                    
+                    if (html.includes('pages.css')) {
+                        addResult('✅ index.html 包含 pages.css 引用', 'success');
+                        
+                        // 提取引用行
+                        const match = html.match(/<link[^>]*pages\.css[^>]*>/);
+                        if (match) {
+                            addResult(`<pre>${match[0]}</pre>`, 'info');
+                        }
+                    } else {
+                        addResult('❌ index.html 不包含 pages.css 引用！', 'error');
+                    }
+                    
+                    // 检查所有CSS引用
+                    const cssLinks = html.match(/<link[^>]*stylesheet[^>]*>/g) || [];
+                    addResult(`<h4>所有 CSS 引用 (${cssLinks.length}):</h4>`, 'info');
+                    cssLinks.forEach(link => {
+                        addResult(`<pre>${link}</pre>`, 'info');
+                    });
+                    
+                } else {
+                    addResult(`❌ 无法加载 index.html: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ 无法加载 index.html: ${error.message}`, 'error');
+            }
+
+            // 3. 检查浏览器中实际加载的样式表
+            addResult('<h3>3. 检查浏览器中加载的样式表</h3>', 'info');
+            
+            const stylesheets = Array.from(document.styleSheets);
+            addResult(`浏览器加载了 ${stylesheets.length} 个样式表`, 'info');
+            
+            stylesheets.forEach((sheet, index) => {
+                try {
+                    const href = sheet.href || '(inline)';
+                    const rulesCount = sheet.cssRules ? sheet.cssRules.length : 0;
+                    addResult(`${index + 1}. ${href} (${rulesCount} 规则)`, 'info');
+                } catch (e) {
+                    addResult(`${index + 1}. 无法访问 (CORS)`, 'warning');
+                }
+            });
+
+            // 4. 测试样式应用
+            addResult('<h3>4. 测试样式应用</h3>', 'info');
+            
+            const testDiv = document.createElement('div');
+            testDiv.className = 'config-page';
+            testDiv.style.display = 'none';
+            document.body.appendChild(testDiv);
+            
+            const computed = window.getComputedStyle(testDiv);
+            const background = computed.background || computed.backgroundColor;
+            
+            if (background && background !== 'rgba(0, 0, 0, 0)' && background !== 'transparent') {
+                addResult(`✅ .config-page 样式已应用: ${background}`, 'success');
+            } else {
+                addResult(`❌ .config-page 样式未应用`, 'error');
+            }
+            
+            document.body.removeChild(testDiv);
+
+            // 5. 建议
+            addResult('<h3>5. 解决建议</h3>', 'info');
+            addResult(`
+                <ul>
+                    <li>在浏览器中按 <strong>Ctrl+Shift+R</strong> (Windows) 或 <strong>Cmd+Shift+R</strong> (Mac) 强制刷新</li>
+                    <li>清空浏览器缓存: <strong>Ctrl+Shift+Delete</strong></li>
+                    <li>在开发者工具中右键点击刷新按钮，选择"清空缓存并硬性重新加载"</li>
+                    <li>检查浏览器控制台是否有 CSS 加载错误</li>
+                    <li>确认服务器正在运行: <a href="http://localhost:8093" target="_blank">http://localhost:8093</a></li>
+                </ul>
+            `, 'warning');
+
+            addResult('诊断完成！', 'success');
+        }
+
+        diagnose();
+    </script>
+</body>
+</html>

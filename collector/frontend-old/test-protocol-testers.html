@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocol Testers Test</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+    <div id="app">
+        <div class="testing-page">
+            <div class="page-header">
+                <div class="header-content">
+                    <h1>🔧 协议特定测试功能验证</h1>
+                    <p class="page-description">测试新实现的协议特定测试组件功能</p>
+                </div>
+            </div>
+            
+            <div class="testing-content">
+                <div class="testing-main">
+                    <div class="test-panel">
+                        <div class="panel-header">
+                            <h2>协议测试器</h2>
+                            <p>选择协议并测试其特定功能</p>
+                        </div>
+                        <div id="protocol-tester-container"></div>
+                    </div>
+                </div>
+                
+                <div class="results-panel">
+                    <div class="panel-header">
+                        <h2>测试结果</h2>
+                        <div class="results-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="clearResults()">清空结果</button>
+                        </div>
+                    </div>
+                    <div id="test-results-container">
+                        <div class="empty-results">
+                            <div class="empty-icon">📊</div>
+                            <h3>暂无测试结果</h3>
+                            <p>执行协议测试后，结果将显示在这里</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { h, render } from 'https://esm.sh/preact?no-require';
+        import htm from 'https://esm.sh/htm?no-require';
+        import { useState } from 'https://esm.sh/preact/hooks';
+        
+        import ProtocolTester from './components/ProtocolTester.js';
+        import TestResultsDisplay from './components/TestResultsDisplay.js';
+
+        const html = htm.bind(h);
+
+        const TestApp = () => {
+            const [selectedProtocol, setSelectedProtocol] = useState('OPC_UA');
+            const [testResults, setTestResults] = useState([]);
+            const [isLoading, setIsLoading] = useState(false);
+
+            const handleTestComplete = (result) => {
+                setTestResults(prev => [result, ...prev]);
+                console.log('Test completed:', result);
+            };
+
+            const clearResults = () => {
+                setTestResults([]);
+            };
+
+            // Make clearResults available globally
+            window.clearResults = clearResults;
+
+            return html`
+                <div>
+                    <${ProtocolTester}
+                        protocol=${selectedProtocol}
+                        onProtocolChange=${setSelectedProtocol}
+                        onTestComplete=${handleTestComplete}
+                        isLoading=${isLoading}
+                        setIsLoading=${setIsLoading}
+                    />
+                </div>
+            `;
+        };
+
+        const ResultsApp = () => {
+            const [testResults, setTestResults] = useState([]);
+
+            // Listen for test results from the main app
+            window.addEventListener('testResult', (event) => {
+                setTestResults(prev => [event.detail, ...prev]);
+            });
+
+            return html`
+                <${TestResultsDisplay}
+                    results=${testResults}
+                    onClear=${() => setTestResults([])}
+                />
+            `;
+        };
+
+        // Render the apps
+        render(html`<${TestApp} />`, document.getElementById('protocol-tester-container'));
+        
+        // Update results display when tests complete
+        let testResults = [];
+        const updateResults = () => {
+            const container = document.getElementById('test-results-container');
+            if (testResults.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-results">
+                        <div class="empty-icon">📊</div>
+                        <h3>暂无测试结果</h3>
+                        <p>执行协议测试后，结果将显示在这里</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = testResults.map(result => `
+                    <div class="result-item ${result.success ? 'success' : 'error'}">
+                        <div class="result-header">
+                            <div class="result-main-info">
+                                <div class="result-status">
+                                    <span class="status-icon">${result.success ? '✅' : '❌'}</span>
+                                    <span class="protocol-name">${result.protocol}</span>
+                                </div>
+                                <div class="result-test-type">${result.testType}</div>
+                            </div>
+                            <div class="result-meta-info">
+                                <div class="result-duration">${result.duration}ms</div>
+                                <div class="result-timestamp">${new Date(result.timestamp).toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                        ${result.error ? `
+                            <div class="result-details">
+                                <div class="error-details">
+                                    <h4>错误信息</h4>
+                                    <div class="error-message">${result.error}</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${result.success && result.data ? `
+                            <div class="result-details">
+                                <div class="success-details">
+                                    <h4>测试数据</h4>
+                                    <div class="data-display">
+                                        <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+        };
+
+        // Listen for test completion events
+        document.addEventListener('testComplete', (event) => {
+            testResults.unshift(event.detail);
+            updateResults();
+        });
+
+        window.clearResults = () => {
+            testResults = [];
+            updateResults();
+        };
+
+        console.log('Protocol Testers Test App initialized');
+    </script>
+</body>
+</html>

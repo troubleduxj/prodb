@@ -1,0 +1,66 @@
+{
+  "name": "Standard MQTT Template",
+  "description": "Standard template for MQTT data collection from IoT devices and sensors",
+  "protocol": "mqtt",
+  "template_config": {
+    "broker_url": "{{broker_url}}",
+    "client_id": "{{client_id}}",
+    "username": "{{username}}",
+    "password": "{{password}}",
+    "qos": 1,
+    "clean_session": true,
+    "keep_alive": 60,
+    "connection": {
+      "timeout": 30000,
+      "retry_count": 3,
+      "retry_interval": 5000,
+      "auto_reconnect": true
+    },
+    "tls": {
+      "enabled": "{{tls_enabled}}",
+      "ca_cert_path": "{{ca_cert_path}}",
+      "client_cert_path": "{{client_cert_path}}",
+      "client_key_path": "{{client_key_path}}",
+      "insecure_skip_verify": false
+    },
+    "topics": [
+      {
+        "topic": "{{topic}}",
+        "qos": 1,
+        "data_format": "json",
+        "field_mapping": {
+          "timestamp": "{{timestamp_field}}",
+          "value": "{{value_field}}",
+          "quality": "{{quality_field}}",
+          "device_id": "{{device_id_field}}"
+        },
+        "filters": {
+          "device_filter": "{{device_filter}}",
+          "value_filter": "{{value_filter}}"
+        }
+      }
+    ],
+    "target": {
+      "database": "industrial_data",
+      "super_table": "mqtt_metrics",
+      "tags": {
+        "collector_id": "{{collector_id}}",
+        "broker": "{{broker_name}}",
+        "topic": "{{topic}}",
+        "location": "{{location}}",
+        "device_type": "iot_sensor",
+        "protocol": "mqtt"
+      }
+    },
+    "data_processing": {
+      "enable_buffering": true,
+      "buffer_size": 1000,
+      "batch_size": 100,
+      "flush_interval": 5000,
+      "enable_deduplication": true,
+      "dedup_window": 60000
+    }
+  },
+  "version": "1.0.0",
+  "tags": ["mqtt", "iot", "sensor", "wireless"]
+}

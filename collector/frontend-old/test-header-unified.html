@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Unified Test - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        /* Test content styles */
+        .test-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .test-section h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .test-section p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-3);
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: var(--space-4) 0;
+        }
+
+        .feature-list li {
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            color: var(--color-success);
+            font-weight: bold;
+        }
+
+        .alignment-demo {
+            background: linear-gradient(45deg, var(--color-primary), var(--color-success));
+            height: 200px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            margin: var(--space-4) 0;
+        }
+
+        .success-message {
+            padding: var(--space-4);
+            background-color: var(--color-success);
+            color: white;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: var(--font-weight-bold);
+            margin-top: var(--space-4);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            border-radius: 9999px;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .status-indicator.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+        }
+
+        .status-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState } from 'https://esm.sh/preact/hooks';
+        import Layout from './components/Layout.js';
+
+        // Test App Component
+        const TestApp = () => {
+            const [currentPath, setCurrentPath] = useState('/');
+
+            const navigateTo = (path) => {
+                setCurrentPath(path);
+                console.log('Navigating to:', path);
+            };
+
+            return html`
+                <${Layout} 
+                    currentPath=${currentPath} 
+                    navigateTo=${navigateTo}
+                >
+                    <!-- Test Content -->
+                    <div class="test-content">
+                        <div class="test-section">
+                            <h3>🎯 Header Unified Design - 统一设计的header</h3>
+                            <p>这个页面使用重新设计的Layout组件，采用统一的控件基类和简化的结构。</p>
+                            
+                            <div class="status-indicator success">
+                                Header统一设计已应用
+                            </div>
+
+                            <h4 style="margin-top: var(--space-6); color: var(--text-primary);">重新设计要点：</h4>
+                            <ul class="feature-list">
+                                <li><span class="feature-icon">✓</span> 简化HTML结构，减少嵌套层级</li>
+                                <li><span class="feature-icon">✓</span> 使用统一的.header-control基类</li>
+                                <li><span class="feature-icon">✓</span> 固定header容器高度64px</li>
+                                <li><span class="feature-icon">✓</span> 所有控件统一高度36px</li>
+                                <li><span class="feature-icon">✓</span> 简化的flexbox对齐方式</li>
+                                <li><span class="feature-icon">✓</span> 统一的hover和focus效果</li>
+                            </ul>
+
+                            <div class="alignment-demo">
+                                Header统一设计验证区域
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h3>🔍 验证清单</h3>
+                            <p>请检查以下统一设计效果：</p>
+                            <ul class="feature-list">
+                                <li><span class="feature-icon">✓</span> 所有header控件使用相同的基础样式</li>
+                                <li><span class="feature-icon">✓</span> 控件高度完全一致（36px）</li>
+                                <li><span class="feature-icon">✓</span> 垂直居中对齐完美</li>
+                                <li><span class="feature-icon">✓</span> hover效果统一一致</li>
+                                <li><span class="feature-icon">✓</span> focus状态样式统一</li>
+                                <li><span class="feature-icon">✓</span> 间距和padding一致</li>
+                            </ul>
+                        </div>
+
+                        <div class="test-section">
+                            <h3>⚙️ 技术改进</h3>
+                            <ul class="feature-list">
+                                <li><span class="feature-icon">✓</span> 移除复杂的CSS选择器</li>
+                                <li><span class="feature-icon">✓</span> 使用单一的控件基类</li>
+                                <li><span class="feature-icon">✓</span> 简化的HTML结构</li>
+                                <li><span class="feature-icon">✓</span> 更好的可维护性</li>
+                                <li><span class="feature-icon">✓</span> 一致的视觉效果</li>
+                            </ul>
+                        </div>
+
+                        <div class="success-message">
+                            🎉 Header统一设计完成！所有控件完美对齐！
+                        </div>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>📜 滚动测试</h3>
+                        <p>滚动页面验证header的sticky效果和统一设计的稳定性。</p>
+                        
+                        <div class="alignment-demo" style="background: linear-gradient(135deg, var(--color-warning), var(--color-error));">
+                            滚动测试区域 1 - Header应保持统一对齐
+                        </div>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>✨ 设计完成</h3>
+                        <p>Header统一设计已完成，可以在生产环境中使用。</p>
+                        
+                        <div class="alignment-demo" style="background: linear-gradient(225deg, var(--color-success), var(--color-primary));">
+                            最终验证区域 - Unified Design Success!
+                        </div>
+                    </div>
+                </>
+            `;
+        };
+
+        // Render the app
+        render(html`<${TestApp} />`, document.getElementById('app'));
+
+        console.log('Header Unified Test loaded!');
+        console.log('Applied unified design:');
+        console.log('- Simplified HTML structure');
+        console.log('- Unified .header-control base class');
+        console.log('- Fixed 64px header height');
+        console.log('- Consistent 36px control height');
+        console.log('- Simplified flexbox alignment');
+        console.log('- Unified hover and focus effects');
+    </script>
+</body>
+</html>

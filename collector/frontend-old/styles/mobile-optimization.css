@@ -1,0 +1,431 @@
+/* Mobile Performance and Network Optimization Styles */
+
+/* Enhanced Mobile Form Styles */
+.mobile-form.enhanced {
+    --touch-target-size: 44px;
+    --input-padding: 12px 16px;
+    --border-radius: 8px;
+    --transition-speed: 0.2s;
+}
+
+.mobile-form.enhanced .mobile-form-input {
+    min-height: var(--touch-target-size);
+    padding: var(--input-padding);
+    border-radius: var(--border-radius);
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 16px; /* Prevents zoom on iOS */
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.mobile-form.enhanced .mobile-form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.mobile-form.enhanced .mobile-form-input.large {
+    min-height: 52px;
+    padding: 16px 20px;
+    font-size: 18px;
+}
+
+.mobile-form.enhanced .mobile-form-input.error {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Enhanced Checkbox and Radio Styles */
+.mobile-checkbox-label.enhanced {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    position: relative;
+    min-height: var(--touch-target-size);
+}
+
+.mobile-checkbox-label.enhanced:hover {
+    background-color: var(--bg-hover);
+}
+
+.mobile-checkbox.enhanced {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mobile-checkbox-indicator {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-card);
+    position: relative;
+    transition: all var(--transition-speed);
+    flex-shrink: 0;
+}
+
+.mobile-checkbox.enhanced:checked + .mobile-checkbox-text + .mobile-checkbox-indicator {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.mobile-checkbox.enhanced:checked + .mobile-checkbox-text + .mobile-checkbox-indicator::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Enhanced Radio Button Styles */
+.mobile-radio-group.enhanced {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mobile-radio-label.enhanced {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    min-height: var(--touch-target-size);
+}
+
+.mobile-radio.enhanced {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mobile-radio-indicator {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    background-color: var(--bg-card);
+    position: relative;
+    transition: all var(--transition-speed);
+    flex-shrink: 0;
+}
+
+.mobile-radio.enhanced:checked ~ .mobile-radio-indicator {
+    border-color: var(--color-primary);
+}
+
+.mobile-radio.enhanced:checked ~ .mobile-radio-indicator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+}
+
+/* Form Header Enhancements */
+.mobile-form-header.enhanced {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+.offline-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.auto-save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+}/* Va
+lidation Progress Bar */
+.validation-progress-bar {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.validation-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.validation-progress-text {
+    position: absolute;
+    top: -24px;
+    right: 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Enhanced Form Actions */
+.mobile-form-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mobile-form-submit.enhanced,
+.mobile-form-cancel.enhanced {
+    min-height: var(--touch-target-size);
+    padding: 12px 24px;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all var(--transition-speed);
+    flex: 1;
+    min-width: 120px;
+}
+
+.mobile-form-submit.enhanced:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Offline Notice */
+.offline-notice {
+    margin-top: 12px;
+    padding: 12px;
+    background-color: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.offline-notice small {
+    color: var(--color-warning);
+    font-size: 14px;
+}
+
+/* Progressive Loader Styles */
+.progressive-loader {
+    position: relative;
+    min-height: 100px;
+}
+
+.progressive-loader-placeholder {
+    width: 100%;
+    height: 100px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.progressive-loader-loading {
+    padding: 24px;
+    text-align: center;
+}
+
+.loading-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skeleton-line {
+    height: 16px;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+.skeleton-line.short {
+    width: 60%;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.progressive-loader-error {
+    padding: 24px;
+    text-align: center;
+    color: var(--color-error);
+}
+
+/* Optimized Image Styles */
+.optimized-image-container {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+}
+
+.optimized-image {
+    width: 100%;
+    height: auto;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.optimized-image.loaded {
+    opacity: 1;
+}
+
+.optimized-image.error {
+    opacity: 0.5;
+}
+
+.image-loading-overlay,
+.image-error-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-secondary);
+}
+
+.image-error-overlay {
+    color: var(--color-error);
+    font-size: 24px;
+}
+
+.loading-spinner.small {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+}
+
+/* Network-aware optimizations */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Slow connection optimizations */
+.slow-connection .mobile-form.enhanced {
+    --transition-speed: 0s;
+}
+
+.slow-connection .skeleton-line {
+    animation: none;
+    background: var(--bg-secondary);
+}
+
+.slow-connection .loading-spinner {
+    animation-duration: 2s;
+}
+
+/* Touch improvements for mobile */
+@media (hover: none) and (pointer: coarse) {
+    .mobile-form.enhanced .mobile-form-input {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    .mobile-checkbox-label.enhanced,
+    .mobile-radio-label.enhanced {
+        min-height: 48px; /* Larger touch targets */
+    }
+    
+    .mobile-form-submit.enhanced,
+    .mobile-form-cancel.enhanced {
+        min-height: 48px;
+        padding: 14px 28px;
+    }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .mobile-checkbox-indicator,
+    .mobile-radio-indicator {
+        border-width: 1px;
+    }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+    .validation-progress-bar {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .offline-notice {
+        background-color: rgba(245, 158, 11, 0.15);
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+}
+
+/* Reduced data mode */
+@media (prefers-reduced-data: reduce) {
+    .skeleton-line {
+        animation: none;
+        background: var(--bg-secondary);
+    }
+    
+    .optimized-image {
+        filter: contrast(0.8) brightness(1.1);
+    }
+}

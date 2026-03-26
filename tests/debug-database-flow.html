@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库流程调试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; white-space: pre-wrap; }
+        .error { background: #ffe6e6; color: #d00; }
+        .success { background: #e6ffe6; color: #060; }
+        .warning { background: #fff3cd; color: #856404; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        .step { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .links { margin: 20px 0; }
+        .links a { display: inline-block; margin: 5px; padding: 10px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .links a:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔧 数据库管理页面完整调试</h1>
+    
+    <div class="links">
+        <h3>📋 快速链接</h3>
+        <a href="http://localhost:3000/" target="_blank">前端首页</a>
+        <a href="http://localhost:3000/database/connection" target="_blank">数据库连接配置</a>
+        <a href="http://localhost:3000/database/management" target="_blank">数据库管理</a>
+        <a href="http://localhost:3000/database/tables" target="_blank">表结构管理</a>
+        <a href="http://localhost:3001/ping" target="_blank">后端状态</a>
+    </div>
+
+    <div class="section">
+        <h2>🚀 完整流程测试</h2>
+        <button onclick="runCompleteTest()">运行完整测试</button>
+        <div id="complete-test-result" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>📊 问题诊断报告</h2>
+        <div id="diagnosis-result" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>💡 解决方案建议</h2>
+        <div id="solution-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001';
+        const FRONTEND_URL = 'http://localhost:3000';
+
+        async function runCompleteTest() {
+            const resultDiv = document.getElementById('complete-test-result');
+            const diagnosisDiv = document.getElementById('diagnosis-result');
+            const solutionDiv = document.getElementById('solution-result');
+            
+            resultDiv.className = 'result warning';
+            resultDiv.textContent = '🔍 开始完整流程测试...\n';
+            
+            const testResults = {
+                backend: null,
+                frontend: null,
+                connections: null,
+                defaultConnection: null,
+                databases: null,
+                superTables: null,
+                issues: [],
+                solutions: []
+            };
+
+            try {
+                // 1. 测试后端状态
+                resultDiv.textContent += '\n📡 测试后端服务状态...';
+                try {
+                    const backendResponse = await fetch(`${API_BASE_URL}/ping`);
+                    const backendData = await backendResponse.json();
+                    testResults.backend = {
+                        success: true,
+                        data: backendData,
+                        tdengineHealthy: backendData.tdengine_status?.healthy || false
+                    };
+                    resultDiv.textContent += ' ✅';
+                } catch (error) {
+                    testResults.backend = { success: false, error: error.message };
+                    testResults.issues.push('后端服务无法访问');
+                    testResults.solutions.push('启动后端服务: 运行 quick-start-backend.bat');
+                    resultDiv.textContent += ' ❌';
+                }
+
+                // 2. 测试前端状态
+                resultDiv.textContent += '\n🌐 测试前端服务状态...';
+                try {
+                    const frontendResponse = await fetch(`${FRONTEND_URL}/`);
+                    testResults.frontend = { success: frontendResponse.ok };
+                    resultDiv.textContent += ' ✅';
+                } catch (error) {
+                    testResults.frontend = { success: false, error: error.message };
+                    testResults.issues.push('前端服务无法访问');
+                    testResults.solutions.push('启动前端服务: cd platform/frontend && npm run dev');
+                    resultDiv.textContent += ' ❌';
+                }
+
+                // 3. 测试连接配置API
+                if (testResults.backend?.success) {
+                    resultDiv.textContent += '\n🔗 测试连接配置API...';
+                    try {
+                        const connectionsResponse = await fetch(`${API_BASE_URL}/api/v1/database/connections`);
+                        const connectionsData = await connectionsResponse.json();
+                        testResults.connections = {
+                            success: true,
+                            data: connectionsData,
+                            count: connectionsData.connections?.length || 0
+                        };
+                        
+                        if (testResults.connections.count === 0) {
+                            testResults.issues.push('没有配置TDengine连接');
+                            testResults.solutions.push('在数据库连接配置页面添加TDengine连接');
+                        }
+                        resultDiv.textContent += ` ✅ (${testResults.connections.count}个连接)`;
+                    } catch (error) {
+                        testResults.connections = { success: false, error: error.message };
+                        testResults.issues.push('连接配置API调用失败');
+                        resultDiv.textContent += ' ❌';
+                    }
+                }
+
+                // 4. 测试默认连接逻辑
+                if (testResults.connections?.success && testResults.connections.count > 0) {
+                    resultDiv.textContent += '\n⚙️ 测试默认连接逻辑...';
+                    const connections = testResults.connections.data.connections;
+                    const defaultConn = connections.find(conn => conn.is_default);
+                    const selectedConn = defaultConn || connections[0];
+                    
+                    testResults.defaultConnection = {
+                        success: true,
+                        connection: selectedConn,
+                        isDefault: !!defaultConn
+                    };
+                    
+                    if (!defaultConn) {
+                        testResults.issues.push('没有设置默认连接');
+                        testResults.solutions.push('在连接配置中将一个连接设为默认');
+                    }
+                    resultDiv.textContent += ` ✅ (使用: ${selectedConn.name})`;
+                }
+
+                // 5. 测试数据库列表API
+                if (testResults.defaultConnection?.success) {
+                    resultDiv.textContent += '\n🗄️ 测试数据库列表API...';
+                    try {
+                        const connectionId = testResults.defaultConnection.connection.id;
+                        const databasesResponse = await fetch(`${API_BASE_URL}/api/v1/database/databases?connection_id=${connectionId}`);
+                        const databasesData = await databasesResponse.json();
+                        
+                        testResults.databases = {
+                            success: true,
+                            data: databasesData,
+                            count: databasesData.databases?.length || 0
+                        };
+                        resultDiv.textContent += ` ✅ (${testResults.databases.count}个数据库)`;
+                    } catch (error) {
+                        testResults.databases = { success: false, error: error.message };
+                        testResults.issues.push('数据库列表API调用失败');
+                        testResults.solutions.push('检查TDengine服务是否运行，连接配置是否正确');
+                        resultDiv.textContent += ' ❌';
+                    }
+                }
+
+                // 6. 测试超级表列表API
+                if (testResults.databases?.success && testResults.databases.count > 0) {
+                    resultDiv.textContent += '\n📊 测试超级表列表API...';
+                    try {
+                        const connectionId = testResults.defaultConnection.connection.id;
+                        const database = testResults.databases.data.databases[0].name;
+                        const superTablesResponse = await fetch(`${API_BASE_URL}/api/v1/database/supertables?database=${database}&connection_id=${connectionId}`);
+                        const superTablesData = await superTablesResponse.json();
+                        
+                        testResults.superTables = {
+                            success: true,
+                            data: superTablesData,
+                            count: (superTablesData.supertables || superTablesData || []).length
+                        };
+                        resultDiv.textContent += ` ✅ (${testResults.superTables.count}个超级表)`;
+                    } catch (error) {
+                        testResults.superTables = { success: false, error: error.message };
+                        testResults.issues.push('超级表列表API调用失败');
+                        resultDiv.textContent += ' ❌';
+                    }
+                }
+
+                resultDiv.textContent += '\n\n🎉 测试完成！';
+                resultDiv.className = testResults.issues.length === 0 ? 'result success' : 'result warning';
+
+                // 生成诊断报告
+                generateDiagnosis(testResults, diagnosisDiv);
+                generateSolutions(testResults, solutionDiv);
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `\n\n💥 测试过程中发生错误: ${error.message}`;
+            }
+        }
+
+        function generateDiagnosis(results, div) {
+            let diagnosis = '📊 诊断报告:\n\n';
+
+            // 服务状态
+            diagnosis += '🔧 服务状态:\n';
+            diagnosis += `  后端服务: ${results.backend?.success ? '✅ 正常' : '❌ 异常'}\n`;
+            diagnosis += `  前端服务: ${results.frontend?.success ? '✅ 正常' : '❌ 异常'}\n`;
+            if (results.backend?.success) {
+                diagnosis += `  TDengine: ${results.backend.tdengineHealthy ? '✅ 健康' : '⚠️ 可能有问题'}\n`;
+            }
+
+            // 配置状态
+            diagnosis += '\n⚙️ 配置状态:\n';
+            diagnosis += `  连接配置: ${results.connections?.count || 0} 个\n`;
+            if (results.defaultConnection?.success) {
+                diagnosis += `  默认连接: ${results.defaultConnection.isDefault ? '✅ 已设置' : '⚠️ 未设置'}\n`;
+                diagnosis += `  选择连接: ${results.defaultConnection.connection.name}\n`;
+            }
+
+            // 数据状态
+            diagnosis += '\n📊 数据状态:\n';
+            diagnosis += `  数据库数量: ${results.databases?.count || 0} 个\n`;
+            diagnosis += `  超级表数量: ${results.superTables?.count || 0} 个\n`;
+
+            // 问题汇总
+            if (results.issues.length > 0) {
+                diagnosis += '\n⚠️ 发现的问题:\n';
+                results.issues.forEach((issue, index) => {
+                    diagnosis += `  ${index + 1}. ${issue}\n`;
+                });
+            } else {
+                diagnosis += '\n✅ 没有发现问题，系统应该正常工作！\n';
+            }
+
+            div.className = results.issues.length === 0 ? 'result success' : 'result warning';
+            div.textContent = diagnosis;
+        }
+
+        function generateSolutions(results, div) {
+            let solutions = '💡 解决方案建议:\n\n';
+
+            if (results.solutions.length > 0) {
+                solutions += '🔧 需要执行的操作:\n';
+                results.solutions.forEach((solution, index) => {
+                    solutions += `  ${index + 1}. ${solution}\n`;
+                });
+            } else {
+                solutions += '🎉 系统运行正常，无需额外操作！\n';
+            }
+
+            solutions += '\n📋 验证步骤:\n';
+            solutions += '  1. 确保后端服务运行在 http://localhost:3001\n';
+            solutions += '  2. 确保前端服务运行在 http://localhost:3000\n';
+            solutions += '  3. 访问数据库连接配置页面，确保有可用连接\n';
+            solutions += '  4. 设置一个连接为默认连接\n';
+            solutions += '  5. 访问数据库管理页面，应该能看到数据库列表\n';
+            solutions += '  6. 访问表结构管理页面，应该能看到表列表\n';
+
+            solutions += '\n🔗 相关链接:\n';
+            solutions += '  - 数据库连接配置: http://localhost:3000/database/connection\n';
+            solutions += '  - 数据库管理: http://localhost:3000/database/management\n';
+            solutions += '  - 表结构管理: http://localhost:3000/database/tables\n';
+            solutions += '  - 后端状态检查: http://localhost:3001/ping\n';
+
+            div.className = 'result success';
+            div.textContent = solutions;
+        }
+
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            setTimeout(runCompleteTest, 1000);
+        };
+    </script>
+</body>
+</html>

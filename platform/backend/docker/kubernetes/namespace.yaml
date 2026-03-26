@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prodb
+  labels:
+    name: prodb
+    environment: production
+    team: prodb-team
+  annotations:
+    description: "ProDB Industrial Data Collection Platform"

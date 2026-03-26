@@ -1,0 +1,19 @@
+@echo off
+echo Testing OPC UA Simulator...
+echo.
+echo Starting simulator in background...
+start /B go run main.go config.json
+
+echo Waiting for simulator to start...
+timeout /t 3 /nobreak > nul
+
+echo Running tests...
+go run test_simulator.go
+
+echo.
+echo Test completed. Press any key to stop simulator...
+pause > nul
+
+echo Stopping simulator...
+taskkill /f /im go.exe > nul 2>&1
+echo Done.

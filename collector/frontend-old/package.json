@@ -1,0 +1,57 @@
+{
+  "name": "prodb-collector-frontend",
+  "version": "1.0.0",
+  "description": "ProDB Collector Frontend - Industrial Data Collection and Protocol Testing Tool",
+  "type": "module",
+  "scripts": {
+    "build": "node build/optimize-resources.js",
+    "deploy": "node deploy.js",
+    "serve": "python -m http.server 8080",
+    "serve:dist": "cd dist && python -m http.server 8080",
+    "test": "echo 'Tests will be added in future versions'",
+    "lint": "echo 'Linting will be added in future versions'",
+    "analyze": "node build/analyze-bundle.js"
+  },
+  "keywords": [
+    "industrial",
+    "data-collection",
+    "protocol-testing",
+    "opcua",
+    "modbus",
+    "mqtt",
+    "pwa",
+    "offline-first"
+  ],
+  "author": "ProDB Team",
+  "license": "MIT",
+  "devDependencies": {
+    "compression": "^1.7.4",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
+  "pwa": {
+    "name": "ProDB Collector",
+    "shortName": "Collector",
+    "description": "Industrial Data Collection and Protocol Testing Tool",
+    "themeColor": "#2563eb",
+    "backgroundColor": "#0f172a",
+    "display": "standalone",
+    "orientation": "portrait-primary"
+  },
+  "performance": {
+    "budgets": {
+      "maxBundleSize": "500KB",
+      "maxInitialLoad": "200KB",
+      "maxImageSize": "100KB",
+      "maxFontSize": "50KB"
+    }
+  }
+}

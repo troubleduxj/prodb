@@ -1,0 +1,116 @@
+{
+  "collector_id": "collector-001",
+  "name": "ProDB Collector Example",
+  "version": "1.0.0",
+  "heartbeat_interval": 60,
+  "auth": {
+    "collector_id": "collector-001",
+    "secret_key": "your-secret-key-here",
+    "platform_endpoint": "http://localhost:9080",
+    "token_refresh_url": "/api/v1/auth/collector/refresh",
+    "max_retries": 3,
+    "retry_delay": 5,
+    "tls": {
+      "insecure_skip_verify": false,
+      "ca_cert_path": "",
+      "ca_certs": [],
+      "client_cert_path": "",
+      "client_key_path": "",
+      "min_version": "1.2",
+      "max_version": "1.3",
+      "server_name": "",
+      "handshake_timeout": 10
+    },
+    "security": {
+      "key_store_path": "./keys",
+      "master_key_path": "./keys/master.key",
+      "auto_generate": true,
+      "key_rotation_days": 90,
+      "encrypt_secret_key": true
+    }
+  },
+  "logger": {
+    "level": "info",
+    "format": "json",
+    "output": "stdout",
+    "file_path": "./logs/collector.log",
+    "max_size": 100,
+    "max_backups": 3,
+    "max_age": 30
+  },
+  "buffer": {
+    "max_size": 10000,
+    "flush_interval": 30,
+    "flush_batch_size": 1000
+  },
+  "storage": {
+    "database_path": "./collector_cache.db",
+    "max_cache_size": 1073741824,
+    "retention_days": 7,
+    "cleanup_interval": 3600,
+    "max_retries": 3,
+    "retry_delay": 5
+  },
+  "platform": {
+    "base_url": "http://localhost:9080",
+    "data_upload_url": "/api/v1/data/batch",
+    "config_sync_url": "/api/v1/collectors/%s/config",
+    "heartbeat_url": "/api/v1/collectors/%s/heartbeat",
+    "timeout": 30,
+    "max_retries": 3,
+    "retry_delay": 5,
+    "enable_compression": true
+  },
+  "collection_tasks": [
+    {
+      "task_id": "task-001",
+      "name": "Example Modbus Task",
+      "protocol": "modbus_tcp",
+      "enabled": true,
+      "schedule": {
+        "interval": 5,
+        "unit": "seconds"
+      },
+      "connection": {
+        "host": "192.168.1.100",
+        "port": 502,
+        "slave_id": 1,
+        "timeout": 3000
+      },
+      "data_points": [
+        {
+          "name": "temperature",
+          "address": "40001",
+          "data_type": "float32",
+          "scale": 0.1,
+          "offset": 0,
+          "unit": "°C",
+          "tags": {
+            "sensor_type": "temperature",
+            "location": "workshop_a"
+          }
+        },
+        {
+          "name": "pressure",
+          "address": "40002",
+          "data_type": "float32",
+          "scale": 0.01,
+          "offset": 0,
+          "unit": "bar",
+          "tags": {
+            "sensor_type": "pressure",
+            "location": "workshop_a"
+          }
+        }
+      ],
+      "target": {
+        "database": "industrial_data",
+        "super_table": "modbus_metrics",
+        "tags": {
+          "location": "workshop_a",
+          "device_type": "plc"
+        }
+      }
+    }
+  ]
+}

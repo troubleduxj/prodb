@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库树组件测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .tree-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .tree-panel {
+            flex: 1;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            background: white;
+        }
+        .tree-node {
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tree-node:hover {
+            background: #f8f9fa;
+        }
+        .tree-node.selected {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+        }
+        .tree-node.database {
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .tree-node.supertable {
+            color: #388e3c;
+            margin-left: 20px;
+        }
+        .tree-node.table {
+            color: #f57c00;
+            margin-left: 40px;
+        }
+        .expand-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌳 数据库树组件测试</h1>
+    <div class="info">
+        <strong>测试目标:</strong> 模拟数据库树组件的行为，验证数据加载和展开逻辑
+    </div>
+    
+    <div>
+        <button onclick="initializeTree()">🚀 初始化树</button>
+        <button onclick="loadAllData()">📊 加载所有数据</button>
+        <button onclick="simulateUserClick()">👆 模拟用户点击</button>
+        <button onclick="clearTree()">🗑️清空树</button>
+    </div>
+    
+    <div id="status"></div>
+    
+    <div class="tree-container">
+        <div class="tree-panel">
+            <h3>🌲 数据库树</h3>
+            <div id="tree-display"></div>
+        </div>
+        <div class="tree-panel">
+            <h3>📋 选中节点信息</h3>
+            <div id="selected-info"></div>
+        </div>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        
+        // 模拟树状态
+        let treeState = {
+            nodes: [],
+            selectedNode: null,
+            expandedNodes: new Set(),
+            loadingNodes: new Set()
+        };
+        
+        let defaultConnection = null;
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResult(content) {
+            const resultDiv = document.getElementById('result');
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+
+        // 模拟API调用
+        async function apiCall(method, url, params = {}) {
+            try {
+                let fullUrl = `${API_BASE}${url}`;
+                
+                if (method === 'GET' && Object.keys(params).length > 0) {
+                    const searchParams = new URLSearchParams();
+                    Object.entries(params).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null) {
+                            searchParams.append(key, value);
+                        }
+                    });
+                    fullUrl += '?' + searchParams.toString();
+                }
+
+                console.log(`API调用: ${method} ${fullUrl}`);
+                const response = await fetch(fullUrl);
+                const data = await response.json();
+                
+                return { ok: response.ok, data, status: response.status };
+            } catch (error) {
+                return { ok: false, error: error.message, status: 0 };
+            }
+        }
+
+        // 获取默认连接
+        async function getDefaultConnection() {
+            const result = await apiCall('GET', '/database/connections');
+            if (result.ok) {
+                const connections = result.data.connections || [];
+                defaultConnection = connections.find(conn => conn.is_default);
+                if (defaultConnection) {
+                    console.log('找到默认连接:', defaultConnection);
+                    return defaultConnection;
+                }
+            }
+            console.error('未找到默认连接');
+            return null;
+        }
+
+        // 加载数据库列表
+        async function loadDatabases(connectionId) {
+            console.log('加载数据库列表...');
+            const result = await apiCall('GET', '/database/databases');
+            if (result.ok) {
+                const databases = result.data.databases || [];
+                console.log('数据库列表:', databases);
+                return databases.map(db => ({
+                    id: `db-${db.name}`,
+                    name: db.name,
+                    type: 'database',
+                    children: [],
+                    metadata: db
+                }));
+            }
+            return [];
+        }
+
+        // 加载表数据
+        async function loadTables(database, connectionId) {
+            console.log(`加载数据库 ${database} 的表数据...`);
+            
+            try {
+                const [tablesResult, superTablesResult] = await Promise.all([
+                    apiCall('GET', '/database/tables', { database, connection_id: connectionId }),
+                    apiCall('GET', '/database/supertables', { database, connectionId })
+                ]);
+
+                console.log('表数据结果:', tablesResult);
+                console.log('超级表数据结果:', superTablesResult);
+
+                const tables = tablesResult.ok ? (tablesResult.data.data?.tables || []) : [];
+                const superTables = superTablesResult.ok ? (superTablesResult.data.supertables || []) : [];
+
+                const tableNodes = [];
+                
+                // 添加超级表
+                superTables.forEach(st => {
+                    tableNodes.push({
+                        id: `st-${database}-${st.name}`,
+                        name: st.name,
+                        type: 'supertable',
+                        children: [],
+                        metadata: st
+                    });
+                });
+
+                // 添加普通表
+                tables.forEach(table => {
+                    if (table.type === 'NORMAL_TABLE') {
+                        tableNodes.push({
+                            id: `nt-${database}-${table.name}`,
+                            name: table.name,
+                            type: 'table',
+                            children: [],
+                            metadata: table
+                        });
+                    }
+                });
+
+                console.log(`为数据库 ${database} 生成了 ${tableNodes.length} 个表节点:`, tableNodes);
+                return tableNodes;
+            } catch (error) {
+                console.error('加载表数据失败:', error);
+                return [];
+            }
+        }
+
+        // 初始化树
+        async function initializeTree() {
+            showStatus('初始化数据库树...', 'info');
+            
+            // 获取默认连接
+            const conn = await getDefaultConnection();
+            if (!conn) {
+                showStatus('❌ 未找到默认连接', 'error');
+                return;
+            }
+
+            // 创建连接节点
+            const connectionNode = {
+                id: `conn-${conn.id}`,
+                name: conn.name,
+                type: 'connection',
+                children: [],
+                metadata: conn
+            };
+
+            // 加载数据库
+            const databases = await loadDatabases(conn.id);
+            connectionNode.children = databases;
+
+            // 更新树状态
+            treeState.nodes = [connectionNode];
+            treeState.expandedNodes.add(connectionNode.id);
+
+            showStatus(`✅ 树初始化完成，找到 ${databases.length} 个数据库`, 'success');
+            renderTree();
+        }
+
+        // 加载所有数据
+        async function loadAllData() {
+            showStatus('加载所有数据库的表信息...', 'info');
+            
+            if (!defaultConnection) {
+                await getDefaultConnection();
+            }
+
+            if (!defaultConnection) {
+                showStatus('❌ 未找到默认连接', 'error');
+                return;
+            }
+
+            let totalTables = 0;
+            
+            // 遍历所有数据库节点
+            for (const connNode of treeState.nodes) {
+                if (connNode.children) {
+                    for (const dbNode of connNode.children) {
+                        if (dbNode.type === 'database') {
+                            console.log(`加载数据库 ${dbNode.name} 的表...`);
+                            const tables = await loadTables(dbNode.name, defaultConnection.id);
+                            dbNode.children = tables;
+                            totalTables += tables.length;
+                            treeState.expandedNodes.add(dbNode.id);
+                        }
+                    }
+                }
+            }
+
+            showStatus(`✅ 所有数据加载完成，共 ${totalTables} 个表/超级表`, 'success');
+            renderTree();
+        }
+
+        // 模拟用户点击
+        async function simulateUserClick() {
+            if (treeState.nodes.length === 0) {
+                showStatus('⚠️ 请先初始化树', 'info');
+                return;
+            }
+
+            // 找到第一个数据库节点
+            const connNode = treeState.nodes[0];
+            if (connNode.children && connNode.children.length > 0) {
+                const dbNode = connNode.children[0];
+                await selectNode(dbNode);
+            }
+        }
+
+        // 选择节点
+        async function selectNode(node) {
+            console.log('选择节点:', node);
+            treeState.selectedNode = node;
+            
+            // 如果是数据库节点，自动展开并加载表
+            if (node.type === 'database') {
+                const isExpanded = treeState.expandedNodes.has(node.id);
+                
+                if (!isExpanded) {
+                    showStatus(`展开数据库 ${node.name}...`, 'info');
+                    treeState.expandedNodes.add(node.id);
+                    treeState.loadingNodes.add(node.id);
+                    
+                    // 如果没有子节点，加载表
+                    if (!node.children || node.children.length === 0) {
+                        const tables = await loadTables(node.name, defaultConnection?.id);
+                        node.children = tables;
+                        showStatus(`✅ 数据库 ${node.name} 展开完成，找到 ${tables.length} 个表/超级表`, 'success');
+                    }
+                    
+                    treeState.loadingNodes.delete(node.id);
+                }
+            }
+            
+            renderTree();
+            showSelectedInfo(node);
+        }
+
+        // 渲染树
+        function renderTree() {
+            const treeDisplay = document.getElementById('tree-display');
+            let html = '';
+            
+            function renderNode(node, level = 0) {
+                const isSelected = treeState.selectedNode?.id === node.id;
+                const isExpanded = treeState.expandedNodes.has(node.id);
+                const isLoading = treeState.loadingNodes.has(node.id);
+                const hasChildren = node.children && node.children.length > 0;
+                const canExpand = node.type === 'connection' || node.type === 'database';
+                
+                let nodeHtml = `
+                    <div class="tree-node ${node.type} ${isSelected ? 'selected' : ''}" 
+                         onclick="handleNodeClick('${node.id}')" 
+                         style="margin-left: ${level * 20}px">
+                        <div class="expand-icon">
+                `;
+                
+                if (canExpand) {
+                    if (isLoading) {
+                        nodeHtml += '⏳';
+                    } else if (hasChildren) {
+                        nodeHtml += isExpanded ? '📂' : '📁';
+                    } else {
+                        nodeHtml += '📁';
+                    }
+                } else {
+                    if (node.type === 'supertable') {
+                        nodeHtml += '🏗️';
+                    } else if (node.type === 'table') {
+                        nodeHtml += '📋';
+                    }
+                }
+                
+                nodeHtml += `
+                        </div>
+                        <span>${node.name}</span>
+                `;
+                
+                if (node.metadata) {
+                    if (node.type === 'database') {
+                        nodeHtml += ` <small>(${node.metadata.ntables || 0} 表)</small>`;
+                    } else if (node.type === 'supertable') {
+                        nodeHtml += ` <small>(超级表)</small>`;
+                    }
+                }
+                
+                nodeHtml += '</div>';
+                
+                // 渲染子节点
+                if (isExpanded && hasChildren) {
+                    node.children.forEach(child => {
+                        nodeHtml += renderNode(child, level + 1);
+                    });
+                }
+                
+                return nodeHtml;
+            }
+            
+            treeState.nodes.forEach(node => {
+                html += renderNode(node);
+            });
+            
+            treeDisplay.innerHTML = html || '<div class="loading">暂无数据</div>';
+        }
+
+        // 处理节点点击
+        window.handleNodeClick = async function(nodeId) {
+            const node = findNodeById(treeState.nodes, nodeId);
+            if (node) {
+                await selectNode(node);
+            }
+        };
+
+        // 查找节点
+        function findNodeById(nodes, id) {
+            for (const node of nodes) {
+                if (node.id === id) return node;
+                if (node.children) {
+                    const found = findNodeById(node.children, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        // 显示选中节点信息
+        function showSelectedInfo(node) {
+            const infoDiv = document.getElementById('selected-info');
+            if (!node) {
+                infoDiv.innerHTML = '<div class="loading">未选择节点</div>';
+                return;
+            }
+            
+            let html = `
+                <div><strong>节点ID:</strong> ${node.id}</div>
+                <div><strong>节点名称:</strong> ${node.name}</div>
+                <div><strong>节点类型:</strong> ${node.type}</div>
+                <div><strong>子节点数:</strong> ${node.children?.length || 0}</div>
+            `;
+            
+            if (node.metadata) {
+                html += '<div><strong>元数据:</strong></div>';
+                html += `<div class="result">${JSON.stringify(node.metadata, null, 2)}</div>`;
+            }
+            
+            infoDiv.innerHTML = html;
+        }
+
+        // 清空树
+        function clearTree() {
+            treeState = {
+                nodes: [],
+                selectedNode: null,
+                expandedNodes: new Set(),
+                loadingNodes: new Set()
+            };
+            renderTree();
+            showSelectedInfo(null);
+            showStatus('🗑️ 树已清空', 'info');
+        }
+
+        // 页面加载时自动初始化
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                initializeTree();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

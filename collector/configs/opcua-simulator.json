@@ -1,0 +1,347 @@
+{
+  "collector_id": "opcua-simulator-collector",
+  "collector_name": "OPC UA模拟器采集器",
+  "description": "用于采集OPC UA模拟器数据的采集器配置",
+  "platform": {
+    "url": "http://localhost:3001",
+    "auth_endpoint": "http://localhost:3001/api/v1/auth",
+    "data_endpoint": "http://localhost:3001/api/v1/data",
+    "heartbeat_interval": 30,
+    "config_sync_interval": 300,
+    "data_upload_interval": 10,
+    "max_retry_attempts": 3,
+    "retry_delay": 5
+  },
+  "protocols": {
+    "opcua": {
+      "enabled": true,
+      "endpoint": "opc.tcp://localhost:4840/opcua/simulator",
+      "security_policy": "None",
+      "security_mode": "None",
+      "username": "",
+      "password": "",
+      "connection_timeout": 30,
+      "session_timeout": 300,
+      "subscription_interval": 1000,
+      "nodes": [
+        {
+          "node_id": "ns=2;s=Temperature_Sensor_01",
+          "name": "温度传感器1",
+          "description": "车间1号温度传感器",
+          "data_type": "float",
+          "collection_interval": 1000,
+          "enabled": true,
+          "tags": {
+            "location": "workshop_1",
+            "type": "temperature",
+            "unit": "celsius"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Temperature_Sensor_02",
+          "name": "温度传感器2",
+          "description": "车间2号温度传感器",
+          "data_type": "float",
+          "collection_interval": 1000,
+          "enabled": true,
+          "tags": {
+            "location": "workshop_2",
+            "type": "temperature",
+            "unit": "celsius"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Temperature_Sensor_03",
+          "name": "温度传感器3",
+          "description": "车间3号温度传感器",
+          "data_type": "float",
+          "collection_interval": 1000,
+          "enabled": true,
+          "tags": {
+            "location": "workshop_3",
+            "type": "temperature",
+            "unit": "celsius"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Pressure_Sensor_01",
+          "name": "压力传感器1",
+          "description": "主管道压力传感器",
+          "data_type": "float",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "main_pipeline",
+            "type": "pressure",
+            "unit": "bar"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Pressure_Sensor_02",
+          "name": "压力传感器2",
+          "description": "副管道压力传感器",
+          "data_type": "float",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "secondary_pipeline",
+            "type": "pressure",
+            "unit": "bar"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Flow_Sensor_01",
+          "name": "流量传感器1",
+          "description": "进水流量传感器",
+          "data_type": "float",
+          "collection_interval": 1500,
+          "enabled": true,
+          "tags": {
+            "location": "inlet",
+            "type": "flow",
+            "unit": "lpm"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Flow_Sensor_02",
+          "name": "流量传感器2",
+          "description": "出水流量传感器",
+          "data_type": "float",
+          "collection_interval": 1500,
+          "enabled": true,
+          "tags": {
+            "location": "outlet",
+            "type": "flow",
+            "unit": "lpm"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Level_Sensor_01",
+          "name": "液位传感器1",
+          "description": "储罐1液位传感器",
+          "data_type": "float",
+          "collection_interval": 3000,
+          "enabled": true,
+          "tags": {
+            "location": "tank_1",
+            "type": "level",
+            "unit": "percent"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Level_Sensor_02",
+          "name": "液位传感器2",
+          "description": "储罐2液位传感器",
+          "data_type": "float",
+          "collection_interval": 3000,
+          "enabled": true,
+          "tags": {
+            "location": "tank_2",
+            "type": "level",
+            "unit": "percent"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Motor_01_Status",
+          "name": "电机1状态",
+          "description": "主泵电机运行状态",
+          "data_type": "boolean",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "pump_station",
+            "type": "motor_status",
+            "equipment": "main_pump"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Motor_02_Status",
+          "name": "电机2状态",
+          "description": "副泵电机运行状态",
+          "data_type": "boolean",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "pump_station",
+            "type": "motor_status",
+            "equipment": "backup_pump"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Motor_01_Speed",
+          "name": "电机1转速",
+          "description": "主泵电机转速",
+          "data_type": "int32",
+          "collection_interval": 1000,
+          "enabled": true,
+          "tags": {
+            "location": "pump_station",
+            "type": "motor_speed",
+            "equipment": "main_pump",
+            "unit": "rpm"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Motor_02_Speed",
+          "name": "电机2转速",
+          "description": "副泵电机转速",
+          "data_type": "int32",
+          "collection_interval": 1000,
+          "enabled": true,
+          "tags": {
+            "location": "pump_station",
+            "type": "motor_speed",
+            "equipment": "backup_pump",
+            "unit": "rpm"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Valve_01_Opening",
+          "name": "阀门1开度",
+          "description": "进水阀门开度",
+          "data_type": "float",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "inlet",
+            "type": "valve_opening",
+            "equipment": "inlet_valve",
+            "unit": "percent"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Valve_02_Opening",
+          "name": "阀门2开度",
+          "description": "出水阀门开度",
+          "data_type": "float",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "outlet",
+            "type": "valve_opening",
+            "equipment": "outlet_valve",
+            "unit": "percent"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Device_Runtime",
+          "name": "设备运行时间",
+          "description": "系统累计运行时间",
+          "data_type": "int32",
+          "collection_interval": 5000,
+          "enabled": true,
+          "tags": {
+            "type": "runtime",
+            "unit": "seconds"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Alarm_Temperature_High",
+          "name": "高温报警",
+          "description": "温度超过阈值报警",
+          "data_type": "boolean",
+          "collection_interval": 1000,
+          "enabled": true,
+          "tags": {
+            "type": "alarm",
+            "category": "temperature",
+            "severity": "high"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Alarm_Pressure_Low",
+          "name": "低压报警",
+          "description": "压力低于阈值报警",
+          "data_type": "boolean",
+          "collection_interval": 1000,
+          "enabled": true,
+          "tags": {
+            "type": "alarm",
+            "category": "pressure",
+            "severity": "medium"
+          }
+        }
+      ]
+    }
+  },
+  "data_processing": {
+    "validation": {
+      "enabled": true,
+      "rules": [
+        {
+          "name": "temperature_range_check",
+          "type": "range",
+          "field": "value",
+          "condition": {
+            "min": -50,
+            "max": 150
+          },
+          "tags": {
+            "type": "temperature"
+          }
+        },
+        {
+          "name": "pressure_range_check",
+          "type": "range",
+          "field": "value",
+          "condition": {
+            "min": 0,
+            "max": 20
+          },
+          "tags": {
+            "type": "pressure"
+          }
+        },
+        {
+          "name": "flow_range_check",
+          "type": "range",
+          "field": "value",
+          "condition": {
+            "min": 0,
+            "max": 200
+          },
+          "tags": {
+            "type": "flow"
+          }
+        }
+      ]
+    },
+    "transformation": {
+      "enabled": true,
+      "rules": [
+        {
+          "name": "add_timestamp",
+          "type": "add_field",
+          "field": "collected_at",
+          "value": "{{.Timestamp}}"
+        },
+        {
+          "name": "add_collector_info",
+          "type": "add_field",
+          "field": "collector_id",
+          "value": "opcua-simulator-collector"
+        }
+      ]
+    }
+  },
+  "storage": {
+    "local_cache": {
+      "enabled": true,
+      "max_size": "100MB",
+      "retention_days": 7,
+      "compression": true
+    },
+    "buffer": {
+      "max_size": 10000,
+      "flush_interval": 10,
+      "batch_size": 100
+    }
+  },
+  "logging": {
+    "level": "info",
+    "file": "logs/opcua-simulator-collector.log",
+    "max_size": "10MB",
+    "max_backups": 5,
+    "max_age": 30
+  }
+}

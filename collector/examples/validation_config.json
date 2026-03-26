@@ -1,0 +1,331 @@
+{
+  "version": "1.0.0",
+  "enabled": true,
+  "rules": [
+    {
+      "name": "temperature_range",
+      "type": "range",
+      "data_types": ["temperature"],
+      "enabled": true,
+      "parameters": {
+        "min": -40.0,
+        "max": 125.0
+      },
+      "description": "Temperature sensor range validation (-40°C to 125°C)"
+    },
+    {
+      "name": "pressure_range",
+      "type": "range",
+      "data_types": ["pressure"],
+      "enabled": true,
+      "parameters": {
+        "min": 0.0,
+        "max": 1000.0
+      },
+      "description": "Pressure sensor range validation (0 to 1000 bar)"
+    },
+    {
+      "name": "humidity_range",
+      "type": "range",
+      "data_types": ["humidity"],
+      "enabled": true,
+      "parameters": {
+        "min": 0.0,
+        "max": 100.0
+      },
+      "description": "Humidity sensor range validation (0% to 100%)"
+    },
+    {
+      "name": "device_id_format",
+      "type": "regex",
+      "data_types": ["device_id"],
+      "enabled": true,
+      "parameters": {
+        "pattern": "^[A-Z]{2,3}-\\d{3,4}$",
+        "must_match": true
+      },
+      "description": "Device ID format validation (e.g., AB-123, ABC-1234)"
+    },
+    {
+      "name": "serial_number_format",
+      "type": "regex",
+      "data_types": ["serial_number"],
+      "enabled": true,
+      "parameters": {
+        "pattern": "^SN\\d{8}$",
+        "must_match": true
+      },
+      "description": "Serial number format validation (e.g., SN12345678)"
+    },
+    {
+      "name": "temperature_outlier_detection",
+      "type": "statistical",
+      "data_types": ["temperature"],
+      "enabled": true,
+      "parameters": {
+        "method": "zscore",
+        "threshold": 3.0,
+        "min_sample_size": 10.0,
+        "max_history_size": 1000.0
+      },
+      "description": "Temperature outlier detection using Z-score method"
+    },
+    {
+      "name": "pressure_outlier_detection",
+      "type": "statistical",
+      "data_types": ["pressure"],
+      "enabled": true,
+      "parameters": {
+        "method": "iqr",
+        "threshold": 1.5,
+        "min_sample_size": 8.0,
+        "max_history_size": 500.0
+      },
+      "description": "Pressure outlier detection using IQR method"
+    },
+    {
+      "name": "modbus_protocol_validation",
+      "type": "protocol",
+      "data_types": ["int16", "uint16", "int32", "uint32"],
+      "enabled": true,
+      "parameters": {
+        "protocol": "modbus",
+        "rules": {
+          "validate_ranges": true,
+          "check_register_type": true
+        }
+      },
+      "description": "Modbus protocol specific validation for register ranges"
+    },
+    {
+      "name": "opcua_protocol_validation",
+      "type": "protocol",
+      "data_types": ["*"],
+      "enabled": true,
+      "parameters": {
+        "protocol": "opcua",
+        "rules": {
+          "check_status_codes": true,
+          "validate_timestamps": true
+        }
+      },
+      "description": "OPC-UA protocol specific validation for status codes"
+    },
+    {
+      "name": "mqtt_protocol_validation",
+      "type": "protocol",
+      "data_types": ["string"],
+      "enabled": true,
+      "parameters": {
+        "protocol": "mqtt",
+        "rules": {
+          "validate_json": true,
+          "check_qos_level": true
+        }
+      },
+      "description": "MQTT protocol specific validation for JSON payloads"
+    },
+    {
+      "name": "performance_monitoring",
+      "type": "performance",
+      "data_types": ["*"],
+      "enabled": true,
+      "parameters": {
+        "max_processing_time_ms": 10.0,
+        "max_data_points_per_sec": 1000.0
+      },
+      "description": "Performance monitoring to meet requirement 10.2 (1000 data points/sec)"
+    },
+    {
+      "name": "data_integrity_check",
+      "type": "integrity",
+      "data_types": ["string"],
+      "enabled": true,
+      "parameters": {
+        "algorithm": "crc32"
+      },
+      "description": "Data integrity validation to detect corruption"
+    },
+    {
+      "name": "business_logic_validation",
+      "type": "business",
+      "data_types": ["*"],
+      "enabled": true,
+      "parameters": {
+        "rules": [
+          {
+            "name": "temperature_sensor_range",
+            "condition": "temperature_sensor_range",
+            "action": "reject",
+            "message": "Temperature outside operational sensor range",
+            "params": {
+              "range": {
+                "min": -20.0,
+                "max": 80.0
+              }
+            }
+          },
+          {
+            "name": "pressure_sensor_range",
+            "condition": "pressure_sensor_range",
+            "action": "reject",
+            "message": "Pressure outside operational sensor range",
+            "params": {
+              "range": {
+                "min": 0.0,
+                "max": 500.0
+              }
+            }
+          },
+          {
+            "name": "device_status_values",
+            "condition": "device_status_values",
+            "action": "reject",
+            "message": "Invalid device status value",
+            "params": {
+              "valid_values": ["RUNNING", "STOPPED", "MAINTENANCE", "ERROR", "IDLE"]
+            }
+          }
+        ]
+      },
+      "description": "Business logic validation rules for operational constraints"
+    }
+  ],
+  "transforms": [
+    {
+      "name": "temperature_celsius_to_fahrenheit",
+      "point_pattern": "*_temperature_c",
+      "enabled": false,
+      "transform": {
+        "source_data_type": "float64",
+        "target_data_type": "float64",
+        "scale_factor": 1.8,
+        "offset": 32,
+        "unit_conversion": {
+          "source_unit": "°C",
+          "target_unit": "°F",
+          "factor": 1.8,
+          "offset": 32
+        },
+        "precision": 2
+      },
+      "description": "Convert Celsius to Fahrenheit for temperature readings"
+    },
+    {
+      "name": "pressure_bar_to_psi",
+      "point_pattern": "*_pressure_bar",
+      "enabled": false,
+      "transform": {
+        "source_data_type": "float64",
+        "target_data_type": "float64",
+        "scale_factor": 14.5038,
+        "offset": 0,
+        "unit_conversion": {
+          "source_unit": "bar",
+          "target_unit": "psi",
+          "factor": 14.5038,
+          "offset": 0
+        },
+        "precision": 2
+      },
+      "description": "Convert bar to PSI for pressure readings"
+    },
+    {
+      "name": "status_value_mapping",
+      "point_pattern": "*_status",
+      "enabled": true,
+      "transform": {
+        "value_mapping": {
+          "1": "RUNNING",
+          "0": "STOPPED",
+          "2": "MAINTENANCE",
+          "3": "ERROR",
+          "true": "RUNNING",
+          "false": "STOPPED"
+        }
+      },
+      "description": "Map numeric/boolean status values to readable strings"
+    },
+    {
+      "name": "alarm_level_mapping",
+      "point_pattern": "*_alarm_level",
+      "enabled": true,
+      "transform": {
+        "value_mapping": {
+          "0": "NORMAL",
+          "1": "WARNING",
+          "2": "ALARM",
+          "3": "CRITICAL"
+        }
+      },
+      "description": "Map numeric alarm levels to descriptive strings"
+    },
+    {
+      "name": "boolean_normalization",
+      "point_pattern": "*_enabled",
+      "enabled": true,
+      "transform": {
+        "source_data_type": "string",
+        "target_data_type": "bool",
+        "value_mapping": {
+          "1": true,
+          "0": false,
+          "true": true,
+          "false": false,
+          "yes": true,
+          "no": false,
+          "on": true,
+          "off": false,
+          "enabled": true,
+          "disabled": false
+        }
+      },
+      "description": "Normalize various boolean representations to actual boolean values"
+    }
+  ],
+  "quality": {
+    "enabled": true,
+    "completeness_threshold": 0.95,
+    "consistency_threshold": 0.90,
+    "accuracy_threshold": 0.95,
+    "timeliness_threshold": 300,
+    "outlier_detection": {
+      "enabled": true,
+      "method": "zscore",
+      "threshold": 3.0
+    },
+    "history_size": 100
+  },
+  "performance": {
+    "enabled": true,
+    "max_processing_time": "10ms",
+    "max_data_points_per_second": 1000,
+    "monitoring_window": "60s"
+  },
+  "protocols": {
+    "modbus": {
+      "enabled": true,
+      "rules": {
+        "validate_ranges": true,
+        "check_register_type": true,
+        "validate_function_codes": true
+      }
+    },
+    "opcua": {
+      "enabled": true,
+      "rules": {
+        "check_status_codes": true,
+        "validate_timestamps": true,
+        "verify_node_ids": true
+      }
+    },
+    "mqtt": {
+      "enabled": true,
+      "rules": {
+        "validate_json": true,
+        "check_qos_level": true,
+        "validate_topic_format": true
+      }
+    }
+  }
+}

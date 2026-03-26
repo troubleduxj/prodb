@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超级表API直接测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔧 超级表API直接测试</h1>
+    <div class="info">
+        <strong>测试目标:</strong> 直接测试超级表API端点，验证后端实现是否正确
+    </div>
+    
+    <div>
+        <button onclick="testDatabasesAPI()">📊 测试数据库API</button>
+        <button onclick="testSuperTablesAPI('industrial_data')">🏗️ 测试industrial_data超级表</button>
+        <button onclick="testSuperTablesAPI('sensor_data')">🏗️ 测试sensor_data超级表</button>
+        <button onclick="testSuperTablesAPI('test_db')">🏗️ 测试test_db超级表</button>
+        <button onclick="testTablesAPI('industrial_data')">📋 测试industrial_data表</button>
+        <button onclick="testAllAPIs()">🚀 测试所有API</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResult(content) {
+            const resultDiv = document.getElementById('result');
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+
+        async function testDatabasesAPI() {
+            showStatus('测试数据库列表API...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/databases`);
+                console.log('数据库API响应状态:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('数据库API响应数据:', data);
+                    showStatus(`✅ 数据库API测试成功，找到 ${data.databases?.length || 0} 个数据库`, 'success');
+                    showResult(data);
+                    return data;
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('数据库API测试失败:', error);
+                showStatus(`❌ 数据库API测试失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+
+        async function testSuperTablesAPI(databaseName) {
+            showStatus(`测试数据库 "${databaseName}" 的超级表API...`, 'info');
+            try {
+                const url = `${API_BASE}/database/supertables?database=${databaseName}`;
+                console.log('请求URL:', url);
+                
+                const response = await fetch(url);
+                console.log('超级表API响应状态:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('超级表API响应数据:', data);
+                    
+                    const superTables = data.supertables || [];
+                    showStatus(`✅ 数据库 "${databaseName}" 超级表API测试成功，找到 ${superTables.length} 个超级表`, 'success');
+                    showResult(data);
+                    return data;
+                } else {
+                    const errorText = await response.text();
+                    console.error('超级表API错误响应:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('超级表API测试失败:', error);
+                showStatus(`❌ 数据库 "${databaseName}" 超级表API测试失败: ${error.message}`, 'error');
+                showResult({ error: error.message, database: databaseName });
+                return null;
+            }
+        }
+
+        async function testTablesAPI(databaseName) {
+            showStatus(`测试数据库 "${databaseName}" 的表API...`, 'info');
+            try {
+                const url = `${API_BASE}/database/tables?database=${databaseName}`;
+                console.log('请求URL:', url);
+                
+                const response = await fetch(url);
+                console.log('表API响应状态:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('表API响应数据:', data);
+                    
+                    const tables = data.data?.tables || [];
+                    showStatus(`✅ 数据库 "${databaseName}" 表API测试成功，找到 ${tables.length} 个表`, 'success');
+                    showResult(data);
+                    return data;
+                } else {
+                    const errorText = await response.text();
+                    console.error('表API错误响应:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('表API测试失败:', error);
+                showStatus(`❌ 数据库 "${databaseName}" 表API测试失败: ${error.message}`, 'error');
+                showResult({ error: error.message, database: databaseName });
+                return null;
+            }
+        }
+
+        async function testAllAPIs() {
+            showStatus('开始完整API测试...', 'info');
+            
+            // 1. 测试数据库API
+            const databases = await testDatabasesAPI();
+            if (!databases) {
+                showStatus('❌ 数据库API测试失败，停止测试', 'error');
+                return;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // 2. 测试每个数据库的超级表API
+            const testDatabases = ['industrial_data', 'sensor_data', 'test_db'];
+            let totalSuperTables = 0;
+            let totalTables = 0;
+
+            for (const dbName of testDatabases) {
+                // 测试超级表API
+                const superTablesResult = await testSuperTablesAPI(dbName);
+                if (superTablesResult) {
+                    totalSuperTables += (superTablesResult.supertables || []).length;
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 测试表API
+                const tablesResult = await testTablesAPI(dbName);
+                if (tablesResult) {
+                    totalTables += (tablesResult.data?.tables || []).length;
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            showStatus(`🎉 完整API测试完成！总计: ${totalSuperTables} 个超级表, ${totalTables} 个表`, 'success');
+        }
+
+        // 页面加载时自动开始测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAllAPIs();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

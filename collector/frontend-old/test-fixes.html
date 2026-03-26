@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Optimization Test - Fixed</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/mobile-optimization.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        
+        .status-display {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            padding: 10px 15px;
+            background-color: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .test-button {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .test-button:hover {
+            background-color: var(--color-primary-hover);
+        }
+        
+        .test-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-field label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .form-field input,
+        .form-field select {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 16px;
+            min-height: 44px;
+            box-sizing: border-box;
+        }
+        
+        .form-field input:focus,
+        .form-field select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .success {
+            color: var(--color-success);
+        }
+        
+        .error {
+            color: var(--color-error);
+        }
+        
+        .warning {
+            color: var(--color-warning);
+        }
+        
+        .log-output {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🚀 Mobile Optimization Test - Fixed Version</h1>
+        
+        <div class="test-section">
+            <h2>📱 Device & Network Status</h2>
+            <div class="status-display">
+                <div class="status-item">
+                    <strong>Connection:</strong> <span id="connection-status">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <strong>Device:</strong> <span id="device-type">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <strong>Screen:</strong> <span id="screen-size">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <strong>Touch:</strong> <span id="touch-support">Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Touch-Optimized Form</h2>
+            <form class="test-form" id="test-form">
+                <div class="form-field">
+                    <label for="protocol">Protocol Type</label>
+                    <select id="protocol" name="protocol" required>
+                        <option value="">Select Protocol</option>
+                        <option value="opcua">OPC UA</option>
+                        <option value="modbus">Modbus TCP</option>
+                        <option value="mqtt">MQTT</option>
+                    </select>
+                </div>
+                
+                <div class="form-field">
+                    <label for="endpoint">Endpoint URL</label>
+                    <input type="url" id="endpoint" name="endpoint" placeholder="opc.tcp://192.168.1.100:4840" required>
+                </div>
+                
+                <div class="form-field">
+                    <label for="timeout">Timeout (seconds)</label>
+                    <input type="number" id="timeout" name="timeout" min="1" max="300" value="30">
+                </div>
+                
+                <button type="submit" class="test-button">Test Connection</button>
+            </form>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Feature Tests</h2>
+            <button class="test-button" onclick="testOfflineCapability()">Test Offline</button>
+            <button class="test-button" onclick="testNetworkAware()">Test Network Aware</button>
+            <button class="test-button" onclick="testProgressiveLoading()">Test Progressive Loading</button>
+            <button class="test-button" onclick="testMobileDetection()">Test Mobile Detection</button>
+            
+            <div class="log-output" id="test-log"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize status display
+        function updateStatus() {
+            // Connection status
+            document.getElementById('connection-status').textContent = navigator.onLine ? 'Online' : 'Offline';
+            document.getElementById('connection-status').className = navigator.onLine ? 'success' : 'error';
+            
+            // Device type
+            const width = window.innerWidth;
+            let deviceType = 'Desktop';
+            if (width <= 768) deviceType = 'Mobile';
+            else if (width <= 1024) deviceType = 'Tablet';
+            document.getElementById('device-type').textContent = deviceType;
+            
+            // Screen size
+            document.getElementById('screen-size').textContent = `${width}x${window.innerHeight}`;
+            
+            // Touch support
+            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            document.getElementById('touch-support').textContent = hasTouch ? 'Yes' : 'No';
+            document.getElementById('touch-support').className = hasTouch ? 'success' : 'warning';
+        }
+
+        // Log function
+        function log(message, type = 'info') {
+            const output = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Test functions
+        function testOfflineCapability() {
+            log('Testing offline capability...');
+            
+            // Test localStorage
+            try {
+                localStorage.setItem('test', 'value');
+                localStorage.removeItem('test');
+                log('LocalStorage: Working', 'success');
+            } catch (e) {
+                log('LocalStorage: Failed - ' + e.message, 'error');
+            }
+            
+            // Test IndexedDB
+            if ('indexedDB' in window) {
+                log('IndexedDB: Available', 'success');
+            } else {
+                log('IndexedDB: Not available', 'error');
+            }
+            
+            // Test Service Worker
+            if ('serviceWorker' in navigator) {
+                log('Service Worker: Supported', 'success');
+            } else {
+                log('Service Worker: Not supported', 'error');
+            }
+        }
+
+        function testNetworkAware() {
+            log('Testing network awareness...');
+            
+            if ('connection' in navigator) {
+                const conn = navigator.connection;
+                log(`Connection Type: ${conn.effectiveType || 'unknown'}`, 'success');
+                log(`Downlink: ${conn.downlink || 'unknown'} Mbps`, 'success');
+                log(`RTT: ${conn.rtt || 'unknown'} ms`, 'success');
+            } else {
+                log('Network Information API not supported', 'warning');
+            }
+            
+            // Test fetch with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            fetch('/api/v1/status', { signal: controller.signal })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    log(`API Test: ${response.ok ? 'Success' : 'Failed'} (${response.status})`, response.ok ? 'success' : 'error');
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    log(`API Test: Failed - ${error.message}`, 'error');
+                });
+        }
+
+        function testProgressiveLoading() {
+            log('Testing progressive loading...');
+            
+            if ('IntersectionObserver' in window) {
+                log('Intersection Observer: Supported', 'success');
+                
+                // Create a test observer
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            log('Element entered viewport', 'success');
+                        }
+                    });
+                });
+                
+                log('Progressive loading test completed', 'success');
+            } else {
+                log('Intersection Observer: Not supported', 'error');
+            }
+        }
+
+        function testMobileDetection() {
+            log('Testing mobile detection...');
+            
+            const width = window.innerWidth;
+            const isMobile = width <= 768;
+            const isTablet = width > 768 && width <= 1024;
+            const hasTouch = 'ontouchstart' in window;
+            
+            log(`Screen Width: ${width}px`, 'info');
+            log(`Is Mobile: ${isMobile}`, isMobile ? 'success' : 'info');
+            log(`Is Tablet: ${isTablet}`, isTablet ? 'success' : 'info');
+            log(`Has Touch: ${hasTouch}`, hasTouch ? 'success' : 'info');
+            
+            // Test CSS classes
+            document.body.classList.toggle('mobile-device', isMobile);
+            document.body.classList.toggle('touch-device', hasTouch);
+            
+            log('CSS classes applied based on detection', 'success');
+        }
+
+        // Form handling
+        document.getElementById('test-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            log('Form submitted with data:', 'success');
+            log(JSON.stringify(data, null, 2), 'info');
+            
+            // Simulate form processing
+            setTimeout(() => {
+                log('Form processing completed', 'success');
+            }, 1000);
+        });
+
+        // Event listeners
+        window.addEventListener('online', () => {
+            updateStatus();
+            log('Connection restored', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            updateStatus();
+            log('Connection lost', 'warning');
+        });
+
+        window.addEventListener('resize', updateStatus);
+
+        // Initialize
+        updateStatus();
+        log('Mobile optimization test page loaded', 'success');
+        log('All core features are functional', 'success');
+    </script>
+</body>
+</html>

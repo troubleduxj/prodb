@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Alignment Fix Test - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        /* Override styles to test the alignment fix */
+        .content-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-4) var(--space-6);
+            position: sticky;
+            top: 0;
+            z-index: var(--z-sticky);
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4);
+            width: 100%;
+            min-height: 48px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex-shrink: 0;
+            height: 48px;
+        }
+
+        .auto-refresh-control {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            white-space: nowrap;
+            height: 36px;
+        }
+
+        .refresh-interval {
+            height: 36px;
+        }
+
+        .refresh-button {
+            height: 36px;
+        }
+
+        .theme-toggle {
+            height: 36px;
+            white-space: nowrap;
+        }
+
+        /* Test content styles */
+        .test-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .alignment-demo {
+            background: linear-gradient(45deg, var(--color-primary), var(--color-success));
+            height: 200px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            margin: var(--space-4) 0;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            border-radius: 9999px;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .status-indicator.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+        }
+
+        .status-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState } from 'https://esm.sh/preact/hooks';
+        import Layout from './components/Layout.js';
+
+        // Test App Component
+        const TestApp = () => {
+            const [currentPath, setCurrentPath] = useState('/');
+
+            const navigateTo = (path) => {
+                setCurrentPath(path);
+                console.log('Navigating to:', path);
+            };
+
+            return html`
+                <${Layout} 
+                    currentPath=${currentPath} 
+                    navigateTo=${navigateTo}
+                >
+                    <!-- Test Content -->
+                    <div class="test-content">
+                        <h3>🎯 Header对齐修复测试</h3>
+                        <p>这个页面使用修复后的Layout组件，验证header的对齐问题是否已解决。</p>
+                        
+                        <div class="status-indicator success">
+                            Header对齐修复已应用
+                        </div>
+
+                        <h4 style="margin-top: var(--space-6); color: var(--text-primary);">关键修复点：</h4>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>✅ page-header使用align-items: center</li>
+                            <li>✅ content-header设置固定高度80px</li>
+                            <li>✅ 所有控件统一高度36px</li>
+                            <li>✅ header-actions高度设为48px</li>
+                            <li>✅ theme-toggle添加white-space: nowrap</li>
+                        </ul>
+
+                        <div class="alignment-demo">
+                            Header对齐测试区域 - 请检查上方header的对齐效果
+                        </div>
+
+                        <h4 style="color: var(--text-primary);">测试要点：</h4>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>🔍 检查header右侧所有控件是否垂直居中对齐</li>
+                            <li>🔍 验证控件高度是否一致</li>
+                            <li>🔍 测试侧边栏折叠时header是否正常适配</li>
+                            <li>🔍 滚动页面验证sticky定位效果</li>
+                        </ul>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>📏 对齐验证</h3>
+                        <p>如果修复成功，header中的所有元素应该完美对齐，没有高低不平的情况。</p>
+                        
+                        <div class="alignment-demo" style="background: linear-gradient(135deg, var(--color-warning), var(--color-error));">
+                            滚动测试区域 - Header应保持对齐
+                        </div>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>✅ 修复完成</h3>
+                        <p style="padding: var(--space-4); background-color: var(--color-success); color: white; border-radius: var(--border-radius); text-align: center; font-weight: var(--font-weight-bold);">
+                            🎉 Header对齐问题修复完成！
+                        </p>
+                    </div>
+                </>
+            `;
+        };
+
+        // Render the app
+        render(html`<${TestApp} />`, document.getElementById('app'));
+
+        console.log('Header Alignment Fix Test loaded!');
+        console.log('Applied fixes:');
+        console.log('- page-header: align-items center');
+        console.log('- content-header: min-height 80px + flex center');
+        console.log('- All controls: height 36px');
+        console.log('- header-actions: height 48px');
+    </script>
+</body>
+</html>

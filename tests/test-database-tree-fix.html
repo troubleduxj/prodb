@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库树展开修复测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .test-section {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        .database-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .database-name {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .supertable-list {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        .supertable-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #28a745;
+        }
+        .supertable-name {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .table-list {
+            margin-left: 40px;
+            margin-top: 8px;
+        }
+        .table-item {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            border-radius: 3px;
+            padding: 8px;
+            margin: 3px 0;
+            border-left: 3px solid #6c757d;
+            font-size: 14px;
+        }
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .stat-item {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌳 数据库树展开修复测试</h1>
+    <div class="info">
+        <strong>测试目标:</strong> 验证数据库树组件能够正确展开并显示超级表和子表信息
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">🔧 API 端点测试</div>
+        <div>
+            <button onclick="testDatabasesAPI()">📊 测试数据库列表API</button>
+            <button onclick="testSuperTablesAPI()">🏗️ 测试超级表API</button>
+            <button onclick="testTablesAPI()">📋 测试表列表API</button>
+            <button onclick="testFullFlow()">🚀 测试完整流程</button>
+        </div>
+        <div id="api-status"></div>
+        <div id="api-result"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🌲 数据库树结构展示</div>
+        <div>
+            <button onclick="buildDatabaseTree()">🔄 构建数据库树</button>
+            <button onclick="expandAllDatabases()">📂 展开所有数据库</button>
+            <button onclick="collapseAllDatabases()">📁 折叠所有数据库</button>
+        </div>
+        <div id="tree-status"></div>
+        <div id="tree-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        let databasesData = [];
+        let superTablesData = {};
+        let tablesData = {};
+
+        function showStatus(message, type = 'info', containerId = 'api-status') {
+            const statusDiv = document.getElementById(containerId);
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResult(content, containerId = 'api-result') {
+            const resultDiv = document.getElementById(containerId);
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+
+        async function testDatabasesAPI() {
+            showStatus('测试数据库列表API...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/databases`);
+                if (response.ok) {
+                    const data = await response.json();
+                    databasesData = data.databases || [];
+                    showStatus(`✅ 数据库API测试成功，找到 ${databasesData.length} 个数据库`, 'success');
+                    showResult(data);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 数据库API测试失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+
+        async function testSuperTablesAPI() {
+            showStatus('测试超级表API...', 'info');
+            
+            if (databasesData.length === 0) {
+                await testDatabasesAPI();
+            }
+
+            let allSuperTables = {};
+            let totalSuperTables = 0;
+
+            for (const db of databasesData) {
+                try {
+                    const response = await fetch(`${API_BASE}/database/supertables?database=${db.name}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const superTables = data.supertables || [];
+                        allSuperTables[db.name] = superTables;
+                        totalSuperTables += superTables.length;
+                        console.log(`数据库 ${db.name} 的超级表:`, superTables);
+                    } else {
+                        console.error(`获取数据库 ${db.name} 的超级表失败:`, response.status);
+                        allSuperTables[db.name] = [];
+                    }
+                } catch (error) {
+                    console.error(`获取数据库 ${db.name} 的超级表出错:`, error);
+                    allSuperTables[db.name] = [];
+                }
+                // 添加延迟避免请求过快
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            superTablesData = allSuperTables;
+            showStatus(`✅ 超级表API测试完成，共找到 ${totalSuperTables} 个超级表`, 'success');
+            showResult(allSuperTables);
+            return allSuperTables;
+        }
+
+        async function testTablesAPI() {
+            showStatus('测试表列表API...', 'info');
+            
+            if (databasesData.length === 0) {
+                await testDatabasesAPI();
+            }
+
+            let allTables = {};
+            let totalTables = 0;
+
+            for (const db of databasesData) {
+                try {
+                    const response = await fetch(`${API_BASE}/database/tables?database=${db.name}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const tables = data.data?.tables || [];
+                        allTables[db.name] = tables;
+                        totalTables += tables.length;
+                        console.log(`数据库 ${db.name} 的表:`, tables);
+                    } else {
+                        console.error(`获取数据库 ${db.name} 的表失败:`, response.status);
+                        allTables[db.name] = [];
+                    }
+                } catch (error) {
+                    console.error(`获取数据库 ${db.name} 的表出错:`, error);
+                    allTables[db.name] = [];
+                }
+                // 添加延迟避免请求过快
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            tablesData = allTables;
+            showStatus(`✅ 表API测试完成，共找到 ${totalTables} 个表`, 'success');
+            showResult(allTables);
+            return allTables;
+        }
+
+        async function testFullFlow() {
+            showStatus('开始完整流程测试...', 'info');
+            
+            // 1. 测试数据库API
+            const databases = await testDatabasesAPI();
+            if (!databases) {
+                showStatus('❌ 数据库API测试失败，停止测试', 'error');
+                return;
+            }
+
+            // 2. 测试超级表API
+            const superTables = await testSuperTablesAPI();
+            
+            // 3. 测试表API
+            const tables = await testTablesAPI();
+
+            // 4. 生成完整报告
+            let report = {
+                databases: databases.databases?.length || 0,
+                superTables: Object.values(superTables).reduce((sum, st) => sum + st.length, 0),
+                tables: Object.values(tables).reduce((sum, t) => sum + t.length, 0),
+                details: {}
+            };
+
+            for (const db of databases.databases || []) {
+                report.details[db.name] = {
+                    database: db,
+                    superTables: superTables[db.name] || [],
+                    tables: tables[db.name] || []
+                };
+            }
+
+            showStatus(`🎉 完整流程测试完成！数据库: ${report.databases}, 超级表: ${report.superTables}, 表: ${report.tables}`, 'success');
+            showResult(report);
+        }
+
+        async function buildDatabaseTree() {
+            showStatus('构建数据库树结构...', 'info', 'tree-status');
+            
+            if (Object.keys(superTablesData).length === 0) {
+                await testFullFlow();
+            }
+
+            let treeHTML = '<div style="font-family: monospace; font-size: 14px;">';
+            
+            for (const db of databasesData) {
+                const superTables = superTablesData[db.name] || [];
+                const tables = tablesData[db.name] || [];
+                
+                treeHTML += `
+                    <div class="database-item" id="db-${db.name}">
+                        <div class="database-name">
+                            📊 ${db.name}
+                            <span style="font-size: 12px; color: #6c757d; font-weight: normal;">
+                                (${db.ntables || 0} 表, ${superTables.length} 超级表)
+                            </span>
+                        </div>
+                        <div class="stats">
+                            <div class="stat-item">创建时间: ${db.created_time || '未知'}</div>
+                            <div class="stat-item">状态: ${db.status || '未知'}</div>
+                            <div class="stat-item">副本数: ${db.replica || 1}</div>
+                        </div>
+                `;
+
+                if (superTables.length > 0) {
+                    treeHTML += '<div class="supertable-list">';
+                    for (const st of superTables) {
+                        treeHTML += `
+                            <div class="supertable-item">
+                                <div class="supertable-name">🏗️ ${st.name}</div>
+                                <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                                    列数: ${st.columns?.length || st.columns || 0} | 
+                                    标签数: ${st.tags?.length || st.tags || 0} | 
+                                    子表数: ${st.subtables_count || st.tables || 0} |
+                                    数据大小: ${st.data_size || st.DataSize || '未知'}
+                                </div>
+                        `;
+
+                        // 显示该超级表的子表
+                        const childTables = tables.filter(t => t.super_table === st.name);
+                        if (childTables.length > 0) {
+                            treeHTML += '<div class="table-list">';
+                            for (const table of childTables) {
+                                treeHTML += `
+                                    <div class="table-item">
+                                        📋 ${table.name} 
+                                        <span style="color: #6c757d;">
+                                            (${table.type || 'CHILD_TABLE'}, ${table.rows || 0} 行, ${table.size || '0KB'})
+                                        </span>
+                                    </div>
+                                `;
+                            }
+                            treeHTML += '</div>';
+                        }
+
+                        treeHTML += '</div>';
+                    }
+                    treeHTML += '</div>';
+                }
+
+                // 显示普通表（不属于任何超级表的表）
+                const normalTables = tables.filter(t => !t.super_table || t.type === 'NORMAL_TABLE');
+                if (normalTables.length > 0) {
+                    treeHTML += '<div class="supertable-list">';
+                    treeHTML += '<div style="font-weight: bold; color: #6c757d; margin-bottom: 10px;">📋 普通表:</div>';
+                    for (const table of normalTables) {
+                        treeHTML += `
+                            <div class="table-item">
+                                📄 ${table.name} 
+                                <span style="color: #6c757d;">
+                                    (${table.type || 'NORMAL_TABLE'}, ${table.rows || 0} 行, ${table.size || '0KB'})
+                                </span>
+                            </div>
+                        `;
+                    }
+                    treeHTML += '</div>';
+                }
+
+                treeHTML += '</div>';
+            }
+            
+            treeHTML += '</div>';
+
+            showStatus(`✅ 数据库树构建完成，共 ${databasesData.length} 个数据库`, 'success', 'tree-status');
+            showResult(treeHTML, 'tree-result');
+        }
+
+        function expandAllDatabases() {
+            const databases = document.querySelectorAll('.database-item');
+            databases.forEach(db => {
+                db.style.display = 'block';
+                const lists = db.querySelectorAll('.supertable-list, .table-list');
+                lists.forEach(list => list.style.display = 'block');
+            });
+            showStatus('✅ 所有数据库已展开', 'success', 'tree-status');
+        }
+
+        function collapseAllDatabases() {
+            const databases = document.querySelectorAll('.database-item');
+            databases.forEach(db => {
+                const lists = db.querySelectorAll('.supertable-list, .table-list');
+                lists.forEach(list => list.style.display = 'none');
+            });
+            showStatus('📁 所有数据库已折叠', 'info', 'tree-status');
+        }
+
+        // 页面加载时自动开始测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testFullFlow();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

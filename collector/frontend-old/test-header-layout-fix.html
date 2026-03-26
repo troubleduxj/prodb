@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Layout Fix Test - ProDB Collector</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Color System */
+            --color-primary: #2563eb;
+            --color-primary-hover: #1d4ed8;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+
+            /* Background Colors */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+
+            /* Text Colors */
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+
+            /* Border and Shadow */
+            --border-color: #334155;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
+            /* Spacing */
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+
+            /* Typography */
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+
+            /* Transitions */
+            --transition-normal: 0.2s ease;
+
+            /* Z-Index */
+            --z-sticky: 1020;
+            --z-fixed: 1030;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Layout Structure */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+        }
+
+        .layout.sidebar-collapsed .main-content {
+            margin-left: 60px;
+        }
+
+        /* Enhanced Sidebar */
+        .sidebar {
+            width: 320px;
+            min-width: 320px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: var(--z-sticky);
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+            min-width: 60px;
+        }
+
+        /* Fixed Sidebar Header */
+        .sidebar-header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+            background-color: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            min-width: 0;
+        }
+
+        .logo-icon {
+            font-size: var(--font-size-2xl);
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: opacity var(--transition-normal);
+        }
+
+        .sidebar.collapsed .logo-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar-collapse-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--space-1) var(--space-2);
+            font-size: var(--font-size-sm);
+            transition: all var(--transition-normal);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-collapse-toggle:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 320px;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+            transition: margin-left var(--transition-normal);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Fixed Content Header */
+        .content-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-4) var(--space-6);
+            position: sticky;
+            top: 0;
+            z-index: var(--z-sticky);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .page-title-section {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page-title {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+            margin: 0 0 var(--space-2) 0;
+            line-height: 1.2;
+        }
+
+        /* Enhanced Breadcrumbs */
+        .breadcrumbs {
+            margin: 0;
+        }
+
+        .breadcrumb-list {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .breadcrumb-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: var(--font-size-sm);
+            transition: color var(--transition-normal);
+        }
+
+        .breadcrumb-link:hover {
+            color: var(--color-primary);
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex-shrink: 0;
+        }
+
+        .auto-refresh-control {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .refresh-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .refresh-interval {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+            padding: var(--space-2) var(--space-3);
+            min-width: 80px;
+        }
+
+        .refresh-button {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--space-2);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-normal);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-button:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        /* Content Wrapper */
+        .content-wrapper {
+            flex: 1;
+            padding: var(--space-6);
+            overflow-y: auto;
+        }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 var(--space-4);
+            align-items: center;
+            justify-content: space-between;
+            z-index: var(--z-fixed);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .mobile-menu-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--border-radius);
+            transition: background-color var(--transition-normal);
+        }
+
+        .mobile-menu-toggle:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            width: 20px;
+            height: 16px;
+            justify-content: space-between;
+            transition: all var(--transition-normal);
+        }
+
+        .hamburger-icon span {
+            display: block;
+            height: 2px;
+            background-color: var(--text-primary);
+            border-radius: 1px;
+            transition: all var(--transition-normal);
+            transform-origin: center;
+        }
+
+        .hamburger-icon.open span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger-icon.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-icon.open span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        .mobile-title-section {
+            flex: 1;
+            margin: 0 var(--space-4);
+            min-width: 0;
+        }
+
+        .mobile-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: var(--space-2);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .mobile-header {
+                display: flex;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding-top: 60px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform var(--transition-normal);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .content-header {
+                display: none;
+            }
+
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: var(--bg-overlay);
+                z-index: calc(var(--z-sticky) - 1);
+            }
+
+            /* Mobile breadcrumbs in header */
+            .mobile-header .breadcrumbs {
+                margin-top: var(--space-1);
+            }
+
+            .mobile-header .breadcrumb-list {
+                font-size: var(--font-size-sm);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mobile-header {
+                padding: 0 var(--space-3);
+            }
+
+            .mobile-title {
+                font-size: var(--font-size-base);
+            }
+
+            .header-actions {
+                gap: var(--space-2);
+            }
+
+            .auto-refresh-control {
+                display: none;
+                /* Hide on very small screens */
+            }
+
+            .refresh-label {
+                display: none;
+            }
+        }
+
+        /* Demo Content */
+        .demo-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .demo-section {
+            margin-bottom: var(--space-4);
+        }
+
+        .demo-section h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .demo-section p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+
+        /* Navigation items for demo */
+        .nav-section {
+            flex: 1;
+            padding: var(--space-2) 0;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: var(--space-1);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            margin: 0 var(--space-2);
+            transition: all var(--transition-normal);
+            position: relative;
+            min-height: 44px;
+        }
+
+        .nav-link:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: var(--font-size-lg);
+            flex-shrink: 0;
+        }
+
+        .nav-label {
+            flex: 1;
+            font-weight: var(--font-weight-medium);
+            transition: opacity var(--transition-normal);
+        }
+
+        .sidebar.collapsed .nav-label {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: var(--space-3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout" id="layout">
+        <!-- Mobile Header -->
+        <header class="mobile-header" id="mobileHeader">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                <span class="hamburger-icon" id="hamburgerIcon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </button>
+            <div class="mobile-title-section">
+                <h1 class="mobile-title" id="mobileTitle">仪表盘</h1>
+                <nav class="breadcrumbs">
+                    <ol class="breadcrumb-list" id="mobileBreadcrumbs">
+                        <li class="breadcrumb-item">
+                            <span class="breadcrumb-current">仪表盘</span>
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+            <button class="theme-toggle" id="mobileThemeToggle" title="切换主题">
+                <span>🌙</span>
+            </button>
+        </header>
+
+        <!-- Enhanced Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🔧</span>
+                    <h2 class="logo-text">ProDB Collector</h2>
+                </div>
+                <button class="sidebar-collapse-toggle" id="sidebarCollapseToggle" title="折叠侧边栏 (Ctrl+B)">
+                    «
+                </button>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-section">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" data-page="dashboard">
+                            <span class="nav-icon">📊</span>
+                            <span class="nav-label">仪表盘</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-page="interfaces">
+                            <span class="nav-icon">🔗</span>
+                            <span class="nav-label">接口管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-page="testing">
+                            <span class="nav-icon">🧪</span>
+                            <span class="nav-label">协议测试</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-page="drivers">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-label">驱动管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-page="config">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-label">系统配置</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Mobile overlay -->
+        <div class="mobile-overlay" id="mobileOverlay" style="display: none;"></div>
+
+        <!-- Main content with enhanced header -->
+        <main class="main-content">
+            <!-- Desktop Content Header -->
+            <header class="content-header">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title" id="pageTitle">仪表盘</h1>
+                        <nav class="breadcrumbs">
+                            <ol class="breadcrumb-list" id="breadcrumbs">
+                                <li class="breadcrumb-item">
+                                    <span class="breadcrumb-current">仪表盘</span>
+                                </li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="header-actions">
+                        <div class="auto-refresh-control">
+                            <label class="refresh-label">自动刷新</label>
+                            <select class="refresh-interval" id="refreshInterval">
+                                <option value="0">关闭</option>
+                                <option value="5000" selected>5秒</option>
+                                <option value="10000">10秒</option>
+                                <option value="30000">30秒</option>
+                            </select>
+                        </div>
+                        <button class="refresh-button" id="refreshButton" title="手动刷新数据">
+                            🔄
+                        </button>
+                        <button class="theme-toggle" id="themeToggle" title="切换主题">
+                            <span>🌙</span>
+                            <span>Dark</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <!-- Demo Content -->
+                <div class="demo-content">
+                    <div class="demo-section">
+                        <h3>Header Layout Fix 测试</h3>
+                        <p>这个页面测试修复后的header布局，包括以下改进：</p>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>修复了桌面端header的sticky定位</li>
+                            <li>优化了移动端header的响应式布局</li>
+                            <li>改进了breadcrumbs的显示和换行</li>
+                            <li>修复了header actions的对齐问题</li>
+                            <li>优化了sidebar折叠时的header适配</li>
+                        </ul>
+                    </div>
+
+                    <div class="demo-section">
+                        <h3>测试功能</h3>
+                        <p>请测试以下功能：</p>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>点击侧边栏折叠按钮测试header适配</li>
+                            <li>调整浏览器窗口大小测试响应式布局</li>
+                            <li>在移动端测试hamburger菜单</li>
+                            <li>测试breadcrumbs的显示效果</li>
+                            <li>测试header actions的交互</li>
+                        </ul>
+                    </div>
+
+                    <div class="demo-section">
+                        <h3>布局特性</h3>
+                        <p>新的header布局具有以下特性：</p>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li><strong>Sticky定位：</strong>header始终保持在顶部可见</li>
+                            <li><strong>响应式设计：</strong>在不同屏幕尺寸下自适应</li>
+                            <li><strong>优雅降级：</strong>移动端使用简化的header布局</li>
+                            <li><strong>无缝过渡：</strong>sidebar折叠时header平滑适配</li>
+                            <li><strong>可访问性：</strong>支持键盘导航和屏幕阅读器</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Additional demo content for scrolling -->
+                <div class="demo-content">
+                    <h3>滚动测试内容</h3>
+                    <p>这里是一些额外的内容用于测试header的sticky效果。当你滚动页面时，header应该始终保持在顶部可见。</p>
+                    <div
+                        style="height: 200px; background: linear-gradient(45deg, var(--bg-tertiary), var(--bg-secondary)); border-radius: var(--border-radius); margin: var(--space-4) 0; display: flex; align-items: center; justify-content: center; color: var(--text-primary);">
+                        滚动测试区域 1
+                    </div>
+                </div>
+
+                <div class="demo-content">
+                    <h3>更多内容</h3>
+                    <p>继续滚动测试sticky header的效果。</p>
+                    <div
+                        style="height: 200px; background: linear-gradient(135deg, var(--color-primary), var(--color-success)); border-radius: var(--border-radius); margin: var(--space-4) 0; display: flex; align-items: center; justify-content: center; color: white;">
+                        滚动测试区域 2
+                    </div>
+                </div>
+
+                <div class="demo-content">
+                    <h3>最后的内容</h3>
+                    <p>这是页面的最后部分，用于确保有足够的内容进行滚动测试。</p>
+                    <div
+                        style="height: 300px; background: linear-gradient(225deg, var(--color-warning), var(--color-error)); border-radius: var(--border-radius); margin: var(--space-4) 0; display: flex; align-items: center; justify-content: center; color: white;">
+                        滚动测试区域 3
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Header Layout Fix JavaScript
+        class HeaderLayoutManager {
+            constructor() {
+                this.layout = document.getElementById('layout');
+                this.sidebar = document.getElementById('sidebar');
+                this.mobileHeader = document.getElementById('mobileHeader');
+                this.mobileOverlay = document.getElementById('mobileOverlay');
+                this.sidebarCollapseToggle = document.getElementById('sidebarCollapseToggle');
+                this.mobileMenuToggle = document.getElementById('mobileMenuToggle');
+                this.hamburgerIcon = document.getElementById('hamburgerIcon');
+                this.themeToggle = document.getElementById('themeToggle');
+                this.mobileThemeToggle = document.getElementById('mobileThemeToggle');
+                this.refreshButton = document.getElementById('refreshButton');
+                this.refreshInterval = document.getElementById('refreshInterval');
+
+                this.isMobile = false;
+                this.sidebarOpen = false;
+                this.sidebarCollapsed = false;
+                this.currentTheme = 'dark';
+
+                this.init();
+            }
+
+            init() {
+                this.checkMobile();
+                this.bindEvents();
+                this.loadPreferences();
+                this.updateBreadcrumbs();
+
+                // Initialize theme
+                document.documentElement.setAttribute('data-theme', this.currentTheme);
+            }
+
+            checkMobile() {
+                const mobile = window.innerWidth < 768;
+                this.isMobile = mobile;
+
+                if (mobile) {
+                    this.sidebarOpen = false;
+                    this.sidebar.classList.remove('open');
+                    this.mobileOverlay.style.display = 'none';
+                } else {
+                    this.sidebar.classList.remove('open');
+                    this.mobileOverlay.style.display = 'none';
+                }
+            }
+
+            bindEvents() {
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.checkMobile();
+                });
+
+                // Sidebar collapse toggle
+                this.sidebarCollapseToggle?.addEventListener('click', () => {
+                    this.toggleSidebarCollapse();
+                });
+
+                // Mobile menu toggle
+                this.mobileMenuToggle?.addEventListener('click', () => {
+                    this.toggleMobileSidebar();
+                });
+
+                // Mobile overlay
+                this.mobileOverlay?.addEventListener('click', () => {
+                    this.closeMobileSidebar();
+                });
+
+                // Theme toggles
+                this.themeToggle?.addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+
+                this.mobileThemeToggle?.addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+
+                // Refresh button
+                this.refreshButton?.addEventListener('click', () => {
+                    this.handleRefresh();
+                });
+
+                // Navigation links
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.handleNavigation(link);
+                    });
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                        e.preventDefault();
+                        this.toggleSidebarCollapse();
+                    }
+                });
+
+                // Auto refresh
+                this.refreshInterval?.addEventListener('change', () => {
+                    this.setupAutoRefresh();
+                });
+            }
+
+            toggleSidebarCollapse() {
+                this.sidebarCollapsed = !this.sidebarCollapsed;
+
+                if (this.sidebarCollapsed) {
+                    this.sidebar.classList.add('collapsed');
+                    this.layout.classList.add('sidebar-collapsed');
+                    this.sidebarCollapseToggle.textContent = '»';
+                    this.sidebarCollapseToggle.title = '展开侧边栏 (Ctrl+B)';
+                } else {
+                    this.sidebar.classList.remove('collapsed');
+                    this.layout.classList.remove('sidebar-collapsed');
+                    this.sidebarCollapseToggle.textContent = '«';
+                    this.sidebarCollapseToggle.title = '折叠侧边栏 (Ctrl+B)';
+                }
+
+                localStorage.setItem('sidebar-collapsed', this.sidebarCollapsed);
+            }
+
+            toggleMobileSidebar() {
+                this.sidebarOpen = !this.sidebarOpen;
+
+                if (this.sidebarOpen) {
+                    this.sidebar.classList.add('open');
+                    this.hamburgerIcon.classList.add('open');
+                    this.mobileOverlay.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    this.closeMobileSidebar();
+                }
+            }
+
+            closeMobileSidebar() {
+                this.sidebarOpen = false;
+                this.sidebar.classList.remove('open');
+                this.hamburgerIcon.classList.remove('open');
+                this.mobileOverlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+
+            toggleTheme() {
+                const themes = ['dark', 'light'];
+                const currentIndex = themes.indexOf(this.currentTheme);
+                this.currentTheme = themes[(currentIndex + 1) % themes.length];
+
+                document.documentElement.setAttribute('data-theme', this.currentTheme);
+                localStorage.setItem('collector-theme', this.currentTheme);
+
+                // Update theme toggle text
+                const themeText = this.currentTheme === 'dark' ? '🌙 Dark' : '☀️ Light';
+                const mobileThemeText = this.currentTheme === 'dark' ? '🌙' : '☀️';
+
+                if (this.themeToggle) {
+                    this.themeToggle.innerHTML = `<span>${mobileThemeText}</span><span>${this.currentTheme === 'dark' ? 'Dark' : 'Light'}</span>`;
+                }
+
+                if (this.mobileThemeToggle) {
+                    this.mobileThemeToggle.innerHTML = `<span>${mobileThemeText}</span>`;
+                }
+            }
+
+            handleRefresh() {
+                // Add rotation animation
+                this.refreshButton.style.transform = 'rotate(360deg)';
+
+                setTimeout(() => {
+                    this.refreshButton.style.transform = '';
+                }, 300);
+
+                // Simulate refresh
+                console.log('Refreshing data...');
+            }
+
+            handleNavigation(link) {
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+
+                // Add active class to clicked link
+                link.classList.add('active');
+
+                // Update page title and breadcrumbs
+                const page = link.dataset.page;
+                this.updatePageInfo(page);
+
+                // Close mobile sidebar if open
+                if (this.isMobile && this.sidebarOpen) {
+                    this.closeMobileSidebar();
+                }
+            }
+
+            updatePageInfo(page) {
+                const pageInfo = {
+                    dashboard: {
+                        title: '仪表盘',
+                        breadcrumbs: [{ label: '仪表盘', current: true }]
+                    },
+                    interfaces: {
+                        title: '接口管理',
+                        breadcrumbs: [
+                            { label: '仪表盘', href: '#' },
+                            { label: '接口管理', current: true }
+                        ]
+                    },
+                    testing: {
+                        title: '协议测试',
+                        breadcrumbs: [
+                            { label: '仪表盘', href: '#' },
+                            { label: '协议测试', current: true }
+                        ]
+                    },
+                    drivers: {
+                        title: '驱动管理',
+                        breadcrumbs: [
+                            { label: '仪表盘', href: '#' },
+                            { label: '驱动管理', current: true }
+                        ]
+                    },
+                    config: {
+                        title: '系统配置',
+                        breadcrumbs: [
+                            { label: '仪表盘', href: '#' },
+                            { label: '系统配置', current: true }
+                        ]
+                    }
+                };
+
+                const info = pageInfo[page] || pageInfo.dashboard;
+
+                // Update page titles
+                const pageTitle = document.getElementById('pageTitle');
+                const mobileTitle = document.getElementById('mobileTitle');
+
+                if (pageTitle) pageTitle.textContent = info.title;
+                if (mobileTitle) mobileTitle.textContent = info.title;
+
+                // Update document title
+                document.title = `${info.title} - ProDB Collector`;
+
+                // Update breadcrumbs
+                this.updateBreadcrumbs(info.breadcrumbs);
+            }
+
+            updateBreadcrumbs(breadcrumbs = [{ label: '仪表盘', current: true }]) {
+                const breadcrumbsContainer = document.getElementById('breadcrumbs');
+                const mobileBreadcrumbs = document.getElementById('mobileBreadcrumbs');
+
+                const renderBreadcrumbs = (container) => {
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    breadcrumbs.forEach((crumb, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'breadcrumb-item';
+
+                        if (crumb.current) {
+                            li.innerHTML = `<span class="breadcrumb-current">${crumb.label}</span>`;
+                        } else {
+                            li.innerHTML = `
+                                <a href="${crumb.href || '#'}" class="breadcrumb-link">${crumb.label}</a>
+                                <span class="breadcrumb-separator">›</span>
+                            `;
+                        }
+
+                        container.appendChild(li);
+                    });
+                };
+
+                renderBreadcrumbs(breadcrumbsContainer);
+                renderBreadcrumbs(mobileBreadcrumbs);
+            }
+
+            setupAutoRefresh() {
+                const interval = parseInt(this.refreshInterval.value);
+
+                // Clear existing interval
+                if (this.autoRefreshInterval) {
+                    clearInterval(this.autoRefreshInterval);
+                }
+
+                // Set new interval if enabled
+                if (interval > 0) {
+                    this.autoRefreshInterval = setInterval(() => {
+                        this.handleRefresh();
+                    }, interval);
+                }
+            }
+
+            loadPreferences() {
+                // Load sidebar collapsed state
+                const savedCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+                if (savedCollapsed) {
+                    this.sidebarCollapsed = true;
+                    this.sidebar.classList.add('collapsed');
+                    this.layout.classList.add('sidebar-collapsed');
+                    this.sidebarCollapseToggle.textContent = '»';
+                }
+
+                // Load theme
+                const savedTheme = localStorage.getItem('collector-theme') || 'dark';
+                this.currentTheme = savedTheme;
+
+                // Update theme toggle display
+                const themeText = this.currentTheme === 'dark' ? '🌙' : '☀️';
+                if (this.themeToggle) {
+                    this.themeToggle.innerHTML = `<span>${themeText}</span><span>${this.currentTheme === 'dark' ? 'Dark' : 'Light'}</span>`;
+                }
+                if (this.mobileThemeToggle) {
+                    this.mobileThemeToggle.innerHTML = `<span>${themeText}</span>`;
+                }
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new HeaderLayoutManager();
+        });
+
+        // Add some demo functionality
+        console.log('Header Layout Fix Test loaded successfully!');
+        console.log('Test features:');
+        console.log('- Sidebar collapse/expand');
+        console.log('- Mobile responsive header');
+        console.log('- Theme switching');
+        console.log('- Breadcrumb navigation');
+        console.log('- Auto refresh controls');
+    </script>
+</body>
+
+</html>

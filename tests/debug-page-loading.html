@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面加载调试工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .step.success {
+            background: #f0f9ff;
+            border-left-color: #10b981;
+        }
+        .step.error {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+        .step.loading {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+        .step-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+        .step.success .step-icon {
+            background: #10b981;
+        }
+        .step.error .step-icon {
+            background: #ef4444;
+        }
+        .step.loading .step-icon {
+            background: #f59e0b;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .log-area {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .page-frame {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>页面加载调试工具</h1>
+    <p>逐步调试页面加载过程，定位500错误的具体原因。</p>
+    
+    <div class="debug-card">
+        <h3>🔍 调试步骤</h3>
+        <div id="debug-steps">
+            <div class="step" id="step-backend">
+                <div class="step-icon">1</div>
+                <div>
+                    <strong>检查后端服务</strong>
+                    <div>验证后端API服务是否正常运行</div>
+                </div>
+            </div>
+            
+            <div class="step" id="step-api">
+                <div class="step-icon">2</div>
+                <div>
+                    <strong>测试API端点</strong>
+                    <div>检查关键API端点的可用性</div>
+                </div>
+            </div>
+            
+            <div class="step" id="step-frontend">
+                <div class="step-icon">3</div>
+                <div>
+                    <strong>检查前端服务</strong>
+                    <div>验证前端开发服务器状态</div>
+                </div>
+            </div>
+            
+            <div class="step" id="step-page">
+                <div class="step-icon">4</div>
+                <div>
+                    <strong>加载目标页面</strong>
+                    <div>尝试加载数据查询页面</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button class="test-button" onclick="runFullDiagnosis()">
+                开始完整诊断
+            </button>
+            <button class="test-button" onclick="testBackend()">
+                测试后端
+            </button>
+            <button class="test-button" onclick="testAPI()">
+                测试API
+            </button>
+            <button class="test-button" onclick="testPage()">
+                测试页面
+            </button>
+            <button class="test-button" onclick="clearLog()">
+                清除日志
+            </button>
+        </div>
+    </div>
+
+    <div class="debug-card">
+        <h3>📊 测试结果</h3>
+        <div id="test-results">
+            <p>点击上面的按钮开始测试...</p>
+        </div>
+    </div>
+
+    <div class="debug-card">
+        <h3>📝 调试日志</h3>
+        <div class="log-area" id="debug-log">
+等待测试开始...
+        </div>
+    </div>
+
+    <div class="debug-card">
+        <h3>🖼️ 页面预览</h3>
+        <p>在iframe中加载目标页面，查看实际效果：</p>
+        <button class="test-button" onclick="loadPageInFrame()">
+            在框架中加载页面
+        </button>
+        <div style="margin-top: 10px;">
+            <iframe id="page-frame" class="page-frame" style="display: none;"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let logArea = document.getElementById('debug-log');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            logArea.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        function clearLog() {
+            logArea.textContent = '日志已清除\n';
+        }
+        
+        function updateStep(stepId, status, message = '') {
+            const step = document.getElementById(stepId);
+            step.className = `step ${status}`;
+            
+            const icon = step.querySelector('.step-icon');
+            if (status === 'success') {
+                icon.textContent = '✓';
+            } else if (status === 'error') {
+                icon.textContent = '✗';
+            } else if (status === 'loading') {
+                icon.textContent = '⟳';
+            }
+            
+            if (message) {
+                const desc = step.querySelector('div div');
+                desc.textContent = message;
+            }
+        }
+        
+        async function testBackend() {
+            log('开始测试后端服务...');
+            updateStep('step-backend', 'loading', '正在检查后端服务...');
+            
+            try {
+                const response = await fetch('http://localhost:3001/ping');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('后端服务正常运行', 'success');
+                    updateStep('step-backend', 'success', '后端服务正常运行');
+                    return true;
+                } else {
+                    log(`后端服务响应异常: ${response.status}`, 'error');
+                    updateStep('step-backend', 'error', `响应异常: ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                log(`后端服务连接失败: ${error.message}`, 'error');
+                updateStep('step-backend', 'error', '连接失败');
+                return false;
+            }
+        }
+        
+        async function testAPI() {
+            log('开始测试API端点...');
+            updateStep('step-api', 'loading', '正在测试API端点...');
+            
+            const endpoints = [
+                { name: 'TDengine健康检查', url: '/api/v1/tdengine/health' },
+                { name: '数据库列表', url: '/api/v1/tdengine/databases' },
+            ];
+            
+            let successCount = 0;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    log(`测试 ${endpoint.name}...`);
+                    const response = await fetch(`http://localhost:3001${endpoint.url}`);
+                    
+                    if (response.ok) {
+                        log(`${endpoint.name} - 成功`, 'success');
+                        successCount++;
+                    } else {
+                        log(`${endpoint.name} - 失败 (${response.status})`, 'error');
+                    }
+                } catch (error) {
+                    log(`${endpoint.name} - 错误: ${error.message}`, 'error');
+                }
+            }
+            
+            if (successCount === endpoints.length) {
+                updateStep('step-api', 'success', '所有API端点正常');
+                return true;
+            } else {
+                updateStep('step-api', 'error', `${successCount}/${endpoints.length} 个端点正常`);
+                return false;
+            }
+        }
+        
+        async function testFrontend() {
+            log('开始检查前端服务...');
+            updateStep('step-frontend', 'loading', '正在检查前端服务...');
+            
+            const ports = [3000, 5173, 5174, 4173];
+            
+            for (const port of ports) {
+                try {
+                    const response = await fetch(`http://localhost:${port}`, { mode: 'no-cors' });
+                    log(`前端服务在端口 ${port} 运行正常`, 'success');
+                    updateStep('step-frontend', 'success', `运行在端口 ${port}`);
+                    return true;
+                } catch (error) {
+                    log(`端口 ${port} 不可用`);
+                }
+            }
+            
+            log('未找到运行中的前端服务', 'error');
+            updateStep('step-frontend', 'error', '前端服务未运行');
+            return false;
+        }
+        
+        async function testPage() {
+            log('开始测试目标页面...');
+            updateStep('step-page', 'loading', '正在加载页面...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/database-apps/query', { mode: 'no-cors' });
+                log('页面请求已发送', 'success');
+                updateStep('step-page', 'success', '页面可访问');
+                return true;
+            } catch (error) {
+                log(`页面加载失败: ${error.message}`, 'error');
+                updateStep('step-page', 'error', '页面加载失败');
+                return false;
+            }
+        }
+        
+        async function runFullDiagnosis() {
+            log('开始完整诊断流程...');
+            
+            const backendOk = await testBackend();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const apiOk = await testAPI();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const frontendOk = await testFrontend();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const pageOk = await testPage();
+            
+            log('诊断完成!');
+            
+            // 更新结果摘要
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <h4>诊断结果摘要</h4>
+                <ul>
+                    <li>后端服务: ${backendOk ? '✅ 正常' : '❌ 异常'}</li>
+                    <li>API端点: ${apiOk ? '✅ 正常' : '❌ 异常'}</li>
+                    <li>前端服务: ${frontendOk ? '✅ 正常' : '❌ 异常'}</li>
+                    <li>目标页面: ${pageOk ? '✅ 可访问' : '❌ 不可访问'}</li>
+                </ul>
+                ${!backendOk || !apiOk || !frontendOk || !pageOk ? 
+                    '<p style="color: red;"><strong>建议:</strong> 请检查失败的服务并重新启动。</p>' : 
+                    '<p style="color: green;"><strong>状态:</strong> 所有服务正常，页面应该可以正常访问。</p>'
+                }
+            `;
+        }
+        
+        function loadPageInFrame() {
+            const frame = document.getElementById('page-frame');
+            frame.src = 'http://localhost:3000/database-apps/query';
+            frame.style.display = 'block';
+            log('在iframe中加载页面...');
+            
+            frame.onload = () => {
+                log('页面在iframe中加载完成', 'success');
+            };
+            
+            frame.onerror = () => {
+                log('页面在iframe中加载失败', 'error');
+            };
+        }
+        
+        // 页面加载时自动开始诊断
+        window.onload = () => {
+            setTimeout(runFullDiagnosis, 1000);
+        };
+    </script>
+</body>
+</html>

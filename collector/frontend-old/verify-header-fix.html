@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Header Fix - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        .verification-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+            max-width: 300px;
+        }
+
+        .verification-item {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-ok {
+            color: #10b981;
+        }
+
+        .status-error {
+            color: #ef4444;
+        }
+
+        .test-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin: var(--space-6);
+        }
+
+        .test-content h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .test-content p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-3);
+        }
+
+        .demo-area {
+            height: 300px;
+            background: linear-gradient(45deg, var(--color-primary), var(--color-success));
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            margin: var(--space-4) 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-panel" id="verificationPanel">
+        <div style="font-weight: bold; margin-bottom: 10px;">Header Fix Verification</div>
+        <div class="verification-item">
+            <span>HTML Structure:</span>
+            <span id="htmlStatus">Checking...</span>
+        </div>
+        <div class="verification-item">
+            <span>CSS Classes:</span>
+            <span id="cssStatus">Checking...</span>
+        </div>
+        <div class="verification-item">
+            <span>Header Height:</span>
+            <span id="heightStatus">Checking...</span>
+        </div>
+        <div class="verification-item">
+            <span>Control Alignment:</span>
+            <span id="alignStatus">Checking...</span>
+        </div>
+        <div class="verification-item">
+            <span>Browser Cache:</span>
+            <span id="cacheStatus">Checking...</span>
+        </div>
+    </div>
+
+    <div id="app"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState, useEffect } from 'https://esm.sh/preact/hooks';
+        import Layout from './components/Layout.js';
+
+        // Verification functions
+        function verifyHeaderFix() {
+            const results = {
+                html: false,
+                css: false,
+                height: false,
+                align: false,
+                cache: false
+            };
+
+            // Check HTML structure
+            setTimeout(() => {
+                const appHeader = document.querySelector('.app-header');
+                const headerContainer = document.querySelector('.header-container');
+                const headerRight = document.querySelector('.header-right');
+                
+                results.html = !!(appHeader && headerContainer && headerRight);
+                document.getElementById('htmlStatus').textContent = results.html ? 'OK' : 'MISSING';
+                document.getElementById('htmlStatus').className = results.html ? 'status-ok' : 'status-error';
+
+                // Check CSS classes
+                const headerControls = document.querySelectorAll('.header-control');
+                results.css = headerControls.length >= 2; // At least refresh button and theme button
+                document.getElementById('cssStatus').textContent = results.css ? `OK (${headerControls.length})` : 'MISSING';
+                document.getElementById('cssStatus').className = results.css ? 'status-ok' : 'status-error';
+
+                // Check header height
+                if (headerContainer) {
+                    const height = headerContainer.offsetHeight;
+                    results.height = height === 64;
+                    document.getElementById('heightStatus').textContent = `${height}px`;
+                    document.getElementById('heightStatus').className = results.height ? 'status-ok' : 'status-error';
+                }
+
+                // Check control alignment
+                if (headerControls.length > 0) {
+                    const heights = Array.from(headerControls).map(el => el.offsetHeight);
+                    const allSameHeight = heights.every(h => h === heights[0]);
+                    results.align = allSameHeight && heights[0] === 36;
+                    document.getElementById('alignStatus').textContent = allSameHeight ? `OK (${heights[0]}px)` : `MIXED (${heights.join(',')})`;
+                    document.getElementById('alignStatus').className = results.align ? 'status-ok' : 'status-error';
+                }
+
+                // Check cache status
+                const timestamp = Date.now();
+                results.cache = timestamp > 0; // Always true, just for display
+                document.getElementById('cacheStatus').textContent = 'Clear & Refresh';
+                document.getElementById('cacheStatus').className = 'status-ok';
+
+                // Overall status
+                const allGood = Object.values(results).every(r => r);
+                if (allGood) {
+                    document.getElementById('verificationPanel').style.borderLeft = '4px solid #10b981';
+                } else {
+                    document.getElementById('verificationPanel').style.borderLeft = '4px solid #ef4444';
+                }
+            }, 100);
+        }
+
+        // Test App Component
+        const TestApp = () => {
+            const [currentPath, setCurrentPath] = useState('/');
+
+            const navigateTo = (path) => {
+                setCurrentPath(path);
+                console.log('Navigating to:', path);
+            };
+
+            useEffect(() => {
+                verifyHeaderFix();
+            }, []);
+
+            return html`
+                <${Layout} 
+                    currentPath=${currentPath} 
+                    navigateTo=${navigateTo}
+                >
+                    <div class="test-content">
+                        <h3>🔍 Header Fix Verification</h3>
+                        <p>这个页面用于验证header修复是否已经生效。请查看右上角的验证面板。</p>
+                        
+                        <h4 style="color: var(--text-primary); margin-top: var(--space-4);">如果修复未生效，请尝试：</h4>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>强制刷新浏览器 (Ctrl+F5 或 Cmd+Shift+R)</li>
+                            <li>清除浏览器缓存</li>
+                            <li>检查开发者工具中的网络请求</li>
+                            <li>确认Layout.js文件已正确保存</li>
+                        </ul>
+
+                        <div class="demo-area">
+                            Header验证测试区域 - 检查上方header是否使用新样式
+                        </div>
+
+                        <h4 style="color: var(--text-primary);">预期效果：</h4>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>Header使用.app-header类名</li>
+                            <li>Header容器高度64px</li>
+                            <li>所有控件使用.header-control基类</li>
+                            <li>控件高度统一36px</li>
+                            <li>完美垂直居中对齐</li>
+                        </ul>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>🛠️ 调试信息</h3>
+                        <p>如果验证失败，请检查以下内容：</p>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>浏览器开发者工具 > Elements > 查找.app-header元素</li>
+                            <li>浏览器开发者工具 > Network > 确认Layout.js已重新加载</li>
+                            <li>浏览器开发者工具 > Console > 查看是否有JavaScript错误</li>
+                            <li>确认CSS样式是否正确应用</li>
+                        </ul>
+
+                        <div class="demo-area" style="background: linear-gradient(135deg, var(--color-warning), var(--color-error));">
+                            滚动测试区域 - 验证header sticky效果
+                        </div>
+                    </div>
+                </>
+            `;
+        };
+
+        // Render the app
+        render(html`<${TestApp} />`, document.getElementById('app'));
+
+        // Add cache busting
+        console.log('Header Fix Verification loaded at:', new Date().toISOString());
+        console.log('Cache buster:', Date.now());
+        
+        // Force reload Layout.js with cache busting
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = `./components/Layout.js?v=${Date.now()}`;
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>

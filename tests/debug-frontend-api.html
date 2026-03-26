@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端API调试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔍 前端API调试</h1>
+    <div class="info">
+        <strong>目标:</strong> 调试前端为什么没有显示表数据
+    </div>
+    
+    <div>
+        <button onclick="checkFrontendStatus()">检查前端状态</button>
+        <button onclick="testAPIEndpoints()">测试API端点</button>
+        <button onclick="simulateFrontendCall()">模拟前端调用</button>
+        <button onclick="checkCORS()">检查CORS</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="result"></div>
+    
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResult(content) {
+            const resultDiv = document.getElementById('result');
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+        
+        async function checkFrontendStatus() {
+            showStatus('检查前端开发服务器状态...', 'info');
+            
+            const frontendPorts = [3000, 5173, 4173, 3001]; // 常见的前端开发服务器端口
+            const results = {};
+            
+            for (const port of frontendPorts) {
+                try {
+                    const response = await fetch(`http://localhost:${port}`, { 
+                        method: 'GET',
+                        mode: 'no-cors' // 避免CORS问题
+                    });
+                    results[port] = 'accessible';
+                } catch (error) {
+                    results[port] = 'not accessible';
+                }
+            }
+            
+            showStatus('前端服务器检查完成', 'info');
+            showResult({
+                message: '前端服务器状态检查',
+                ports: results,
+                note: '如果所有端口都不可访问，说明前端开发服务器没有运行'
+            });
+        }
+        
+        async function testAPIEndpoints() {
+            showStatus('测试API端点...', 'info');
+            
+            const endpoints = [
+                '/database/connections',
+                '/database/databases', 
+                '/database/tables?database=test',
+                '/database/supertables?database=test'
+            ];
+            
+            const results = {};
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        results[endpoint] = { status: 'success', data: data };
+                    } else {
+                        results[endpoint] = { status: 'error', code: response.status };
+                    }
+                } catch (error) {
+                    results[endpoint] = { status: 'error', message: error.message };
+                }
+            }
+            
+            showStatus('API端点测试完成', 'success');
+            showResult(results);
+        }
+        
+        async function simulateFrontendCall() {
+            showStatus('模拟前端API调用...', 'info');
+            
+            try {
+                // 模拟前端的axios调用
+                const baseURL = 'http://localhost:8080/api/v1';
+                
+                // 1. 获取连接列表
+                const connectionsResponse = await fetch(`${baseURL}/database/connections`);
+                const connectionsData = await connectionsResponse.json();
+                
+                // 2. 查找默认连接
+                const defaultConnection = connectionsData.connections?.find(conn => conn.is_default);
+                
+                if (!defaultConnection) {
+                    throw new Error('未找到默认连接');
+                }
+                
+                // 3. 获取数据库列表
+                const databasesResponse = await fetch(`${baseURL}/database/databases`);
+                const databasesData = await databasesResponse.json();
+                
+                // 4. 获取表列表
+                const tablesResponse = await fetch(`${baseURL}/database/tables?database=test&connection_id=${defaultConnection.id}`);
+                const tablesData = await tablesResponse.json();
+                
+                showStatus('✅ 前端API调用模拟成功', 'success');
+                showResult({
+                    defaultConnection: {
+                        id: defaultConnection.id,
+                        name: defaultConnection.name,
+                        host: defaultConnection.host,
+                        port: defaultConnection.port
+                    },
+                    databases: databasesData.databases?.length || 0,
+                    tables: tablesData.data?.tables || [],
+                    tablesCount: tablesData.data?.total || 0
+                });
+                
+            } catch (error) {
+                showStatus(`❌ 前端API调用模拟失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+            }
+        }
+        
+        async function checkCORS() {
+            showStatus('检查CORS配置...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/v1/database/tables?database=test', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000' // 模拟前端域名
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                };
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('✅ CORS配置正常', 'success');
+                    showResult({
+                        corsHeaders: corsHeaders,
+                        responseData: data
+                    });
+                } else {
+                    showStatus(`⚠️ API响应错误: ${response.status}`, 'error');
+                    showResult({
+                        status: response.status,
+                        statusText: response.statusText,
+                        corsHeaders: corsHeaders
+                    });
+                }
+                
+            } catch (error) {
+                showStatus(`❌ CORS检查失败: ${error.message}`, 'error');
+                showResult({ 
+                    error: error.message,
+                    note: '这可能是CORS问题或网络连接问题'
+                });
+            }
+        }
+        
+        // 页面加载时显示说明
+        window.addEventListener('load', () => {
+            showResult(`
+                <div style="background: white; padding: 15px; border-radius: 6px;">
+                    <h4>🔍 调试步骤说明</h4>
+                    <ol>
+                        <li><strong>检查前端状态:</strong> 确认前端开发服务器是否运行</li>
+                        <li><strong>测试API端点:</strong> 验证后端API是否正常工作</li>
+                        <li><strong>模拟前端调用:</strong> 模拟前端的完整API调用流程</li>
+                        <li><strong>检查CORS:</strong> 确认跨域请求配置是否正确</li>
+                    </ol>
+                    <h4>🎯 可能的问题</h4>
+                    <ul>
+                        <li>前端开发服务器没有运行 (npm run dev 或 yarn dev)</li>
+                        <li>前端环境变量配置错误</li>
+                        <li>CORS配置问题</li>
+                        <li>前端组件状态管理问题</li>
+                        <li>API调用时机问题</li>
+                    </ul>
+                </div>
+            `);
+        });
+    </script>
+</body>
+</html>

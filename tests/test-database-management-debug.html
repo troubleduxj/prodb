@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库管理页面调试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; white-space: pre-wrap; }
+        .error { background: #ffe6e6; color: #d00; }
+        .success { background: #e6ffe6; color: #060; }
+        .loading { background: #fff3cd; color: #856404; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        .step { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>数据库管理页面调试工具</h1>
+    <p>这个工具模拟前端数据库管理页面的完整流程，帮助诊断问题。</p>
+
+    <div class="section">
+        <h2>🔍 诊断步骤</h2>
+        <div class="step">
+            <strong>步骤1:</strong> 测试后端连接状态
+        </div>
+        <div class="step">
+            <strong>步骤2:</strong> 获取TDengine连接配置
+        </div>
+        <div class="step">
+            <strong>步骤3:</strong> 模拟useDefaultConnection Hook
+        </div>
+        <div class="step">
+            <strong>步骤4:</strong> 测试数据库列表获取
+        </div>
+        <div class="step">
+            <strong>步骤5:</strong> 测试超级表列表获取
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🚀 开始完整测试</h2>
+        <button onclick="runFullTest()">运行完整测试流程</button>
+        <div id="full-test-result" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>📊 测试结果分析</h2>
+        <div id="analysis-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001';
+        let testResults = {};
+
+        async function runFullTest() {
+            const resultDiv = document.getElementById('full-test-result');
+            const analysisDiv = document.getElementById('analysis-result');
+            
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在运行完整测试流程...';
+            
+            try {
+                // 步骤1: 测试后端连接
+                resultDiv.textContent += '\n\n🔍 步骤1: 测试后端连接状态...';
+                const pingResult = await testBackendConnection();
+                testResults.backend = pingResult;
+                
+                // 步骤2: 获取连接配置
+                resultDiv.textContent += '\n\n🔍 步骤2: 获取TDengine连接配置...';
+                const connectionsResult = await testConnections();
+                testResults.connections = connectionsResult;
+                
+                // 步骤3: 模拟useDefaultConnection
+                resultDiv.textContent += '\n\n🔍 步骤3: 模拟useDefaultConnection Hook...';
+                const defaultConnectionResult = await testDefaultConnection();
+                testResults.defaultConnection = defaultConnectionResult;
+                
+                // 步骤4: 测试数据库列表
+                if (defaultConnectionResult.success && defaultConnectionResult.connection) {
+                    resultDiv.textContent += '\n\n🔍 步骤4: 测试数据库列表获取...';
+                    const databasesResult = await testDatabases(defaultConnectionResult.connection.id);
+                    testResults.databases = databasesResult;
+                    
+                    // 步骤5: 测试超级表列表
+                    if (databasesResult.success && databasesResult.databases.length > 0) {
+                        resultDiv.textContent += '\n\n🔍 步骤5: 测试超级表列表获取...';
+                        const superTablesResult = await testSuperTables(defaultConnectionResult.connection.id, databasesResult.databases[0].name);
+                        testResults.superTables = superTablesResult;
+                    }
+                }
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent += '\n\n✅ 完整测试流程完成！';
+                
+                // 分析结果
+                analyzeResults();
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `\n\n❌ 测试过程中出现错误: ${error.message}`;
+                
+                analysisDiv.className = 'result error';
+                analysisDiv.textContent = `错误分析:\n${error.stack}`;
+            }
+        }
+
+        async function testBackendConnection() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/ping`);
+                const data = await response.json();
+                return {
+                    success: true,
+                    data: data,
+                    message: '后端连接正常'
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    message: '后端连接失败'
+                };
+            }
+        }
+
+        async function testConnections() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/database/connections`);
+                const data = await response.json();
+                
+                return {
+                    success: true,
+                    connections: data.connections || [],
+                    total: data.total || 0,
+                    message: `找到 ${data.connections?.length || 0} 个连接配置`
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    message: '获取连接配置失败'
+                };
+            }
+        }
+
+        async function testDefaultConnection() {
+            try {
+                const connectionsResult = await testConnections();
+                if (!connectionsResult.success) {
+                    throw new Error('无法获取连接列表');
+                }
+
+                const connections = connectionsResult.connections;
+                const defaultConnection = connections.find(conn => conn.is_default);
+                const selectedConnection = defaultConnection || connections[0];
+
+                return {
+                    success: true,
+                    connection: selectedConnection,
+                    isDefault: !!defaultConnection,
+                    message: selectedConnection 
+                        ? `选择连接: ${selectedConnection.name} (${defaultConnection ? '默认' : '第一个'})`
+                        : '没有找到可用连接'
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    message: '获取默认连接失败'
+                };
+            }
+        }
+
+        async function testDatabases(connectionId) {
+            try {
+                const url = `${API_BASE_URL}/api/v1/database/databases${connectionId ? `?connection_id=${connectionId}` : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                return {
+                    success: true,
+                    databases: data.databases || [],
+                    message: `找到 ${data.databases?.length || 0} 个数据库`
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    message: '获取数据库列表失败'
+                };
+            }
+        }
+
+        async function testSuperTables(connectionId, database) {
+            try {
+                const url = `${API_BASE_URL}/api/v1/database/supertables?database=${database}${connectionId ? `&connection_id=${connectionId}` : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                return {
+                    success: true,
+                    superTables: data.supertables || data || [],
+                    message: `在数据库 ${database} 中找到 ${(data.supertables || data || []).length} 个超级表`
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    message: '获取超级表列表失败'
+                };
+            }
+        }
+
+        function analyzeResults() {
+            const analysisDiv = document.getElementById('analysis-result');
+            let analysis = '📊 测试结果分析:\n\n';
+
+            // 分析后端连接
+            if (testResults.backend?.success) {
+                analysis += '✅ 后端服务: 正常运行\n';
+                if (testResults.backend.data?.tdengine_status?.healthy) {
+                    analysis += '✅ TDengine连接: 健康\n';
+                } else {
+                    analysis += '⚠️ TDengine连接: 可能有问题\n';
+                }
+            } else {
+                analysis += '❌ 后端服务: 连接失败\n';
+            }
+
+            // 分析连接配置
+            if (testResults.connections?.success) {
+                analysis += `✅ 连接配置: 找到 ${testResults.connections.total} 个\n`;
+            } else {
+                analysis += '❌ 连接配置: 获取失败\n';
+            }
+
+            // 分析默认连接
+            if (testResults.defaultConnection?.success) {
+                if (testResults.defaultConnection.isDefault) {
+                    analysis += '✅ 默认连接: 已配置\n';
+                } else {
+                    analysis += '⚠️ 默认连接: 未配置，使用第一个连接\n';
+                }
+            } else {
+                analysis += '❌ 默认连接: 获取失败\n';
+            }
+
+            // 分析数据库
+            if (testResults.databases?.success) {
+                analysis += `✅ 数据库列表: 找到 ${testResults.databases.databases.length} 个\n`;
+                if (testResults.databases.databases.length > 0) {
+                    analysis += `   数据库: ${testResults.databases.databases.map(db => db.name).join(', ')}\n`;
+                }
+            } else {
+                analysis += '❌ 数据库列表: 获取失败\n';
+            }
+
+            // 分析超级表
+            if (testResults.superTables?.success) {
+                analysis += `✅ 超级表列表: 找到 ${testResults.superTables.superTables.length} 个\n`;
+            } else if (testResults.superTables) {
+                analysis += '❌ 超级表列表: 获取失败\n';
+            }
+
+            // 问题诊断
+            analysis += '\n🔧 问题诊断:\n';
+            
+            if (!testResults.backend?.success) {
+                analysis += '- 后端服务未运行或无法访问\n';
+                analysis += '- 检查后端是否在 http://localhost:3001 运行\n';
+            } else if (!testResults.connections?.success) {
+                analysis += '- 数据库连接API有问题\n';
+                analysis += '- 检查后端数据库连接处理器\n';
+            } else if (testResults.connections.total === 0) {
+                analysis += '- 没有配置TDengine连接\n';
+                analysis += '- 请在数据库连接配置页面添加连接\n';
+            } else if (!testResults.databases?.success) {
+                analysis += '- TDengine连接有问题\n';
+                analysis += '- 检查TDengine服务是否运行\n';
+                analysis += '- 检查连接配置是否正确\n';
+            } else {
+                analysis += '- 所有测试通过！数据库管理页面应该能正常工作\n';
+            }
+
+            // 建议解决方案
+            analysis += '\n💡 建议解决方案:\n';
+            if (!testResults.backend?.success) {
+                analysis += '1. 启动后端服务: 运行 quick-start-backend.bat\n';
+            }
+            if (testResults.connections?.total === 0) {
+                analysis += '2. 配置TDengine连接: 访问 http://localhost:3000/database/connection\n';
+            }
+            if (!testResults.defaultConnection?.isDefault && testResults.connections?.total > 0) {
+                analysis += '3. 设置默认连接: 在连接配置中将一个连接设为默认\n';
+            }
+
+            analysisDiv.className = 'result success';
+            analysisDiv.textContent = analysis;
+
+            // 显示详细数据
+            analysis += '\n📋 详细测试数据:\n';
+            analysis += JSON.stringify(testResults, null, 2);
+            analysisDiv.textContent = analysis;
+        }
+
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            console.log('页面加载完成，开始自动测试...');
+            setTimeout(runFullTest, 1000);
+        };
+    </script>
+</body>
+</html>

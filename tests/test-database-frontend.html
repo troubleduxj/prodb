@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库前端API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>数据库前端API测试</h1>
+    
+    <div class="test-section">
+        <h3>1. 获取连接列表</h3>
+        <button onclick="testGetConnections()">测试获取连接</button>
+        <div id="connections-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. 创建新连接</h3>
+        <button onclick="testCreateConnection()">测试创建连接</button>
+        <div id="create-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. 测试连接</h3>
+        <button onclick="testConnectionTest()">测试连接测试</button>
+        <div id="test-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api/v1';
+
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE_URL}${url}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        async function testGetConnections() {
+            const resultDiv = document.getElementById('connections-result');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const data = await apiCall('/database/connections');
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `成功获取连接列表:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testCreateConnection() {
+            const resultDiv = document.getElementById('create-result');
+            resultDiv.textContent = '正在测试...';
+            
+            const testConnection = {
+                name: 'Test Connection',
+                host: 'localhost',
+                port: 6030,
+                username: 'root',
+                password: 'taosdata',
+                database: 'test_db',
+                timeout: 5000,
+                maxConnections: 10,
+                isDefault: false
+            };
+            
+            try {
+                const data = await apiCall('/database/connections', {
+                    method: 'POST',
+                    body: JSON.stringify(testConnection)
+                });
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `成功创建连接:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testConnectionTest() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.textContent = '正在测试...';
+            
+            const testData = {
+                name: 'Test Connection',
+                host: 'localhost',
+                port: 6030,
+                username: 'root',
+                password: 'taosdata',
+                database: 'test_db'
+            };
+            
+            try {
+                const data = await apiCall('/database/connections/test', {
+                    method: 'POST',
+                    body: JSON.stringify(testData)
+                });
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `连接测试结果:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        // 页面加载时自动测试获取连接
+        window.onload = function() {
+            testGetConnections();
+        };
+    </script>
+</body>
+</html>

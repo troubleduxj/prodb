@@ -1,0 +1,315 @@
+{
+  "collector": {
+    "id": "opcua-collector-001",
+    "name": "Factory A OPC-UA Collector",
+    "heartbeat_interval": 60,
+    "data_buffer_size": 1000,
+    "cache_retention_days": 7
+  },
+  "collection_tasks": [
+    {
+      "task_id": "opcua-basic-001",
+      "name": "Basic OPC-UA Data Collection",
+      "protocol": "opcua",
+      "enabled": true,
+      "schedule": {
+        "interval": 5,
+        "unit": "seconds"
+      },
+      "connection": {
+        "endpoint": "opc.tcp://localhost:4840/freeopcua/server/",
+        "security_mode": "None",
+        "security_policy": "None",
+        "auth_mode": "Anonymous",
+        "request_timeout": 10000,
+        "session_timeout": 60000,
+        "keepalive_interval": 10000
+      },
+      "data_points": [
+        {
+          "name": "temperature_sensor_1",
+          "address": "ns=2;i=1001",
+          "data_type": "float32",
+          "unit": "°C",
+          "scale": 0.1,
+          "offset": 0,
+          "tags": {
+            "location": "reactor_1",
+            "sensor_type": "temperature"
+          }
+        },
+        {
+          "name": "pressure_sensor_1",
+          "address": "ns=2;i=1002",
+          "data_type": "float32",
+          "unit": "bar",
+          "scale": 0.01,
+          "offset": 0,
+          "tags": {
+            "location": "reactor_1",
+            "sensor_type": "pressure"
+          }
+        },
+        {
+          "name": "pump_status",
+          "address": "ns=2;i=2001",
+          "data_type": "bool",
+          "unit": "",
+          "tags": {
+            "location": "pump_station",
+            "device_type": "pump"
+          }
+        },
+        {
+          "name": "flow_rate",
+          "address": "ns=2;i=3001",
+          "data_type": "float64",
+          "unit": "L/min",
+          "scale": 1.0,
+          "offset": 0,
+          "tags": {
+            "location": "pipeline_a",
+            "sensor_type": "flow"
+          }
+        }
+      ],
+      "target": {
+        "database": "industrial_data",
+        "super_table": "opcua_metrics",
+        "tags": {
+          "collector_type": "opcua",
+          "facility": "factory_a"
+        }
+      }
+    },
+    {
+      "task_id": "opcua-secure-001",
+      "name": "Secure OPC-UA Data Collection",
+      "protocol": "opcua",
+      "enabled": false,
+      "schedule": {
+        "interval": 2,
+        "unit": "seconds"
+      },
+      "connection": {
+        "endpoint": "opc.tcp://plc.factory.com:4840/OPCUA/SimulationServer",
+        "security_mode": "SignAndEncrypt",
+        "security_policy": "Basic256Sha256",
+        "auth_mode": "Username",
+        "username": "operator",
+        "password": "secure_password",
+        "certificate_file": "/etc/opcua/client.crt",
+        "private_key_file": "/etc/opcua/client.key",
+        "trusted_certs_dir": "/etc/opcua/trusted",
+        "request_timeout": 15000,
+        "session_timeout": 120000,
+        "keepalive_interval": 5000,
+        "max_reconnect_delay": 30000
+      },
+      "data_points": [
+        {
+          "name": "production_line_speed",
+          "address": "ns=3;s=ProductionLine.Speed",
+          "data_type": "float32",
+          "unit": "m/min",
+          "scale": 1.0,
+          "offset": 0,
+          "tags": {
+            "location": "production_line_1",
+            "parameter": "speed"
+          }
+        },
+        {
+          "name": "motor_current",
+          "address": "ns=3;s=Motor.Current",
+          "data_type": "float32",
+          "unit": "A",
+          "scale": 0.01,
+          "offset": 0,
+          "tags": {
+            "location": "motor_1",
+            "parameter": "current"
+          }
+        },
+        {
+          "name": "alarm_status",
+          "address": "ns=3;s=System.AlarmStatus",
+          "data_type": "bool",
+          "unit": "",
+          "tags": {
+            "location": "control_room",
+            "parameter": "alarm"
+          }
+        }
+      ],
+      "target": {
+        "database": "production_data",
+        "super_table": "opcua_secure_metrics",
+        "tags": {
+          "collector_type": "opcua_secure",
+          "facility": "factory_a",
+          "security_level": "high"
+        }
+      }
+    },
+    {
+      "task_id": "opcua-subscription-001",
+      "name": "OPC-UA Subscription-based Collection",
+      "protocol": "opcua",
+      "enabled": true,
+      "schedule": {
+        "interval": 1,
+        "unit": "seconds"
+      },
+      "connection": {
+        "endpoint": "opc.tcp://localhost:4840/freeopcua/server/",
+        "security_mode": "None",
+        "auth_mode": "Anonymous",
+        "publishing_interval": 500,
+        "max_notifications_per_publish": 50,
+        "lifetime_count": 7200,
+        "max_keepalive_count": 20
+      },
+      "data_points": [
+        {
+          "name": "high_freq_sensor_1",
+          "address": "ns=2;i=5001",
+          "data_type": "float32",
+          "unit": "Hz",
+          "tags": {
+            "location": "vibration_monitor",
+            "sensor_type": "accelerometer",
+            "collection_mode": "subscription",
+            "sampling_interval": "100"
+          }
+        },
+        {
+          "name": "high_freq_sensor_2",
+          "address": "ns=2;i=5002",
+          "data_type": "float32",
+          "unit": "Hz",
+          "tags": {
+            "location": "vibration_monitor",
+            "sensor_type": "accelerometer",
+            "collection_mode": "subscription",
+            "sampling_interval": "100"
+          }
+        },
+        {
+          "name": "critical_temperature",
+          "address": "ns=2;i=6001",
+          "data_type": "float32",
+          "unit": "°C",
+          "tags": {
+            "location": "critical_zone",
+            "sensor_type": "temperature",
+            "collection_mode": "subscription",
+            "sampling_interval": "500"
+          }
+        }
+      ],
+      "target": {
+        "database": "high_frequency_data",
+        "super_table": "opcua_subscription_metrics",
+        "tags": {
+          "collector_type": "opcua_subscription",
+          "data_frequency": "high"
+        }
+      }
+    },
+    {
+      "task_id": "opcua-mixed-nodes-001",
+      "name": "Mixed Node Types Collection",
+      "protocol": "opcua",
+      "enabled": true,
+      "schedule": {
+        "interval": 10,
+        "unit": "seconds"
+      },
+      "connection": {
+        "endpoint": "opc.tcp://localhost:4840/freeopcua/server/",
+        "security_mode": "None",
+        "auth_mode": "Anonymous"
+      },
+      "data_points": [
+        {
+          "name": "numeric_node",
+          "address": "ns=2;i=1001",
+          "data_type": "int32",
+          "unit": "count",
+          "tags": {
+            "node_type": "numeric"
+          }
+        },
+        {
+          "name": "string_node",
+          "address": "ns=2;s=StringValue",
+          "data_type": "string",
+          "unit": "",
+          "tags": {
+            "node_type": "string"
+          }
+        },
+        {
+          "name": "guid_node",
+          "address": "ns=2;g=12345678-1234-1234-1234-123456789012",
+          "data_type": "string",
+          "unit": "",
+          "tags": {
+            "node_type": "guid"
+          }
+        },
+        {
+          "name": "boolean_array",
+          "address": "ns=2;i=7001",
+          "data_type": "bool",
+          "unit": "",
+          "tags": {
+            "node_type": "boolean",
+            "is_array": "true"
+          }
+        },
+        {
+          "name": "scaled_value",
+          "address": "ns=2;i=8001",
+          "data_type": "float64",
+          "unit": "kPa",
+          "scale": 1000,
+          "offset": 101.325,
+          "tags": {
+            "node_type": "scaled",
+            "original_unit": "Pa"
+          }
+        }
+      ],
+      "target": {
+        "database": "mixed_data",
+        "super_table": "opcua_mixed_metrics",
+        "tags": {
+          "collector_type": "opcua_mixed",
+          "data_variety": "high"
+        }
+      }
+    }
+  ],
+  "platform": {
+    "api_url": "https://platform.example.com/api/v1",
+    "auth": {
+      "collector_id": "opcua-collector-001",
+      "secret_key": "your-secret-key-here"
+    },
+    "upload_interval": 30,
+    "batch_size": 100
+  },
+  "storage": {
+    "cache_file": "opcua_collector_cache.db",
+    "max_cache_size": "100MB",
+    "retention_days": 7
+  },
+  "logging": {
+    "level": "info",
+    "file": "opcua_collector.log",
+    "max_size": "10MB",
+    "max_backups": 5
+  }
+}

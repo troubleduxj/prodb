@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单后端测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+            background: #f0f9ff;
+        }
+        .error {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>简单后端连接测试</h1>
+    <p>测试后端服务的基本连接和API可用性</p>
+
+    <div class="test-section">
+        <h3>🔍 基础连接测试</h3>
+        <button class="test-button" onclick="testPing()">测试 /ping</button>
+        <div class="result-box" id="ping-result">等待测试...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>🗄️ 数据库API测试</h3>
+        <button class="test-button" onclick="testDatabases()">测试数据库列表</button>
+        <div class="result-box" id="databases-result">等待测试...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>📈 趋势API测试</h3>
+        <button class="test-button" onclick="testTrends()">测试趋势参数</button>
+        <div class="result-box" id="trends-result">等待测试...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 查询API测试</h3>
+        <button class="test-button" onclick="testQuery()">测试查询接口</button>
+        <div class="result-box" id="query-result">等待测试...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 诊断信息</h3>
+        <button class="test-button" onclick="runDiagnostics()">运行诊断</button>
+        <div class="result-box" id="diagnostics-result">等待诊断...</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        
+        function showResult(elementId, result, isSuccess = true) {
+            const resultBox = document.getElementById(elementId);
+            if (resultBox) {
+                resultBox.textContent = result;
+                resultBox.className = `result-box ${isSuccess ? 'success' : 'error'}`;
+            }
+        }
+        
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = text;
+                }
+                
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: data,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+            } catch (error) {
+                return {
+                    ok: false,
+                    status: 0,
+                    error: error.message,
+                    data: null
+                };
+            }
+        }
+        
+        async function testPing() {
+            showResult('ping-result', '正在测试...', true);
+            
+            const result = await makeRequest(`${API_BASE}/ping`);
+            
+            if (result.ok) {
+                showResult('ping-result', 
+                    `✅ Ping 测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `响应: ${JSON.stringify(result.data, null, 2)}`, 
+                    true
+                );
+            } else {
+                showResult('ping-result', 
+                    `❌ Ping 测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误: ${result.error || JSON.stringify(result.data)}`, 
+                    false
+                );
+            }
+        }
+        
+        async function testDatabases() {
+            showResult('databases-result', '正在测试...', true);
+            
+            const result = await makeRequest(`${API_BASE}/api/v1/tdengine/databases`);
+            
+            if (result.ok) {
+                showResult('databases-result', 
+                    `✅ 数据库API测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `响应: ${JSON.stringify(result.data, null, 2)}`, 
+                    true
+                );
+            } else {
+                showResult('databases-result', 
+                    `❌ 数据库API测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误: ${result.error || JSON.stringify(result.data)}\\n` +
+                    `可能原因: 路由未注册或后端需要重启`, 
+                    false
+                );
+            }
+        }
+        
+        async function testTrends() {
+            showResult('trends-result', '正在测试...', true);
+            
+            const result = await makeRequest(`${API_BASE}/api/v1/trends/parameters`);
+            
+            if (result.ok) {
+                showResult('trends-result', 
+                    `✅ 趋势API测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `响应: ${JSON.stringify(result.data, null, 2)}`, 
+                    true
+                );
+            } else {
+                showResult('trends-result', 
+                    `❌ 趋势API测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误: ${result.error || JSON.stringify(result.data)}\\n` +
+                    `可能原因: 新的API路由未生效，需要重启后端`, 
+                    false
+                );
+            }
+        }
+        
+        async function testQuery() {
+            showResult('query-result', '正在测试...', true);
+            
+            const queryData = {
+                database: "test_db",
+                table: "test_table",
+                columns: ["*"],
+                limit: 5
+            };
+            
+            const result = await makeRequest(`${API_BASE}/api/v1/query/execute`, {
+                method: 'POST',
+                body: JSON.stringify(queryData)
+            });
+            
+            if (result.ok) {
+                showResult('query-result', 
+                    `✅ 查询API测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `响应: ${JSON.stringify(result.data, null, 2)}`, 
+                    true
+                );
+            } else {
+                showResult('query-result', 
+                    `❌ 查询API测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误: ${result.error || JSON.stringify(result.data)}\\n` +
+                    `可能原因: 查询路由未注册或后端需要重启`, 
+                    false
+                );
+            }
+        }
+        
+        async function runDiagnostics() {
+            showResult('diagnostics-result', '正在运行诊断...', true);
+            
+            let diagnostics = '🔍 后端服务诊断报告\\n\\n';
+            
+            // 1. 基础连接测试
+            diagnostics += '1. 基础连接测试:\\n';
+            const pingResult = await makeRequest(`${API_BASE}/ping`);
+            if (pingResult.ok) {
+                diagnostics += '   ✅ 后端服务运行正常\\n';
+                diagnostics += `   📊 TDengine状态: ${pingResult.data.tdengine_status ? '可用' : '不可用'}\\n`;
+            } else {
+                diagnostics += '   ❌ 后端服务连接失败\\n';
+                diagnostics += `   🔧 建议: 检查后端服务是否在端口3001运行\\n`;
+            }
+            
+            // 2. API路由测试
+            diagnostics += '\\n2. API路由可用性:\\n';
+            const routes = [
+                { path: '/api/v1/tdengine/databases', name: '数据库列表' },
+                { path: '/api/v1/trends/parameters', name: '趋势参数' }
+            ];
+            
+            for (const route of routes) {
+                const result = await makeRequest(`${API_BASE}${route.path}`);
+                if (result.ok) {
+                    diagnostics += `   ✅ ${route.name}: 正常\\n`;
+                } else if (result.status === 404) {
+                    diagnostics += `   ❌ ${route.name}: 路由未找到 (404)\\n`;
+                } else if (result.status === 500) {
+                    diagnostics += `   ⚠️  ${route.name}: 服务器错误 (500)\\n`;
+                } else {
+                    diagnostics += `   ❌ ${route.name}: 连接失败\\n`;
+                }
+            }
+            
+            // 3. CORS检查
+            diagnostics += '\\n3. CORS配置:\\n';
+            if (pingResult.ok && pingResult.headers) {
+                const corsHeaders = Object.keys(pingResult.headers).filter(h => 
+                    h.toLowerCase().includes('access-control'));
+                if (corsHeaders.length > 0) {
+                    diagnostics += '   ✅ CORS已配置\\n';
+                } else {
+                    diagnostics += '   ⚠️  CORS可能未正确配置\\n';
+                }
+            }
+            
+            // 4. 解决方案建议
+            diagnostics += '\\n🎯 解决方案建议:\\n';
+            
+            if (!pingResult.ok) {
+                diagnostics += '1. 启动后端服务:\\n';
+                diagnostics += '   cd platform/backend\\n';
+                diagnostics += '   go run main.go\\n\\n';
+            } else {
+                const dbResult = await makeRequest(`${API_BASE}/api/v1/tdengine/databases`);
+                const trendsResult = await makeRequest(`${API_BASE}/api/v1/trends/parameters`);
+                
+                if (!dbResult.ok || !trendsResult.ok) {
+                    diagnostics += '1. 重启后端服务以加载新的API路由:\\n';
+                    diagnostics += '   - 停止当前运行的后端服务 (Ctrl+C)\\n';
+                    diagnostics += '   - 重新启动: go run main.go\\n\\n';
+                    
+                    diagnostics += '2. 检查代码编译:\\n';
+                    diagnostics += '   - 确保新的handler文件已保存\\n';
+                    diagnostics += '   - 检查Go模块依赖: go mod tidy\\n\\n';
+                }
+                
+                diagnostics += '3. 验证步骤:\\n';
+                diagnostics += '   - 访问 http://localhost:3001/ping 确认服务运行\\n';
+                diagnostics += '   - 检查控制台输出是否有错误信息\\n';
+                diagnostics += '   - 使用浏览器开发者工具查看网络请求详情\\n';
+            }
+            
+            showResult('diagnostics-result', diagnostics, pingResult.ok);
+        }
+        
+        // 页面加载时自动运行基础诊断
+        window.onload = () => {
+            setTimeout(runDiagnostics, 1000);
+        };
+    </script>
+</body>
+</html>

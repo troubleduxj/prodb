@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>采集器API测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        button {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+        .log {
+            background: #263238;
+            color: #00ff00;
+            padding: 20px;
+            margin-top: 15px;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .log-entry {
+            margin: 3px 0;
+            padding: 2px 0;
+        }
+        .log-entry.success {
+            color: #4CAF50;
+        }
+        .log-entry.error {
+            color: #f44336;
+        }
+        .log-entry.info {
+            color: #2196F3;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 15px;
+            font-size: 0.9em;
+        }
+        .status.online {
+            background: #4CAF50;
+            color: white;
+        }
+        .status.offline {
+            background: #f44336;
+            color: white;
+        }
+        .status.testing {
+            background: #FF9800;
+            color: white;
+        }
+        input, select {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 采集器API测试工具</h1>
+            <p>ProDB Collector API Testing Tool</p>
+        </div>
+        
+        <div class="content">
+            <div class="test-section">
+                <h3>服务器配置 <span id="status" class="status offline">离线</span></h3>
+                <div class="form-group">
+                    <label>采集器地址:</label>
+                    <input type="text" id="collectorUrl" value="http://localhost:8093" style="width: 300px;">
+                </div>
+                <button onclick="checkStatus()">🔍 检查服务状态</button>
+            </div>
+
+            <div class="test-section">
+                <h3>1. 健康检查API</h3>
+                <p>测试采集器健康检查端点</p>
+                <button onclick="testHealthCheck()">GET /api/v1/health</button>
+                <button onclick="testStatus()">GET /api/v1/status</button>
+                <div id="log-health" class="log"></div>
+            </div>
+
+            <div class="test-section">
+                <h3>2. 协议测试API</h3>
+                <p>测试协议连接和数据采集</p>
+                <div class="form-group">
+                    <label>协议类型:</label>
+                    <select id="protocolType">
+                        <option value="opcua">OPC UA</option>
+                        <option value="modbus">Modbus TCP</option>
+                        <option value="mqtt">MQTT</option>
+                    </select>
+                </div>
+                <button onclick="testProtocolList()">GET /api/v1/protocols</button>
+                <button onclick="testProtocolTest()">POST /api/v1/protocols/test</button>
+                <div id="log-protocol" class="log"></div>
+            </div>
+
+            <div class="test-section">
+                <h3>3. 驱动管理API</h3>
+                <p>测试驱动列表和安装</p>
+                <button onclick="testDriverList()">GET /api/v1/drivers</button>
+                <button onclick="testDriverScan()">POST /api/v1/drivers/scan</button>
+                <div id="log-driver" class="log"></div>
+            </div>
+
+            <div class="test-section">
+                <h3>4. 配置管理API</h3>
+                <p>测试配置获取和更新</p>
+                <button onclick="testGetConfig()">GET /api/v1/config</button>
+                <button onclick="testUpdateConfig()">PUT /api/v1/config</button>
+                <div id="log-config" class="log"></div>
+            </div>
+
+            <div class="test-section">
+                <h3>5. 数据采集API</h3>
+                <p>测试数据点读取</p>
+                <button onclick="testReadData()">POST /api/v1/data/read</button>
+                <button onclick="testBatchRead()">POST /api/v1/data/batch-read</button>
+                <div id="log-data" class="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(testId, message, type = 'info') {
+            const logDiv = document.getElementById(`log-${testId}`);
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span style="color: #888;">[${timestamp}]</span> ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function getBaseUrl() {
+            return document.getElementById('collectorUrl').value;
+        }
+
+        async function checkStatus() {
+            const baseUrl = getBaseUrl();
+            const statusSpan = document.getElementById('status');
+            statusSpan.className = 'status testing';
+            statusSpan.textContent = '检测中...';
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    statusSpan.className = 'status online';
+                    statusSpan.textContent = '在线';
+                    log('health', '✅ 采集器服务在线', 'success');
+                } else {
+                    statusSpan.className = 'status offline';
+                    statusSpan.textContent = '离线';
+                    log('health', `❌ 服务响应异常: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                statusSpan.className = 'status offline';
+                statusSpan.textContent = '离线';
+                log('health', `❌ 无法连接到服务: ${error.message}`, 'error');
+            }
+        }
+
+        async function testHealthCheck() {
+            const baseUrl = getBaseUrl();
+            log('health', `📡 请求: GET ${baseUrl}/api/v1/health`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/health`);
+                const data = await response.json();
+                
+                log('health', `✅ 响应状态: ${response.status}`, 'success');
+                log('health', `📦 响应数据: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('health', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStatus() {
+            const baseUrl = getBaseUrl();
+            log('health', `📡 请求: GET ${baseUrl}/api/v1/status`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/status`);
+                const data = await response.json();
+                
+                log('health', `✅ 响应状态: ${response.status}`, 'success');
+                log('health', `📦 响应数据: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('health', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testProtocolList() {
+            const baseUrl = getBaseUrl();
+            log('protocol', `📡 请求: GET ${baseUrl}/api/v1/protocols`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/protocols`);
+                const data = await response.json();
+                
+                log('protocol', `✅ 响应状态: ${response.status}`, 'success');
+                log('protocol', `📦 支持的协议: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('protocol', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testProtocolTest() {
+            const baseUrl = getBaseUrl();
+            const protocol = document.getElementById('protocolType').value;
+            
+            const testData = {
+                protocol: protocol,
+                connection: {
+                    host: "192.168.1.100",
+                    port: protocol === 'opcua' ? 4840 : 502,
+                    timeout: 5000
+                }
+            };
+
+            log('protocol', `📡 请求: POST ${baseUrl}/api/v1/protocols/test`, 'info');
+            log('protocol', `📤 请求数据: ${JSON.stringify(testData, null, 2)}`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/protocols/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                const data = await response.json();
+                
+                log('protocol', `✅ 响应状态: ${response.status}`, 'success');
+                log('protocol', `📦 测试结果: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('protocol', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDriverList() {
+            const baseUrl = getBaseUrl();
+            log('driver', `📡 请求: GET ${baseUrl}/api/v1/drivers`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/drivers`);
+                const data = await response.json();
+                
+                log('driver', `✅ 响应状态: ${response.status}`, 'success');
+                log('driver', `📦 驱动列表: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('driver', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDriverScan() {
+            const baseUrl = getBaseUrl();
+            log('driver', `📡 请求: POST ${baseUrl}/api/v1/drivers/scan`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/drivers/scan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                log('driver', `✅ 响应状态: ${response.status}`, 'success');
+                log('driver', `📦 扫描结果: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('driver', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGetConfig() {
+            const baseUrl = getBaseUrl();
+            log('config', `📡 请求: GET ${baseUrl}/api/v1/config`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/config`);
+                const data = await response.json();
+                
+                log('config', `✅ 响应状态: ${response.status}`, 'success');
+                log('config', `📦 配置信息: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('config', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUpdateConfig() {
+            const baseUrl = getBaseUrl();
+            const configData = {
+                heartbeat_interval: 60,
+                log_level: "info"
+            };
+
+            log('config', `📡 请求: PUT ${baseUrl}/api/v1/config`, 'info');
+            log('config', `📤 请求数据: ${JSON.stringify(configData, null, 2)}`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/config`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(configData)
+                });
+                const data = await response.json();
+                
+                log('config', `✅ 响应状态: ${response.status}`, 'success');
+                log('config', `📦 更新结果: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('config', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testReadData() {
+            const baseUrl = getBaseUrl();
+            const readData = {
+                protocol: "opcua",
+                node_id: "ns=2;s=Temperature",
+                connection: {
+                    host: "192.168.1.100",
+                    port: 4840
+                }
+            };
+
+            log('data', `📡 请求: POST ${baseUrl}/api/v1/data/read`, 'info');
+            log('data', `📤 请求数据: ${JSON.stringify(readData, null, 2)}`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/data/read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(readData)
+                });
+                const data = await response.json();
+                
+                log('data', `✅ 响应状态: ${response.status}`, 'success');
+                log('data', `📦 读取结果: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('data', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testBatchRead() {
+            const baseUrl = getBaseUrl();
+            const batchData = {
+                protocol: "opcua",
+                nodes: [
+                    { node_id: "ns=2;s=Temperature" },
+                    { node_id: "ns=2;s=Pressure" }
+                ],
+                connection: {
+                    host: "192.168.1.100",
+                    port: 4840
+                }
+            };
+
+            log('data', `📡 请求: POST ${baseUrl}/api/v1/data/batch-read`, 'info');
+            log('data', `📤 请求数据: ${JSON.stringify(batchData, null, 2)}`, 'info');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/v1/data/batch-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(batchData)
+                });
+                const data = await response.json();
+                
+                log('data', `✅ 响应状态: ${response.status}`, 'success');
+                log('data', `📦 批量读取结果: ${JSON.stringify(data, null, 2)}`, 'info');
+            } catch (error) {
+                log('data', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时自动检查状态
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('health', '🎯 页面加载完成，准备测试...', 'info');
+                log('health', '💡 点击"检查服务状态"按钮开始测试', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

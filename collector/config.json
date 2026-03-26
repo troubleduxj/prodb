@@ -1,0 +1,67 @@
+{
+    "collector_id": "agent-test12",
+    "name": "ProDB Test Collector",
+    "version": "1.0.0",
+    "heartbeat_interval": 60,
+    "auth": {
+        "enabled": true,
+        "collector_id": "agent-test12",
+        "secret_key": "tk_8mwslln5_jn9m",
+        "platform_endpoint": "http://localhost:9080",
+        "token_refresh_url": "",
+        "token_refresh_interval": 3600,
+        "max_retries": 3,
+        "retry_delay": 5,
+        "tls": {
+            "insecure_skip_verify": true,
+            "ca_cert_path": "",
+            "ca_certs": null,
+            "client_cert_path": "",
+            "client_key_path": "",
+            "min_version": "",
+            "max_version": "",
+            "server_name": "",
+            "handshake_timeout": 0
+        },
+        "security": {
+            "key_store_path": "./keys",
+            "master_key_path": "./keys/master.key",
+            "auto_generate": true,
+            "key_rotation_days": 90,
+            "encrypt_secret_key": false
+        }
+    },
+    "logger": {
+        "level": "info",
+        "format": "json",
+        "output": "stdout",
+        "file_path": "",
+        "max_size": 0,
+        "max_backups": 0,
+        "max_age": 0
+    },
+    "buffer": {
+        "max_size": 10000,
+        "flush_interval": 30,
+        "flush_batch_size": 1000
+    },
+    "storage": {
+        "database_path": "./test_data/collector.db",
+        "max_cache_size": 104857600,
+        "retention_days": 7,
+        "cleanup_interval": 3600,
+        "max_retries": 3,
+        "retry_delay": 5
+    },
+    "platform": {
+        "base_url": "",
+        "data_upload_url": "",
+        "config_sync_url": "",
+        "heartbeat_url": "",
+        "timeout": 30,
+        "max_retries": 0,
+        "retry_delay": 5,
+        "enable_compression": false
+    },
+    "collection_tasks": null
+}

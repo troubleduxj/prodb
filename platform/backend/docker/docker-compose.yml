@@ -1,0 +1,217 @@
+version: '3.8'
+
+services:
+  # 后端服务
+  prodb-backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: prodb-backend
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      - ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=prodbmanager
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - TDENGINE_HOST=tdengine
+      - TDENGINE_PORT=6030
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+    volumes:
+      - ./config:/app/config:ro
+      - ./logs:/var/log/prodb
+    depends_on:
+      - postgres
+      - tdengine
+      - redis
+      - consul
+    networks:
+      - prodb-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: prodb-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=prodbmanager
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - prodb-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TDengine时序数据库
+  tdengine:
+    image: tdengine/tdengine:3.0.0.0
+    container_name: prodb-tdengine
+    restart: unless-stopped
+    ports:
+      - "6030:6030"
+      - "6041:6041"
+      - "6043-6049:6043-6049"
+      - "6043-6049:6043-6049/udp"
+    volumes:
+      - tdengine_data:/var/lib/taos
+      - tdengine_log:/var/log/taos
+    environment:
+      - TAOS_FQDN=tdengine
+    networks:
+      - prodb-network
+    healthcheck:
+      test: ["CMD", "taos", "-s", "show databases;"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: prodb-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - prodb-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Consul服务发现
+  consul:
+    image: consul:1.16
+    container_name: prodb-consul
+    restart: unless-stopped
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    volumes:
+      - consul_data:/consul/data
+      - ./consul.json:/consul/config/consul.json:ro
+    command: >
+      consul agent
+      -server
+      -bootstrap-expect=1
+      -data-dir=/consul/data
+      -config-dir=/consul/config
+      -ui
+      -client=0.0.0.0
+      -bind=0.0.0.0
+    networks:
+      - prodb-network
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Nginx负载均衡器
+  nginx:
+    image: nginx:alpine
+    container_name: prodb-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - prodb-backend
+    networks:
+      - prodb-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus监控
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prodb-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - prodb-network
+
+  # Grafana可视化
+  grafana:
+    image: grafana/grafana:latest
+    container_name: prodb-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - prodb-network
+
+networks:
+  prodb-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  tdengine_data:
+    driver: local
+  tdengine_log:
+    driver: local
+  redis_data:
+    driver: local
+  consul_data:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

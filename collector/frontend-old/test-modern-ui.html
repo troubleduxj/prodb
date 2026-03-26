@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>现代化UI组件测试 - ProDB Collector</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/modern-components.css">
+    <link rel="stylesheet" href="/styles/components.css">
+    <link rel="stylesheet" href="/styles/themes.css">
+</head>
+
+<body>
+    <div class="layout">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>ProDB Collector</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">仪表盘</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🔌</span>
+                    <span class="nav-text">接口管理</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🧪</span>
+                    <span class="nav-text">协议测试</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">系统配置</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>现代化UI组件展示</h1>
+                <p class="text-secondary">测试所有现代化组件的显示效果</p>
+            </div>
+
+            <!-- 卡片组件 -->
+            <section class="mb-8">
+                <h2 class="mb-4">卡片组件</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="modern-card">
+                        <div class="card-header">
+                            <h3>基础卡片</h3>
+                            <span class="badge badge-primary">新</span>
+                        </div>
+                        <div class="card-body">
+                            <p>这是一个基础的现代化卡片组件,具有优雅的阴影和圆角效果。</p>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary btn-sm">操作</button>
+                        </div>
+                    </div>
+
+                    <div class="modern-card card-hover">
+                        <div class="card-header">
+                            <h3>悬停效果卡片</h3>
+                            <span class="badge badge-success">活跃</span>
+                        </div>
+                        <div class="card-body">
+                            <p>鼠标悬停时会有提升效果,增强交互体验。</p>
+                        </div>
+                    </div>
+
+                    <div class="modern-card card-gradient">
+                        <div class="card-header">
+                            <h3>渐变卡片</h3>
+                            <span class="badge badge-warning">热门</span>
+                        </div>
+                        <div class="card-body">
+                            <p>带有渐变背景的卡片,更加醒目。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 按钮组件 -->
+            <section class="mb-8">
+                <h2 class="mb-4">按钮组件</h2>
+                <div class="flex gap-3 flex-wrap">
+                    <button class="btn btn-primary">主要按钮</button>
+                    <button class="btn btn-secondary">次要按钮</button>
+                    <button class="btn btn-success">成功按钮</button>
+                    <button class="btn btn-warning">警告按钮</button>
+                    <button class="btn btn-error">错误按钮</button>
+                    <button class="btn btn-ghost">幽灵按钮</button>
+                </div>
+                <div class="flex gap-3 flex-wrap mt-4">
+                    <button class="btn btn-primary btn-sm">小按钮</button>
+                    <button class="btn btn-primary">默认按钮</button>
+                    <button class="btn btn-primary btn-lg">大按钮</button>
+                </div>
+            </section>
+
+            <!-- 表单组件 -->
+            <section class="mb-8">
+                <h2 class="mb-4">表单组件</h2>
+                <div class="modern-card">
+                    <form class="modern-form">
+                        <div class="form-group">
+                            <label class="form-label">输入框</label>
+                            <input type="text" class="form-input" placeholder="请输入内容">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">选择框</label>
+                            <select class="form-select">
+                                <option>选项 1</option>
+                                <option>选项 2</option>
+                                <option>选项 3</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">文本域</label>
+                            <textarea class="form-textarea" rows="3" placeholder="请输入多行文本"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="form-checkbox">
+                                <span>我同意服务条款</span>
+                            </label>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">提交</button>
+                            <button type="button" class="btn btn-secondary">取消</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 徽章和标签 -->
+            <section class="mb-8">
+                <h2 class="mb-4">徽章和标签</h2>
+                <div class="flex gap-3 flex-wrap">
+                    <span class="badge badge-primary">主要</span>
+                    <span class="badge badge-secondary">次要</span>
+                    <span class="badge badge-success">成功</span>
+                    <span class="badge badge-warning">警告</span>
+                    <span class="badge badge-error">错误</span>
+                    <span class="badge badge-info">信息</span>
+                </div>
+                <div class="flex gap-3 flex-wrap mt-4">
+                    <span class="tag tag-primary">标签1</span>
+                    <span class="tag tag-success">标签2</span>
+                    <span class="tag tag-warning">标签3</span>
+                    <span class="tag tag-error">标签4</span>
+                </div>
+            </section>
+
+            <!-- 进度条 -->
+            <section class="mb-8">
+                <h2 class="mb-4">进度条</h2>
+                <div class="modern-card">
+                    <div class="mb-4">
+                        <label class="form-label mb-2">主要进度</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-primary" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label mb-2">成功进度</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-success" style="width: 60%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label mb-2">警告进度</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-warning" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label mb-2">错误进度</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-error" style="width: 30%"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 统计卡片 -->
+            <section class="mb-8">
+                <h2 class="mb-4">统计卡片</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="stat-card stat-primary">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-value">1,234</div>
+                            <div class="stat-label">总数据点</div>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-success">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <div class="stat-value">98.5%</div>
+                            <div class="stat-label">成功率</div>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-warning">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-content">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">警告</div>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-error">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-content">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">错误</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 列表组件 -->
+            <section class="mb-8">
+                <h2 class="mb-4">列表组件</h2>
+                <div class="modern-card">
+                    <ul class="modern-list">
+                        <li class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-title">列表项标题 1</div>
+                                <div class="list-item-description">这是列表项的描述文本</div>
+                            </div>
+                            <div class="list-item-action">
+                                <button class="btn btn-sm btn-ghost">操作</button>
+                            </div>
+                        </li>
+                        <li class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-title">列表项标题 2</div>
+                                <div class="list-item-description">这是另一个列表项的描述</div>
+                            </div>
+                            <div class="list-item-action">
+                                <span class="badge badge-success">活跃</span>
+                            </div>
+                        </li>
+                        <li class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-title">列表项标题 3</div>
+                                <div class="list-item-description">第三个列表项</div>
+                            </div>
+                            <div class="list-item-action">
+                                <span class="badge badge-warning">待处理</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 提示框 -->
+            <section class="mb-8">
+                <h2 class="mb-4">提示框</h2>
+                <div class="alert alert-info mb-4">
+                    <strong>信息:</strong> 这是一个信息提示框
+                </div>
+                <div class="alert alert-success mb-4">
+                    <strong>成功:</strong> 操作已成功完成
+                </div>
+                <div class="alert alert-warning mb-4">
+                    <strong>警告:</strong> 请注意这个警告信息
+                </div>
+                <div class="alert alert-error mb-4">
+                    <strong>错误:</strong> 发生了一个错误
+                </div>
+            </section>
+
+            <!-- 加载动画 -->
+            <section class="mb-8">
+                <h2 class="mb-4">加载动画</h2>
+                <div class="flex gap-6 items-center">
+                    <div class="spinner spinner-primary"></div>
+                    <div class="spinner spinner-success"></div>
+                    <div class="spinner spinner-warning"></div>
+                    <div class="spinner spinner-error"></div>
+                </div>
+            </section>
+
+            <!-- 分隔线 -->
+            <section class="mb-8">
+                <h2 class="mb-4">分隔线</h2>
+                <div class="divider"></div>
+                <p class="text-center text-secondary">或者</p>
+                <div class="divider"></div>
+            </section>
+
+            <!-- 工具提示 -->
+            <section class="mb-8">
+                <h2 class="mb-4">工具提示</h2>
+                <div class="flex gap-4">
+                    <button class="btn btn-primary tooltip" data-tooltip="这是一个工具提示">
+                        悬停查看提示
+                    </button>
+                    <button class="btn btn-secondary tooltip" data-tooltip="另一个提示信息">
+                        另一个按钮
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // 主题切换
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // 添加主题切换按钮
+        const themeToggle = document.createElement('button');
+        themeToggle.className = 'btn btn-ghost';
+        themeToggle.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1000;';
+        themeToggle.textContent = '🌓 切换主题';
+        themeToggle.onclick = toggleTheme;
+        document.body.appendChild(themeToggle);
+
+        // 加载保存的主题
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</body>
+
+</html>
+""

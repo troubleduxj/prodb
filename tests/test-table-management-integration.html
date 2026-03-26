@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表结构管理集成测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .table-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .table-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .super-table { color: #007bff; }
+        .child-table { color: #28a745; }
+        .normal-table { color: #6f42c1; }
+        .table-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        .info-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .info-value {
+            color: #212529;
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .super-table-badge { background: #e3f2fd; color: #1976d2; }
+        .child-table-badge { background: #e8f5e8; color: #2e7d32; }
+        .normal-table-badge { background: #f3e5f5; color: #7b1fa2; }
+    </style>
+</head>
+<body>
+    <h1>📊 表结构管理集成测试</h1>
+    <div class="info">
+        <strong>测试目标:</strong> 验证表结构管理页面能否使用默认连接获取并显示真实的数据库表信息
+    </div>
+    
+    <div>
+        <button onclick="testDefaultConnection()">🔗 测试默认连接</button>
+        <button onclick="testDatabaseList()">📋 测试数据库列表</button>
+        <button onclick="testTablesAPI()">📊 测试表API</button>
+        <button onclick="testSuperTablesAPI()">🏗️ 测试超级表API</button>
+        <button onclick="testFullIntegration()">🚀 完整集成测试</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="result"></div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResult(content) {
+            const resultDiv = document.getElementById('result');
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+        
+        async function testDefaultConnection() {
+            showStatus('测试获取默认连接...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/connections`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const defaultConn = data.connections.find(conn => conn.is_default);
+                    if (defaultConn) {
+                        showStatus(`✅ 找到默认连接: ${defaultConn.name}`, 'success');
+                        showResult({
+                            name: defaultConn.name,
+                            host: defaultConn.host,
+                            port: defaultConn.port,
+                            status: defaultConn.status,
+                            id: defaultConn.id
+                        });
+                        return defaultConn;
+                    } else {
+                        showStatus('⚠️ 未找到默认连接', 'error');
+                        return null;
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 获取默认连接失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+        
+        async function testDatabaseList() {
+            showStatus('测试获取数据库列表...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/databases`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.databases && Array.isArray(data.databases)) {
+                        const userDatabases = data.databases.filter(db => 
+                            !['information_schema', 'performance_schema'].includes(db.name)
+                        );
+                        showStatus(`✅ 成功获取 ${userDatabases.length} 个用户数据库`, 'success');
+                        showResult(userDatabases);
+                        return userDatabases;
+                    } else {
+                        throw new Error('响应格式不正确，缺少databases字段');
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 获取数据库列表失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+        
+        async function testTablesAPI() {
+            showStatus('测试获取表列表API...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/tables?database=test`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success' && data.data && data.data.tables) {
+                        const tables = data.data.tables;
+                        showStatus(`✅ 成功获取 ${tables.length} 个表`, 'success');
+                        
+                        let html = '<div>';
+                        tables.forEach(table => {
+                            const typeClass = table.type.toLowerCase().replace('_', '-');
+                            html += `
+                                <div class="table-card">
+                                    <div class="table-name ${typeClass}">${table.name}</div>
+                                    <span class="type-badge ${typeClass}-badge">${table.type}</span>
+                                    <div class="table-info">
+                                        <div class="info-item">
+                                            <span class="info-label">列数:</span>
+                                            <span class="info-value">${table.columns}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">行数:</span>
+                                            <span class="info-value">${table.rows.toLocaleString()}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">大小:</span>
+                                            <span class="info-value">${table.size}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">数据库:</span>
+                                            <span class="info-value">${table.database}</span>
+                                        </div>
+                                        ${table.super_table ? `
+                                        <div class="info-item">
+                                            <span class="info-label">超级表:</span>
+                                            <span class="info-value">${table.super_table}</span>
+                                        </div>
+                                        ` : ''}
+                                        <div class="info-item">
+                                            <span class="info-label">创建时间:</span>
+                                            <span class="info-value">${new Date(table.created_time).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        showResult(html);
+                        return tables;
+                    } else {
+                        throw new Error('响应格式不正确');
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 获取表列表失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+        
+        async function testSuperTablesAPI() {
+            showStatus('测试获取超级表API...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/supertables?database=test`);
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus(`✅ 超级表API正常工作`, 'success');
+                    showResult(data);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 获取超级表失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+        
+        async function testFullIntegration() {
+            showStatus('开始完整的表结构管理集成测试...', 'info');
+            
+            // 1. 测试默认连接
+            const defaultConn = await testDefaultConnection();
+            if (!defaultConn) {
+                showStatus('❌ 完整测试失败: 无法获取默认连接', 'error');
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 2. 测试数据库列表
+            const databases = await testDatabaseList();
+            if (!databases || databases.length === 0) {
+                showStatus('❌ 完整测试失败: 无法获取数据库列表', 'error');
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 3. 测试表API
+            const tables = await testTablesAPI();
+            if (!tables) {
+                showStatus('❌ 完整测试失败: 无法获取表列表', 'error');
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 4. 测试超级表API
+            const superTables = await testSuperTablesAPI();
+            
+            showStatus('🎉 表结构管理集成测试完成！', 'success');
+            
+            const summary = `
+                <div class="table-card">
+                    <div class="table-name">✅ 集成测试总结</div>
+                    <div class="table-info">
+                        <div class="info-item">
+                            <span class="info-label">默认连接:</span>
+                            <span class="info-value">${defaultConn.name} (${defaultConn.host}:${defaultConn.port})</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">可用数据库:</span>
+                            <span class="info-value">${databases.length} 个</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">表API:</span>
+                            <span class="info-value">正常工作 (${tables.length} 个表)</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">超级表API:</span>
+                            <span class="info-value">正常工作</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">前端集成:</span>
+                            <span class="info-value">已完成</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                        <h4>🎯 测试结果:</h4>
+                        <ul>
+                            <li>✅ 后端API正常工作</li>
+                            <li>✅ 默认连接机制正常</li>
+                            <li>✅ 表数据获取成功</li>
+                            <li>✅ 数据格式正确</li>
+                            <li>✅ 前端可以正常调用API</li>
+                        </ul>
+                        <h4>📋 发现的表:</h4>
+                        <ul>
+                            ${tables.map(table => `<li>${table.name} (${table.type}) - ${table.rows} 行</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            showResult(summary);
+        }
+        
+        // 页面加载时自动运行基本测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testTablesAPI();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

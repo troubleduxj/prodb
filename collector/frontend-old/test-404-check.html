@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404错误检查</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #ccc;
+            background: #f9f9f9;
+        }
+        .test-item.success {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .test-item.error {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+        .test-item.loading {
+            border-color: #2196f3;
+            background: #e3f2fd;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        pre {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 采集器前端404错误检查</h1>
+    
+    <div class="test-section">
+        <h2>测试说明</h2>
+        <p>此页面将检查所有前端资源是否可以正常加载，帮助诊断404错误。</p>
+        <button onclick="runAllTests()">🚀 开始检查</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 检查结果</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 详细信息</h2>
+        <div id="details"></div>
+    </div>
+
+    <script>
+        const resources = [
+            // CSS files
+            { url: '/styles/main.css', type: 'CSS' },
+            { url: '/styles/components.css', type: 'CSS' },
+            { url: '/styles/themes.css', type: 'CSS' },
+            { url: '/styles/mobile-optimization.css', type: 'CSS' },
+            { url: '/styles/ux-enhancements.css', type: 'CSS' },
+            { url: '/styles/performance.css', type: 'CSS' },
+            { url: '/styles/security-enhancements.css', type: 'CSS' },
+            { url: '/styles/privacy-protection.css', type: 'CSS' },
+            
+            // JavaScript files
+            { url: '/app.js', type: 'JS' },
+            { url: '/sw.js', type: 'JS' },
+            
+            // Component files
+            { url: '/components/Layout.js', type: 'Component' },
+            { url: '/components/StatusIndicator.js', type: 'Component' },
+            { url: '/components/QuickActions.js', type: 'Component' },
+            { url: '/components/Modal.js', type: 'Component' },
+            { url: '/components/Dialog.js', type: 'Component' },
+            { url: '/components/Form.js', type: 'Component' },
+            
+            // Page files
+            { url: '/pages/DashboardPage.js', type: 'Page' },
+            { url: '/pages/ConfigPage.js', type: 'Page' },
+            { url: '/pages/TestingPage.js', type: 'Page' },
+            { url: '/pages/DriversPage.js', type: 'Page' },
+            
+            // Service files
+            { url: '/services/api.js', type: 'Service' },
+            { url: '/services/protocols.js', type: 'Service' },
+            { url: '/services/drivers.js', type: 'Service' },
+            { url: '/services/security.js', type: 'Service' },
+            { url: '/services/offline-manager.js', type: 'Service' },
+            
+            // Utility files
+            { url: '/utils/validation.js', type: 'Util' },
+            { url: '/utils/helpers.js', type: 'Util' },
+            { url: '/utils/performance.js', type: 'Util' },
+            
+            // Other files
+            { url: '/manifest.json', type: 'Manifest' },
+            { url: '/index.html', type: 'HTML' }
+        ];
+
+        async function checkResource(resource) {
+            try {
+                const response = await fetch(resource.url, { method: 'HEAD' });
+                return {
+                    ...resource,
+                    status: response.status,
+                    ok: response.ok,
+                    statusText: response.statusText
+                };
+            } catch (error) {
+                return {
+                    ...resource,
+                    status: 0,
+                    ok: false,
+                    statusText: error.message
+                };
+            }
+        }
+
+        async function runAllTests() {
+            const resultsDiv = document.getElementById('results');
+            const detailsDiv = document.getElementById('details');
+            
+            resultsDiv.innerHTML = '<p class="test-item loading">⏳ 正在检查资源...</p>';
+            detailsDiv.innerHTML = '';
+            
+            const results = await Promise.all(resources.map(checkResource));
+            
+            // Group results by type
+            const grouped = {};
+            results.forEach(result => {
+                if (!grouped[result.type]) {
+                    grouped[result.type] = [];
+                }
+                grouped[result.type].push(result);
+            });
+            
+            // Display results
+            let html = '';
+            let totalCount = 0;
+            let successCount = 0;
+            let errorCount = 0;
+            
+            Object.keys(grouped).sort().forEach(type => {
+                html += `<h3>${type} 文件</h3>`;
+                grouped[type].forEach(result => {
+                    totalCount++;
+                    const className = result.ok ? 'success' : 'error';
+                    const icon = result.ok ? '✅' : '❌';
+                    if (result.ok) successCount++;
+                    else errorCount++;
+                    
+                    html += `
+                        <div class="test-item ${className}">
+                            ${icon} <strong>${result.url}</strong> - 
+                            状态: ${result.status} ${result.statusText}
+                        </div>
+                    `;
+                });
+            });
+            
+            resultsDiv.innerHTML = html;
+            
+            // Display summary
+            const summaryHtml = `
+                <h3>📈 统计摘要</h3>
+                <pre>
+总计: ${totalCount} 个资源
+成功: ${successCount} 个 (${(successCount/totalCount*100).toFixed(1)}%)
+失败: ${errorCount} 个 (${(errorCount/totalCount*100).toFixed(1)}%)
+                </pre>
+                
+                <h3>🔧 诊断建议</h3>
+                ${errorCount === 0 ? 
+                    '<p class="test-item success">✅ 所有资源都可以正常访问！如果仍然看到404错误，请检查：<br>1. 浏览器控制台的具体错误信息<br>2. 网络面板中失败的请求<br>3. 采集器是否从正确的目录启动</p>' :
+                    '<p class="test-item error">❌ 发现无法访问的资源！请检查：<br>1. 采集器是否从collector目录启动<br>2. frontend文件夹是否完整<br>3. 文件权限是否正确</p>'
+                }
+                
+                <h3>🌐 当前环境</h3>
+                <pre>
+URL: ${window.location.href}
+协议: ${window.location.protocol}
+主机: ${window.location.host}
+路径: ${window.location.pathname}
+                </pre>
+            `;
+            
+            detailsDiv.innerHTML = summaryHtml;
+        }
+        
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>

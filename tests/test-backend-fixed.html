@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后端API测试 - 修复版</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+            background: #f0f9ff;
+        }
+        .error {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+        .warning {
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #10b981; }
+        .status-error { background: #ef4444; }
+        .status-warning { background: #f59e0b; }
+        .status-pending { background: #6b7280; }
+    </style>
+</head>
+<body>
+    <h1>后端API测试 - 修复版</h1>
+    <p>测试新实现的后端API接口，解决网络连接问题。</p>
+
+    <div class="test-section">
+        <h3>🔍 连接诊断</h3>
+        <button class="test-button" onclick="runDiagnostics()">运行完整诊断</button>
+        <div class="result-box" id="diagnostics-result">点击按钮开始诊断...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>🗄️ 数据库管理API</h3>
+        
+        <div style="margin: 10px 0;">
+            <h4><span class="status-indicator status-pending" id="db-status"></span>获取数据库列表</h4>
+            <button class="test-button" onclick="testDatabases()">测试</button>
+            <div class="result-box" id="db-result">等待测试...</div>
+        </div>
+
+        <div style="margin: 10px 0;">
+            <h4><span class="status-indicator status-pending" id="supertables-status"></span>获取超级表列表</h4>
+            <button class="test-button" onclick="testSuperTables()">测试</button>
+            <div class="result-box" id="supertables-result">等待测试...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>📈 历史趋势API</h3>
+        
+        <div style="margin: 10px 0;">
+            <h4><span class="status-indicator status-pending" id="trends-status"></span>获取趋势参数</h4>
+            <button class="test-button" onclick="testTrends()">测试</button>
+            <div class="result-box" id="trends-result">等待测试...</div>
+        </div>
+
+        <div style="margin: 10px 0;">
+            <h4><span class="status-indicator status-pending" id="analyze-status"></span>执行趋势分析</h4>
+            <button class="test-button" onclick="testTrendAnalysis()">测试</button>
+            <div class="result-box" id="analyze-result">等待测试...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 批量测试</h3>
+        <button class="test-button" onclick="runAllTests()" style="background: #059669; font-size: 16px; padding: 12px 24px;">
+            运行所有测试
+        </button>
+        <button class="test-button" onclick="clearResults()" style="background: #dc2626;">
+            清除结果
+        </button>
+        
+        <div class="result-box" id="batch-result" style="margin-top: 15px;">
+            点击"运行所有测试"开始...
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        
+        // 更新状态指示器
+        function updateStatus(elementId, status) {
+            const indicator = document.getElementById(elementId);
+            if (indicator) {
+                indicator.className = `status-indicator status-${status}`;
+            }
+        }
+        
+        // 显示结果
+        function showResult(elementId, result, type = 'success') {
+            const resultBox = document.getElementById(elementId);
+            if (resultBox) {
+                resultBox.textContent = result;
+                resultBox.className = `result-box ${type}`;
+            }
+        }
+        
+        // 安全的API请求函数
+        async function safeRequest(url, options = {}) {
+            try {
+                console.log(`Making request to: ${url}`);
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+                
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...options.headers
+                    },
+                    mode: 'cors'
+                });
+                
+                clearTimeout(timeoutId);
+                
+                let data;
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    data = { message: text };
+                }
+                
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: data,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+                
+            } catch (error) {
+                console.error(`Request failed for ${url}:`, error);
+                
+                let errorType = 'unknown';
+                let errorMessage = error.message;
+                
+                if (error.name === 'AbortError') {
+                    errorType = 'timeout';
+                    errorMessage = '请求超时 (10秒)';
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorType = 'network';
+                    errorMessage = '网络连接失败 - 后端服务可能未运行';
+                } else if (error.message.includes('CORS')) {
+                    errorType = 'cors';
+                    errorMessage = 'CORS错误 - 跨域请求被阻止';
+                }
+                
+                return {
+                    ok: false,
+                    status: 0,
+                    error: errorMessage,
+                    errorType: errorType,
+                    data: null
+                };
+            }
+        }
+        
+        // 运行完整诊断
+        async function runDiagnostics() {
+            showResult('diagnostics-result', '🔍 正在运行诊断...', 'warning');
+            
+            let report = '🔍 后端服务诊断报告\\n\\n';
+            
+            // 1. 基础连接测试
+            report += '1. 基础连接测试:\\n';
+            const pingResult = await safeRequest(`${API_BASE}/ping`);
+            
+            if (pingResult.ok) {
+                report += '   ✅ 后端服务运行正常\\n';
+                report += `   📊 状态码: ${pingResult.status}\\n`;
+                if (pingResult.data && pingResult.data.tdengine_status) {
+                    report += `   🗄️ TDengine状态: ${pingResult.data.tdengine_status.healthy ? '健康' : '不健康'}\\n`;
+                }
+            } else {
+                report += '   ❌ 后端服务连接失败\\n';
+                report += `   🔧 错误类型: ${pingResult.errorType}\\n`;
+                report += `   💬 错误信息: ${pingResult.error}\\n`;
+            }
+            
+            // 2. API路由测试
+            report += '\\n2. API路由可用性测试:\\n';
+            const routes = [
+                { path: '/api/v1/tdengine/databases', name: '数据库列表API' },
+                { path: '/api/v1/trends/parameters', name: '趋势参数API' }
+            ];
+            
+            for (const route of routes) {
+                const result = await safeRequest(`${API_BASE}${route.path}`);
+                if (result.ok) {
+                    report += `   ✅ ${route.name}: 正常 (${result.status})\\n`;
+                } else if (result.status === 404) {
+                    report += `   ❌ ${route.name}: 路由未找到 (404)\\n`;
+                } else if (result.status === 500) {
+                    report += `   ⚠️  ${route.name}: 服务器内部错误 (500)\\n`;
+                } else if (result.status === 0) {
+                    report += `   ❌ ${route.name}: 连接失败 (${result.errorType})\\n`;
+                } else {
+                    report += `   ⚠️  ${route.name}: 异常状态 (${result.status})\\n`;
+                }
+            }
+            
+            // 3. 解决方案建议
+            report += '\\n🎯 解决方案建议:\\n';
+            
+            if (!pingResult.ok) {
+                if (pingResult.errorType === 'network') {
+                    report += '1. 启动后端服务:\\n';
+                    report += '   cd platform/backend\\n';
+                    report += '   go run main.go\\n\\n';
+                } else if (pingResult.errorType === 'timeout') {
+                    report += '1. 后端服务响应缓慢，检查服务状态\\n\\n';
+                } else if (pingResult.errorType === 'cors') {
+                    report += '1. CORS配置问题，检查后端CORS设置\\n\\n';
+                }
+            } else {
+                // 检查API路由问题
+                const hasRouteIssues = routes.some(async route => {
+                    const result = await safeRequest(`${API_BASE}${route.path}`);
+                    return !result.ok;
+                });
+                
+                report += '1. 如果API路由返回404，重启后端服务:\\n';
+                report += '   - 停止当前服务 (Ctrl+C)\\n';
+                report += '   - 重新启动: go run main.go\\n\\n';
+                
+                report += '2. 检查编译错误:\\n';
+                report += '   - 确保所有Go文件已保存\\n';
+                report += '   - 运行: go mod tidy\\n\\n';
+            }
+            
+            report += '3. 验证步骤:\\n';
+            report += '   - 浏览器访问: http://localhost:3001/ping\\n';
+            report += '   - 检查浏览器开发者工具的网络选项卡\\n';
+            report += '   - 查看后端控制台输出\\n';
+            
+            const resultType = pingResult.ok ? 'success' : 'error';
+            showResult('diagnostics-result', report, resultType);
+        }
+        
+        // 测试数据库API
+        async function testDatabases() {
+            updateStatus('db-status', 'warning');
+            showResult('db-result', '正在测试...', 'warning');
+            
+            const result = await safeRequest(`${API_BASE}/api/v1/tdengine/databases`);
+            
+            if (result.ok) {
+                updateStatus('db-status', 'success');
+                const response = `✅ 数据库API测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `响应数据:\\n${JSON.stringify(result.data, null, 2)}`;
+                showResult('db-result', response, 'success');
+            } else {
+                updateStatus('db-status', 'error');
+                const response = `❌ 数据库API测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误类型: ${result.errorType || 'unknown'}\\n` +
+                    `错误信息: ${result.error || JSON.stringify(result.data)}`;
+                showResult('db-result', response, 'error');
+            }
+        }
+        
+        // 测试超级表API
+        async function testSuperTables() {
+            updateStatus('supertables-status', 'warning');
+            showResult('supertables-result', '正在测试...', 'warning');
+            
+            const result = await safeRequest(`${API_BASE}/api/v1/tdengine/db/industrial_data/supertables`);
+            
+            if (result.ok) {
+                updateStatus('supertables-status', 'success');
+                const response = `✅ 超级表API测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `响应数据:\\n${JSON.stringify(result.data, null, 2)}`;
+                showResult('supertables-result', response, 'success');
+            } else {
+                updateStatus('supertables-status', 'error');
+                const response = `❌ 超级表API测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误类型: ${result.errorType || 'unknown'}\\n` +
+                    `错误信息: ${result.error || JSON.stringify(result.data)}`;
+                showResult('supertables-result', response, 'error');
+            }
+        }
+        
+        // 测试趋势API
+        async function testTrends() {
+            updateStatus('trends-status', 'warning');
+            showResult('trends-result', '正在测试...', 'warning');
+            
+            const result = await safeRequest(`${API_BASE}/api/v1/trends/parameters`);
+            
+            if (result.ok) {
+                updateStatus('trends-status', 'success');
+                const response = `✅ 趋势参数API测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `参数数量: ${result.data.data ? result.data.data.total : 'N/A'}\\n` +
+                    `响应数据:\\n${JSON.stringify(result.data, null, 2)}`;
+                showResult('trends-result', response, 'success');
+            } else {
+                updateStatus('trends-status', 'error');
+                const response = `❌ 趋势参数API测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误类型: ${result.errorType || 'unknown'}\\n` +
+                    `错误信息: ${result.error || JSON.stringify(result.data)}`;
+                showResult('trends-result', response, 'error');
+            }
+        }
+        
+        // 测试趋势分析
+        async function testTrendAnalysis() {
+            updateStatus('analyze-status', 'warning');
+            showResult('analyze-result', '正在测试...', 'warning');
+            
+            const analysisData = {
+                parameters: ["temp_sensor_01", "humidity_sensor_01"],
+                timeRange: { type: "relative", value: "24h" },
+                aggregation: "avg",
+                interval: "1h"
+            };
+            
+            const result = await safeRequest(`${API_BASE}/api/v1/trends/analyze`, {
+                method: 'POST',
+                body: JSON.stringify(analysisData)
+            });
+            
+            if (result.ok) {
+                updateStatus('analyze-status', 'success');
+                const response = `✅ 趋势分析API测试成功\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `数据点数量: ${result.data.data ? result.data.data.data.length : 'N/A'}\\n` +
+                    `执行时间: ${result.data.data ? result.data.data.executionTime : 'N/A'}ms\\n` +
+                    `响应数据:\\n${JSON.stringify(result.data, null, 2)}`;
+                showResult('analyze-result', response, 'success');
+            } else {
+                updateStatus('analyze-status', 'error');
+                const response = `❌ 趋势分析API测试失败\\n` +
+                    `状态码: ${result.status}\\n` +
+                    `错误类型: ${result.errorType || 'unknown'}\\n` +
+                    `错误信息: ${result.error || JSON.stringify(result.data)}`;
+                showResult('analyze-result', response, 'error');
+            }
+        }
+        
+        // 运行所有测试
+        async function runAllTests() {
+            showResult('batch-result', '🧪 正在运行所有测试...\\n', 'warning');
+            
+            const tests = [
+                { name: '数据库列表', func: testDatabases },
+                { name: '超级表列表', func: testSuperTables },
+                { name: '趋势参数', func: testTrends },
+                { name: '趋势分析', func: testTrendAnalysis }
+            ];
+            
+            let results = [];
+            let report = '🧪 批量测试结果:\\n\\n';
+            
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                report += `[${i + 1}/${tests.length}] 测试 ${test.name}...`;
+                
+                try {
+                    await test.func();
+                    results.push({ name: test.name, success: true });
+                    report += ' ✅\\n';
+                } catch (error) {
+                    results.push({ name: test.name, success: false, error: error.message });
+                    report += ' ❌\\n';
+                }
+                
+                // 更新进度
+                const currentReport = report + `\\n进度: ${i + 1}/${tests.length}`;
+                showResult('batch-result', currentReport, 'warning');
+                
+                // 添加延迟
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // 最终结果
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+            
+            report += `\\n📊 测试完成！\\n`;
+            report += `成功: ${successCount}/${totalCount}\\n`;
+            report += `成功率: ${Math.round(successCount / totalCount * 100)}%\\n\\n`;
+            
+            report += '详细结果:\\n';
+            results.forEach((result, index) => {
+                report += `${index + 1}. ${result.success ? '✅' : '❌'} ${result.name}`;
+                if (!result.success && result.error) {
+                    report += ` - ${result.error}`;
+                }
+                report += '\\n';
+            });
+            
+            const resultType = successCount === totalCount ? 'success' : 'error';
+            showResult('batch-result', report, resultType);
+        }
+        
+        // 清除结果
+        function clearResults() {
+            const resultBoxes = document.querySelectorAll('.result-box');
+            resultBoxes.forEach(box => {
+                box.textContent = '等待测试...';
+                box.className = 'result-box';
+            });
+            
+            const statusIndicators = document.querySelectorAll('.status-indicator');
+            statusIndicators.forEach(indicator => {
+                indicator.className = 'status-indicator status-pending';
+            });
+        }
+        
+        // 页面加载时自动运行诊断
+        window.onload = () => {
+            setTimeout(runDiagnostics, 1000);
+        };
+    </script>
+</body>
+</html>

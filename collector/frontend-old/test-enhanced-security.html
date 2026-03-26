@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>增强安全功能测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-card);
+        }
+        
+        .test-section h2 {
+            margin-bottom: 20px;
+            color: var(--color-primary);
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .test-item {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-secondary);
+        }
+        
+        .security-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .security-alert.warning {
+            background-color: var(--color-warning);
+        }
+        
+        .security-alert.error {
+            background-color: var(--color-error);
+        }
+        
+        .alert-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+        
+        .secure-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .secure-input.has-security-issues {
+            border-color: var(--color-error);
+        }
+        
+        .security-issues {
+            margin-top: 5px;
+        }
+        
+        .security-issue {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px;
+            background-color: rgba(239, 68, 68, 0.1);
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: var(--color-error);
+        }
+        
+        .sensitive-indicator {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .secure-input-wrapper {
+            position: relative;
+        }
+        
+        .permission-denied {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--color-warning);
+        }
+        
+        .denied-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .permission-details {
+            margin-top: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .security-stats-panel {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background-color: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+        }
+        
+        .stat-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+        
+        .stat-value.error {
+            color: var(--color-error);
+        }
+        
+        .stat-value.warning {
+            color: var(--color-warning);
+        }
+        
+        .anomalies-panel {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--color-warning);
+        }
+        
+        .anomaly-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            background-color: var(--bg-tertiary);
+        }
+        
+        .anomaly-item.high {
+            border-left: 4px solid var(--color-error);
+        }
+        
+        .anomaly-item.medium {
+            border-left: 4px solid var(--color-warning);
+        }
+        
+        .risk-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .risk-badge.low {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--color-success);
+        }
+        
+        .risk-badge.medium {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--color-warning);
+        }
+        
+        .risk-badge.high {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--color-error);
+        }
+        
+        .log-row.anomalous {
+            background-color: rgba(239, 68, 68, 0.05);
+            border-left: 3px solid var(--color-error);
+        }
+        
+        .security-confirmation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .security-confirmation-dialog {
+            background-color: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .security-confirmation-dialog.high-risk {
+            border: 2px solid var(--color-error);
+        }
+        
+        .confirmation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .risk-indicator {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .risk-indicator.high {
+            background-color: var(--color-error);
+            color: white;
+        }
+        
+        .risk-indicator.medium {
+            background-color: var(--color-warning);
+            color: white;
+        }
+        
+        .risk-indicator.low {
+            background-color: var(--color-success);
+            color: white;
+        }
+        
+        .operation-details {
+            background-color: var(--bg-secondary);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+        }
+        
+        .detail-item {
+            margin-bottom: 8px;
+        }
+        
+        .high-risk-warning {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--color-error);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 15px 0;
+            color: var(--color-error);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>增强安全功能测试</h1>
+        
+        <!-- XSS防护测试 -->
+        <div class="test-section">
+            <h2>XSS防护和输入验证测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>安全输入组件</h3>
+                    <div id="secure-input-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>敏感信息输入</h3>
+                    <div id="sensitive-input-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>安全表单</h3>
+                    <div id="secure-form-test"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 权限控制测试 -->
+        <div class="test-section">
+            <h2>权限控制和访问管理测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>权限保护组件</h3>
+                    <div id="protected-component-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>安全操作按钮</h3>
+                    <div id="protected-button-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>会话管理</h3>
+                    <div id="session-manager-test"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 审计日志测试 -->
+        <div class="test-section">
+            <h2>安全审计和日志管理测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>操作日志记录</h3>
+                    <div id="operation-logger-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>异常检测</h3>
+                    <div id="anomaly-detection-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>安全统计</h3>
+                    <div id="security-stats-test"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 敏感数据保护测试 -->
+        <div class="test-section">
+            <h2>敏感数据保护和脱敏测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>敏感数据显示</h3>
+                    <div id="sensitive-data-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>配置导出安全</h3>
+                    <div id="secure-export-test"></div>
+                </div>
+                
+                <div class="test-item">
+                    <h3>数据脱敏</h3>
+                    <div id="data-masking-test"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState, useEffect } from 'https://esm.sh/preact/hooks';
+        import securityService from './services/security.js';
+        import { 
+            SecureInput, 
+            SecureForm, 
+            ProtectedComponent, 
+            ProtectedButton, 
+            SessionManager,
+            SensitiveDataDisplay 
+        } from './components/AccessControl.js';
+        import OperationLogger from './components/OperationLogger.js';
+
+        // XSS防护测试
+        const SecureInputTest = () => {
+            const [inputValue, setInputValue] = useState('');
+            const [securityIssues, setSecurityIssues] = useState([]);
+
+            const handleSecurityIssue = (issues) => {
+                setSecurityIssues(issues);
+                console.log('Security issues detected:', issues);
+            };
+
+            return html`
+                <div>
+                    <${SecureInput}
+                        value=${inputValue}
+                        onChange=${(e) => setInputValue(e.target.value)}
+                        onSecurityIssue=${handleSecurityIssue}
+                        placeholder="尝试输入 <script>alert('xss')</script>"
+                        maxLength=${200}
+                    />
+                    <p>当前值: ${inputValue}</p>
+                    ${securityIssues.length > 0 && html`
+                        <div style="color: red; margin-top: 10px;">
+                            检测到安全问题: ${securityIssues.length} 个
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+
+        // 敏感信息输入测试
+        const SensitiveInputTest = () => {
+            const [password, setPassword] = useState('');
+
+            return html`
+                <div>
+                    <${SecureInput}
+                        type="password"
+                        value=${password}
+                        onChange=${(e) => setPassword(e.target.value)}
+                        placeholder="输入密码"
+                        sensitive=${true}
+                    />
+                    <p>密码长度: ${password.length}</p>
+                </div>
+            `;
+        };
+
+        // 安全表单测试
+        const SecureFormTest = () => {
+            const [formData, setFormData] = useState(null);
+
+            const handleSubmit = async (data) => {
+                setFormData(data);
+                console.log('Form submitted with data:', data);
+            };
+
+            const handleSecurityIssue = (issues) => {
+                alert('表单包含安全问题: ' + issues.map(i => i.message).join(', '));
+            };
+
+            return html`
+                <div>
+                    <${SecureForm} onSubmit=${handleSubmit} onSecurityIssue=${handleSecurityIssue}>
+                        <${SecureInput} name="username" placeholder="用户名" required />
+                        <${SecureInput} name="password" type="password" placeholder="密码" sensitive=${true} required />
+                        <button type="submit" class="btn-primary">提交</button>
+                    <//>
+                    ${formData && html`
+                        <div style="margin-top: 10px;">
+                            <strong>提交的数据:</strong>
+                            <pre>${JSON.stringify(formData, null, 2)}</pre>
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+
+        // 权限保护组件测试
+        const ProtectedComponentTest = () => {
+            return html`
+                <div>
+                    <${ProtectedComponent} requiredPermission="read" resource="test">
+                        <div style="padding: 10px; background: green; color: white;">
+                            您有读取权限，可以看到这个内容
+                        </div>
+                    <//>
+                    
+                    <${ProtectedComponent} requiredPermission="admin" resource="test">
+                        <div style="padding: 10px; background: red; color: white;">
+                            您有管理员权限，可以看到这个内容
+                        </div>
+                    <//>
+                </div>
+            `;
+        };
+
+        // 安全操作按钮测试
+        const ProtectedButtonTest = () => {
+            const handleDelete = async () => {
+                alert('删除操作已执行');
+            };
+
+            return html`
+                <div>
+                    <${ProtectedButton}
+                        requiredPermission="delete"
+                        resource="test_resource"
+                        operation="delete"
+                        confirmMessage="确认要删除这个测试资源吗？"
+                        onClick=${handleDelete}
+                        className="btn-danger"
+                    >
+                        删除测试资源
+                    <//>
+                    
+                    <${ProtectedButton}
+                        requiredPermission="admin"
+                        resource="system"
+                        operation="admin"
+                        onClick=${() => alert('管理操作')}
+                        className="btn-warning"
+                    >
+                        管理员操作
+                    <//>
+                </div>
+            `;
+        };
+
+        // 敏感数据显示测试
+        const SensitiveDataTest = () => {
+            const testData = {
+                username: 'admin',
+                password: 'super_secret_password_123',
+                apiKey: 'sk-1234567890abcdef',
+                token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+            };
+
+            return html`
+                <div>
+                    <h4>敏感数据展示</h4>
+                    <div style="margin-bottom: 10px;">
+                        <strong>用户名:</strong> ${testData.username}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>密码:</strong>
+                        <${SensitiveDataDisplay} 
+                            data=${testData.password} 
+                            fieldName="password" 
+                        />
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>API密钥:</strong>
+                        <${SensitiveDataDisplay} 
+                            data=${testData.apiKey} 
+                            fieldName="apiKey" 
+                        />
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>访问令牌:</strong>
+                        <${SensitiveDataDisplay} 
+                            data=${testData.token} 
+                            fieldName="token" 
+                        />
+                    </div>
+                </div>
+            `;
+        };
+
+        // 安全导出测试
+        const SecureExportTest = () => {
+            const testConfig = {
+                name: 'Test Config',
+                host: '192.168.1.100',
+                port: 4840,
+                username: 'admin',
+                password: 'secret123',
+                apiKey: 'sk-abcdef123456'
+            };
+
+            const handleExport = () => {
+                const secureConfig = securityService.secureExportConfig(testConfig);
+                const blob = new Blob([JSON.stringify(secureConfig, null, 2)], {
+                    type: 'application/json'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'secure-config.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            return html`
+                <div>
+                    <h4>配置导出安全处理</h4>
+                    <p>原始配置包含敏感信息，导出时会自动脱敏</p>
+                    <button class="btn-primary" onClick=${handleExport}>
+                        安全导出配置
+                    </button>
+                    <div style="margin-top: 10px; font-size: 12px;">
+                        <strong>原始配置:</strong>
+                        <pre>${JSON.stringify(testConfig, null, 2)}</pre>
+                    </div>
+                </div>
+            `;
+        };
+
+        // 数据脱敏测试
+        const DataMaskingTest = () => {
+            const testData = {
+                username: 'administrator',
+                password: 'very_long_password_123456',
+                email: 'admin@example.com',
+                phone: '13812345678',
+                creditCard: '4111111111111111'
+            };
+
+            const maskedData = securityService.maskSensitiveData(testData);
+
+            return html`
+                <div>
+                    <h4>数据脱敏演示</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <strong>原始数据:</strong>
+                            <pre>${JSON.stringify(testData, null, 2)}</pre>
+                        </div>
+                        <div>
+                            <strong>脱敏后数据:</strong>
+                            <pre>${JSON.stringify(maskedData, null, 2)}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // 异常检测测试
+        const AnomalyDetectionTest = () => {
+            const [anomalies, setAnomalies] = useState([]);
+
+            const triggerAnomalies = () => {
+                // 模拟一些异常操作
+                for (let i = 0; i < 15; i++) {
+                    securityService.logFailedOperation('test_operation', 'test_resource', 
+                        new Error('Simulated failure'), { test: true });
+                }
+                
+                // 检测异常
+                const detected = securityService.detectAnomalousAccess();
+                setAnomalies(detected);
+            };
+
+            return html`
+                <div>
+                    <h4>异常检测测试</h4>
+                    <button class="btn-warning" onClick=${triggerAnomalies}>
+                        触发异常检测
+                    </button>
+                    ${anomalies.length > 0 && html`
+                        <div style="margin-top: 15px;">
+                            <strong>检测到的异常:</strong>
+                            ${anomalies.map((anomaly, index) => html`
+                                <div key=${index} style="padding: 10px; margin: 5px 0; background: rgba(239, 68, 68, 0.1); border-radius: 4px;">
+                                    <div><strong>类型:</strong> ${anomaly.type}</div>
+                                    <div><strong>消息:</strong> ${anomaly.message}</div>
+                                    <div><strong>次数:</strong> ${anomaly.count}</div>
+                                    <div><strong>严重程度:</strong> ${anomaly.severity}</div>
+                                </div>
+                            `)}
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+
+        // 安全统计测试
+        const SecurityStatsTest = () => {
+            const [stats, setStats] = useState(null);
+
+            const loadStats = () => {
+                const report = securityService.getSecurityStatusReport();
+                setStats(report);
+            };
+
+            useEffect(() => {
+                loadStats();
+            }, []);
+
+            return html`
+                <div>
+                    <h4>安全状态报告</h4>
+                    <button class="btn-secondary" onClick=${loadStats}>
+                        刷新统计
+                    </button>
+                    ${stats && html`
+                        <div style="margin-top: 15px;">
+                            <div style="margin-bottom: 10px;">
+                                <strong>会话信息:</strong>
+                                <div>活跃: ${stats.sessionInfo.isActive ? '是' : '否'}</div>
+                                <div>会话ID: ${stats.sessionInfo.sessionId}</div>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <strong>安全指标:</strong>
+                                <div>总操作数: ${stats.securityMetrics.totalOperations}</div>
+                                <div>失败操作: ${stats.securityMetrics.failedOperations}</div>
+                                <div>被阻止IP: ${stats.securityMetrics.blockedIPs}</div>
+                            </div>
+                            <div>
+                                <strong>风险评估:</strong>
+                                <div>当前风险级别: ${stats.riskAssessment.currentRiskLevel}</div>
+                                <div>异常数量: ${stats.riskAssessment.anomalies.length}</div>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+
+        // 渲染所有测试组件
+        render(html`<${SecureInputTest} />`, document.getElementById('secure-input-test'));
+        render(html`<${SensitiveInputTest} />`, document.getElementById('sensitive-input-test'));
+        render(html`<${SecureFormTest} />`, document.getElementById('secure-form-test'));
+        render(html`<${ProtectedComponentTest} />`, document.getElementById('protected-component-test'));
+        render(html`<${ProtectedButtonTest} />`, document.getElementById('protected-button-test'));
+        render(html`<${SessionManager} />`, document.getElementById('session-manager-test'));
+        render(html`<${OperationLogger} maxEntries=${50} enableSecurityAnalysis=${true} enableAnomalyDetection=${true} />`, document.getElementById('operation-logger-test'));
+        render(html`<${AnomalyDetectionTest} />`, document.getElementById('anomaly-detection-test'));
+        render(html`<${SecurityStatsTest} />`, document.getElementById('security-stats-test'));
+        render(html`<${SensitiveDataTest} />`, document.getElementById('sensitive-data-test'));
+        render(html`<${SecureExportTest} />`, document.getElementById('secure-export-test'));
+        render(html`<${DataMaskingTest} />`, document.getElementById('data-masking-test'));
+
+        // 记录页面加载
+        securityService.logOperation('page_load', 'security_test', {
+            page: 'enhanced-security-test',
+            timestamp: new Date().toISOString()
+        });
+
+        console.log('Enhanced security features test page loaded');
+        console.log('Security service:', securityService);
+    </script>
+</body>
+</html>

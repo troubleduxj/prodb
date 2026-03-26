@@ -1,0 +1,5 @@
+{
+  "name": "Data Collector Agent",
+  "description": "A frontend interface for a multi-protocol data collection agent with real-time monitoring and security configuration.",
+  "requestFramePermissions": []
+}

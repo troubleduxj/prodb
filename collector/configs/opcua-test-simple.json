@@ -1,0 +1,96 @@
+{
+  "collector_id": "opcua-test-collector",
+  "collector_name": "OPC UA测试采集器",
+  "description": "简化的OPC UA测试配置",
+  "platform": {
+    "url": "",
+    "heartbeat_interval": 30,
+    "config_sync_interval": 300,
+    "data_upload_interval": 10,
+    "max_retry_attempts": 3,
+    "retry_delay": 5,
+    "enabled": false
+  },
+  "protocols": {
+    "opcua": {
+      "enabled": true,
+      "endpoint": "opc.tcp://localhost:4840/opcua/simulator",
+      "security_policy": "None",
+      "security_mode": "None",
+      "username": "",
+      "password": "",
+      "connection_timeout": 30,
+      "session_timeout": 300,
+      "subscription_interval": 1000,
+      "nodes": [
+        {
+          "node_id": "ns=2;s=Temperature_Sensor_01",
+          "name": "温度传感器1",
+          "description": "车间1号温度传感器",
+          "data_type": "float",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "workshop_1",
+            "type": "temperature",
+            "unit": "celsius"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Pressure_Sensor_01",
+          "name": "压力传感器1",
+          "description": "主管道压力传感器",
+          "data_type": "float",
+          "collection_interval": 3000,
+          "enabled": true,
+          "tags": {
+            "location": "main_pipeline",
+            "type": "pressure",
+            "unit": "bar"
+          }
+        },
+        {
+          "node_id": "ns=2;s=Motor_01_Status",
+          "name": "电机1状态",
+          "description": "主泵电机运行状态",
+          "data_type": "boolean",
+          "collection_interval": 2000,
+          "enabled": true,
+          "tags": {
+            "location": "pump_station",
+            "type": "motor_status",
+            "equipment": "main_pump"
+          }
+        }
+      ]
+    }
+  },
+  "data_processing": {
+    "validation": {
+      "enabled": false
+    },
+    "transformation": {
+      "enabled": false
+    }
+  },
+  "storage": {
+    "local_cache": {
+      "enabled": true,
+      "max_size": "10MB",
+      "retention_days": 1,
+      "compression": false
+    },
+    "buffer": {
+      "max_size": 1000,
+      "flush_interval": 5,
+      "batch_size": 10
+    }
+  },
+  "logging": {
+    "level": "info",
+    "file": "logs/opcua-test-collector.log",
+    "max_size": "1MB",
+    "max_backups": 2,
+    "max_age": 7
+  }
+}

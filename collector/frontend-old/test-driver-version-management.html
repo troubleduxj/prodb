@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>驱动版本管理测试 - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-card);
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .feature-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .demo-card {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-secondary);
+        }
+
+        .demo-card h4 {
+            margin-bottom: 10px;
+            color: var(--color-primary);
+        }
+
+        .demo-card p {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .status-demo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .version-badge.current {
+            background-color: var(--color-success);
+            color: white;
+        }
+
+        .version-badge.newer {
+            background-color: var(--color-info);
+            color: white;
+        }
+
+        .version-badge.older {
+            background-color: var(--color-warning);
+            color: white;
+        }
+
+        .compatibility-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .compatibility-indicator.compatible {
+            color: var(--color-success);
+        }
+
+        .compatibility-indicator.incompatible {
+            color: var(--color-error);
+        }
+
+        .compatibility-indicator.warning {
+            color: var(--color-warning);
+        }
+
+        .mock-data {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .mock-data pre {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <header class="test-header">
+            <h1>驱动版本管理功能测试</h1>
+            <p>测试驱动安装、版本管理、兼容性验证和开发工具功能</p>
+        </header>
+
+        <!-- Driver Installation Testing -->
+        <div class="test-section">
+            <h2>🔧 驱动安装功能</h2>
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testDriverInstallDialog()">
+                    📦 测试驱动安装对话框
+                </button>
+                <button class="btn btn-secondary" onclick="testFileValidation()">
+                    ✅ 测试文件验证
+                </button>
+                <button class="btn btn-secondary" onclick="testCompatibilityCheck()">
+                    🔍 测试兼容性检查
+                </button>
+                <button class="btn btn-secondary" onclick="testOnlineDrivers()">
+                    🌐 测试在线驱动仓库
+                </button>
+            </div>
+
+            <div class="feature-demo">
+                <div class="demo-card">
+                    <h4>文件上传安装</h4>
+                    <p>支持拖拽上传，自动验证文件格式和大小</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">✅ 支持格式</span>
+                        <span>.js, .dll, .so, .dylib</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator warning">⚠️ 大小限制</span>
+                        <span>最大 10MB</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>在线安装</h4>
+                    <p>从URL直接下载安装驱动程序</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">🔒 HTTPS</span>
+                        <span>安全连接验证</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator info">📋 进度显示</span>
+                        <span>实时下载进度</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>驱动仓库</h4>
+                    <p>从官方和社区仓库安装验证过的驱动</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">✅ 已验证</span>
+                        <span>官方认证驱动</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator info">⭐ 评分</span>
+                        <span>社区评分系统</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version Management Testing -->
+        <div class="test-section">
+            <h2>📋 版本管理功能</h2>
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testVersionManager()">
+                    📋 测试版本管理器
+                </button>
+                <button class="btn btn-secondary" onclick="testUpdateCheck()">
+                    🔄 测试更新检查
+                </button>
+                <button class="btn btn-secondary" onclick="testVersionRollback()">
+                    ⏪ 测试版本回滚
+                </button>
+                <button class="btn btn-secondary" onclick="testVersionHistory()">
+                    📚 测试版本历史
+                </button>
+            </div>
+
+            <div class="feature-demo">
+                <div class="demo-card">
+                    <h4>版本对比</h4>
+                    <p>智能版本比较和更新建议</p>
+                    <div class="status-demo">
+                        <span class="version-badge current">v1.2.3 当前</span>
+                        <span class="version-badge newer">v1.3.0 可更新</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="version-badge older">v1.1.5 历史</span>
+                        <span class="version-badge older">v1.0.0 历史</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>更新类型</h4>
+                    <p>区分主要更新、功能更新和修复更新</p>
+                    <div class="status-demo">
+                        <span class="status-indicator error">🔴 主要更新</span>
+                        <span>可能包含重大变更</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator warning">🟡 功能更新</span>
+                        <span>新增功能和改进</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">🟢 修复更新</span>
+                        <span>问题修复和优化</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>回滚保护</h4>
+                    <p>安全的版本回滚和备份机制</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">💾 自动备份</span>
+                        <span>更新前自动备份</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator info">⏪ 一键回滚</span>
+                        <span>快速恢复到之前版本</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compatibility Validation Testing -->
+        <div class="test-section">
+            <h2>✅ 兼容性验证功能</h2>
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testCompatibilityValidator()">
+                    ✅ 测试兼容性验证器
+                </button>
+                <button class="btn btn-secondary" onclick="testSystemRequirements()">
+                    🖥️ 测试系统要求检查
+                </button>
+                <button class="btn btn-secondary" onclick="testDependencyCheck()">
+                    📦 测试依赖项检查
+                </button>
+                <button class="btn btn-secondary" onclick="testConflictDetection()">
+                    ⚡ 测试冲突检测
+                </button>
+            </div>
+
+            <div class="feature-demo">
+                <div class="demo-card">
+                    <h4>系统兼容性</h4>
+                    <p>检查操作系统、架构和运行时兼容性</p>
+                    <div class="compatibility-indicator compatible">
+                        <span>✅</span>
+                        <span>Windows 10 x64 兼容</span>
+                    </div>
+                    <div class="compatibility-indicator compatible">
+                        <span>✅</span>
+                        <span>Node.js 16+ 支持</span>
+                    </div>
+                    <div class="compatibility-indicator warning">
+                        <span>⚠️</span>
+                        <span>需要 8GB+ 内存</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>依赖项状态</h4>
+                    <p>检查必需和可选依赖项的可用性</p>
+                    <div class="compatibility-indicator compatible">
+                        <span>✅</span>
+                        <span>核心依赖已满足</span>
+                    </div>
+                    <div class="compatibility-indicator incompatible">
+                        <span>❌</span>
+                        <span>缺少可选依赖 libssl</span>
+                    </div>
+                    <div class="compatibility-indicator warning">
+                        <span>⚠️</span>
+                        <span>版本冲突 zlib 1.2.8</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>自动修复</h4>
+                    <p>智能识别并修复兼容性问题</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">🔧 自动修复</span>
+                        <span>可修复的问题</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator warning">⚠️ 手动处理</span>
+                        <span>需要用户干预</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Development Tools Testing -->
+        <div class="test-section">
+            <h2>🛠️ 开发工具功能</h2>
+            <div class="test-buttons">
+                <button class="btn btn-primary" onclick="testDevelopmentTools()">
+                    🛠️ 测试开发工具
+                </button>
+                <button class="btn btn-secondary" onclick="testAPIDocumentation()">
+                    📚 测试API文档
+                </button>
+                <button class="btn btn-secondary" onclick="testCodeTemplates()">
+                    📋 测试代码模板
+                </button>
+                <button class="btn btn-secondary" onclick="testCodeValidator()">
+                    🔍 测试代码验证器
+                </button>
+            </div>
+
+            <div class="feature-demo">
+                <div class="demo-card">
+                    <h4>API文档</h4>
+                    <p>完整的驱动开发接口文档</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">📖 接口说明</span>
+                        <span>详细的方法文档</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator info">💡 代码示例</span>
+                        <span>实用的示例代码</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>代码模板</h4>
+                    <p>多种协议的驱动开发模板</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">🏭 OPC UA</span>
+                        <span>工业标准协议</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">🔌 Modbus</span>
+                        <span>串行通信协议</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">📡 MQTT</span>
+                        <span>物联网消息协议</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <h4>测试工具</h4>
+                    <p>内置的驱动测试和验证工具</p>
+                    <div class="status-demo">
+                        <span class="status-indicator connected">🧪 单元测试</span>
+                        <span>组件功能测试</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator info">🔗 集成测试</span>
+                        <span>端到端流程测试</span>
+                    </div>
+                    <div class="status-demo">
+                        <span class="status-indicator warning">📊 性能测试</span>
+                        <span>吞吐量和延迟测试</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mock Data Display -->
+        <div class="test-section">
+            <h2>📊 模拟数据展示</h2>
+            <div class="mock-data">
+                <h4>驱动版本信息示例</h4>
+                <pre id="mockVersionData"></pre>
+            </div>
+            <div class="mock-data">
+                <h4>兼容性检查结果示例</h4>
+                <pre id="mockCompatibilityData"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import modules -->
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact/standalone';
+        import DriverInstallDialog from './components/DriverInstallDialog.js';
+        import DriverVersionManager from './components/DriverVersionManager.js';
+        import DriverCompatibilityValidator from './components/DriverCompatibilityValidator.js';
+        import DriverDevelopmentTools from './components/DriverDevelopmentTools.js';
+
+        // Mock data for testing
+        const mockDriver = {
+            id: 'opcua-driver-v1',
+            name: 'OPC UA Driver',
+            version: '1.2.3',
+            protocol: 'OPC_UA',
+            status: 'loaded',
+            description: '标准OPC UA协议驱动，支持连接、浏览、读取和订阅功能',
+            author: 'ProDB Team',
+            supportedFeatures: ['connect', 'browse', 'read', 'subscribe', 'write'],
+            lastUpdated: '2024-01-15T10:30:00Z',
+            filePath: '/drivers/opcua-driver.js',
+            uptime: 86400,
+            memoryUsage: 45.2,
+            errorCount: 0
+        };
+
+        const mockVersionData = {
+            versions: [
+                {
+                    version: '1.3.0',
+                    releaseDate: '2024-01-20T00:00:00Z',
+                    description: '新增写入功能和性能优化',
+                    stability: 'stable',
+                    features: ['新增写入操作支持', '优化连接性能', '修复内存泄漏'],
+                    bugFixes: ['修复断线重连问题', '解决大数据量读取超时']
+                },
+                {
+                    version: '1.2.3',
+                    releaseDate: '2024-01-15T00:00:00Z',
+                    description: '当前版本 - 稳定性改进',
+                    stability: 'stable',
+                    features: ['改进错误处理', '优化订阅机制'],
+                    bugFixes: ['修复订阅数据丢失', '解决连接池问题']
+                },
+                {
+                    version: '1.1.5',
+                    releaseDate: '2024-01-10T00:00:00Z',
+                    description: '历史版本 - 基础功能',
+                    stability: 'stable',
+                    features: ['基础连接功能', '数据读取支持'],
+                    bugFixes: ['修复初始化问题']
+                }
+            ],
+            availableUpdates: [
+                {
+                    version: '1.3.0',
+                    releaseDate: '2024-01-20T00:00:00Z',
+                    description: '重要功能更新',
+                    size: '2.5MB',
+                    changelog: [
+                        '新增写入操作支持',
+                        '优化连接性能提升30%',
+                        '修复内存泄漏问题',
+                        '改进错误处理机制'
+                    ],
+                    breakingChanges: [
+                        '配置文件格式变更，需要重新配置',
+                        'API接口参数调整'
+                    ]
+                }
+            ]
+        };
+
+        const mockCompatibilityData = {
+            overall: {
+                status: 'compatible',
+                score: 85,
+                summary: '驱动与当前系统基本兼容，存在少量警告'
+            },
+            systemRequirements: {
+                passed: [
+                    { id: 'os', description: 'Windows 10 x64 支持' },
+                    { id: 'runtime', description: 'Node.js 16.0+ 已安装' },
+                    { id: 'arch', description: 'x64 架构兼容' }
+                ],
+                warnings: [
+                    { id: 'memory', description: '建议内存 8GB+，当前 4GB' }
+                ],
+                issues: []
+            },
+            dependencies: {
+                passed: [
+                    { id: 'core', description: '核心依赖库已满足' }
+                ],
+                warnings: [
+                    { id: 'optional', description: '可选依赖 libssl 未安装，部分功能受限' }
+                ],
+                issues: []
+            },
+            conflicts: {
+                passed: [
+                    { id: 'ports', description: '端口 4840 可用' }
+                ],
+                warnings: [],
+                issues: [
+                    { 
+                        id: 'version', 
+                        description: '检测到版本冲突：zlib 1.2.8 与要求的 1.2.11+ 不匹配',
+                        fixable: true,
+                        solution: '升级 zlib 到最新版本'
+                    }
+                ]
+            },
+            performance: {
+                passed: [
+                    { id: 'cpu', description: 'CPU 性能满足要求' }
+                ],
+                warnings: [
+                    { id: 'disk', description: '磁盘空间充足但建议预留更多空间' }
+                ],
+                issues: [],
+                metrics: {
+                    'CPU使用率': '< 5%',
+                    '内存占用': '45MB',
+                    '磁盘IO': '正常',
+                    '网络延迟': '< 10ms'
+                }
+            }
+        };
+
+        // Display mock data
+        document.getElementById('mockVersionData').textContent = JSON.stringify(mockVersionData, null, 2);
+        document.getElementById('mockCompatibilityData').textContent = JSON.stringify(mockCompatibilityData, null, 2);
+
+        // Test functions
+        window.testDriverInstallDialog = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${DriverInstallDialog}
+                    onClose=${() => {
+                        document.body.removeChild(container);
+                    }}
+                    onInstallComplete=${() => {
+                        alert('驱动安装完成！');
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        window.testVersionManager = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${DriverVersionManager}
+                    driver=${mockDriver}
+                    onClose=${() => {
+                        document.body.removeChild(container);
+                    }}
+                    onVersionChanged=${(version) => {
+                        alert(`版本已更改到: ${version}`);
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        window.testCompatibilityValidator = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${DriverCompatibilityValidator}
+                    driver=${mockDriver}
+                    onClose=${() => {
+                        document.body.removeChild(container);
+                    }}
+                    onValidationComplete=${(results) => {
+                        console.log('验证结果:', results);
+                        alert('兼容性验证完成，请查看控制台输出');
+                    }}
+                />
+            `, container);
+        };
+
+        window.testDevelopmentTools = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${DriverDevelopmentTools}
+                    onClose=${() => {
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        // Placeholder functions for other tests
+        window.testFileValidation = () => alert('文件验证功能演示');
+        window.testCompatibilityCheck = () => alert('兼容性检查功能演示');
+        window.testOnlineDrivers = () => alert('在线驱动仓库功能演示');
+        window.testUpdateCheck = () => alert('更新检查功能演示');
+        window.testVersionRollback = () => alert('版本回滚功能演示');
+        window.testVersionHistory = () => alert('版本历史功能演示');
+        window.testSystemRequirements = () => alert('系统要求检查功能演示');
+        window.testDependencyCheck = () => alert('依赖项检查功能演示');
+        window.testConflictDetection = () => alert('冲突检测功能演示');
+        window.testAPIDocumentation = () => alert('API文档功能演示');
+        window.testCodeTemplates = () => alert('代码模板功能演示');
+        window.testCodeValidator = () => alert('代码验证器功能演示');
+
+        console.log('驱动版本管理测试页面已加载');
+        console.log('模拟驱动数据:', mockDriver);
+        console.log('模拟版本数据:', mockVersionData);
+        console.log('模拟兼容性数据:', mockCompatibilityData);
+    </script>
+</body>
+</html>

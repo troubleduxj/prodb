@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Manager Syntax Test</title>
+</head>
+<body>
+    <h1>Offline Manager Syntax Test</h1>
+    <div id="status">Testing...</div>
+    
+    <script type="module">
+        try {
+            // Test importing the offline manager
+            const { default: OfflineManager } = await import('./services/offline-manager.js');
+            
+            // Test instantiation
+            const offlineManager = new OfflineManager();
+            
+            document.getElementById('status').innerHTML = `
+                <div style="color: green;">
+                    ✅ Syntax test passed!<br>
+                    OfflineManager loaded successfully<br>
+                    Online status: ${offlineManager.isOnline}
+                </div>
+            `;
+            
+            console.log('OfflineManager test passed:', offlineManager);
+            
+        } catch (error) {
+            document.getElementById('status').innerHTML = `
+                <div style="color: red;">
+                    ❌ Syntax error found:<br>
+                    ${error.message}
+                </div>
+            `;
+            console.error('OfflineManager test failed:', error);
+        }
+    </script>
+</body>
+</html>

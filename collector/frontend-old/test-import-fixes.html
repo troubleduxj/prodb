@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Fixes Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .info {
+            background-color: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+        }
+        pre {
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Import Fixes Test</h1>
+    <p>Testing all the import/export fixes for JavaScript modules.</p>
+    
+    <div id="test-results"></div>
+    
+    <h2>Manual Tests</h2>
+    <button onclick="testAllImports()">Test All Imports</button>
+    <button onclick="testFeedbackManager()">Test Feedback Manager</button>
+    <button onclick="testErrorHandler()">Test Error Handler</button>
+    <button onclick="testAccessControl()">Test Access Control</button>
+    
+    <h2>Console Output</h2>
+    <pre id="console-output"></pre>
+
+    <script type="module">
+        const resultsDiv = document.getElementById('test-results');
+        const consoleOutput = document.getElementById('console-output');
+        
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsole(type, ...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += `[${type.toUpperCase()}] ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            addToConsole('log', ...args);
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            addToConsole('error', ...args);
+        };
+        
+        console.warn = (...args) => {
+            originalWarn(...args);
+            addToConsole('warn', ...args);
+        };
+        
+        function addResult(type, title, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${title}</strong><br>${message}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        // Test functions
+        window.testAllImports = async function() {
+            console.log('Testing all import fixes...');
+            
+            const tests = [
+                { name: 'Validation Module', test: testValidationModule },
+                { name: 'Feedback System', test: testFeedbackSystem },
+                { name: 'Error Handler', test: testErrorHandler },
+                { name: 'Access Control', test: testAccessControl },
+                { name: 'Config Page', test: testConfigPage }
+            ];
+            
+            for (const test of tests) {
+                try {
+                    console.log(`Testing ${test.name}...`);
+                    await test.test();
+                    addResult('success', test.name, 'Import successful');
+                } catch (error) {
+                    addResult('error', test.name, `Import failed: ${error.message}`);
+                    console.error(`${test.name} failed:`, error);
+                }
+            }
+            
+            console.log('All import tests completed');
+        };
+        
+        async function testValidationModule() {
+            const { Validator, validator, protocolValidators, formValidators } = await import('./utils/validation.js');
+            
+            if (!Validator || !validator || !protocolValidators || !formValidators) {
+                throw new Error('Missing exports from validation module');
+            }
+            
+            // Test basic functionality
+            const result = validator.validateField('test', 'value', [{ type: 'required' }]);
+            if (!result || typeof result.valid !== 'boolean') {
+                throw new Error('Validation functionality not working');
+            }
+            
+            return true;
+        }
+        
+        async function testFeedbackSystem() {
+            const FeedbackSystemModule = await import('./components/FeedbackSystem.js');
+            const { default: FeedbackSystem, feedbackManager } = FeedbackSystemModule;
+            
+            if (!FeedbackSystem) {
+                throw new Error('FeedbackSystem default export not found');
+            }
+            
+            if (!feedbackManager) {
+                throw new Error('feedbackManager named export not found');
+            }
+            
+            if (typeof feedbackManager.success !== 'function' || typeof feedbackManager.error !== 'function') {
+                throw new Error('feedbackManager methods not available');
+            }
+            
+            return true;
+        }
+        
+        async function testErrorHandler() {
+            const ErrorHandlerModule = await import('./components/ErrorHandler.js');
+            const { ErrorBoundary, errorReporter } = ErrorHandlerModule;
+            
+            if (!ErrorBoundary) {
+                throw new Error('ErrorBoundary not found');
+            }
+            
+            return true;
+        }
+        
+        async function testAccessControl() {
+            const AccessControlModule = await import('./components/AccessControl.js');
+            const { default: ProtectedComponent, ProtectedButton, SensitiveDataDisplay } = AccessControlModule;
+            
+            if (!ProtectedComponent) {
+                throw new Error('ProtectedComponent default export not found');
+            }
+            
+            if (!ProtectedButton || !SensitiveDataDisplay) {
+                throw new Error('Named exports not found');
+            }
+            
+            return true;
+        }
+        
+        async function testConfigPage() {
+            const ConfigPageModule = await import('./pages/ConfigPage.js');
+            const { default: ConfigPage } = ConfigPageModule;
+            
+            if (!ConfigPage) {
+                throw new Error('ConfigPage not found');
+            }
+            
+            return true;
+        }
+        
+        window.testFeedbackManager = async function() {
+            try {
+                const { feedbackManager } = await import('./components/FeedbackSystem.js');
+                
+                // Test notification methods
+                feedbackManager.success('Test success message');
+                feedbackManager.error('Test error message');
+                feedbackManager.warning('Test warning message');
+                feedbackManager.info('Test info message');
+                
+                addResult('success', 'Feedback Manager', 'All notification methods working');
+                console.log('Feedback manager test completed');
+                
+            } catch (error) {
+                addResult('error', 'Feedback Manager', `Test failed: ${error.message}`);
+                console.error('Feedback manager test failed:', error);
+            }
+        };
+        
+        window.testErrorHandler = async function() {
+            try {
+                const { ErrorBoundary, errorReporter } = await import('./components/ErrorHandler.js');
+                
+                if (ErrorBoundary && errorReporter) {
+                    addResult('success', 'Error Handler', 'All exports available');
+                    console.log('Error handler test completed');
+                } else {
+                    throw new Error('Missing exports');
+                }
+                
+            } catch (error) {
+                addResult('error', 'Error Handler', `Test failed: ${error.message}`);
+                console.error('Error handler test failed:', error);
+            }
+        };
+        
+        window.testAccessControl = async function() {
+            try {
+                const AccessControlModule = await import('./components/AccessControl.js');
+                const { default: ProtectedComponent, ProtectedButton, SensitiveDataDisplay } = AccessControlModule;
+                
+                if (ProtectedComponent && ProtectedButton && SensitiveDataDisplay) {
+                    addResult('success', 'Access Control', 'All exports available');
+                    console.log('Access control test completed');
+                } else {
+                    throw new Error('Missing exports');
+                }
+                
+            } catch (error) {
+                addResult('error', 'Access Control', `Test failed: ${error.message}`);
+                console.error('Access control test failed:', error);
+            }
+        };
+        
+        // Run initial test
+        console.log('Starting import fixes test...');
+        addResult('info', 'Test Started', 'Testing all import/export fixes...');
+        
+        // Auto-run basic test
+        setTimeout(() => {
+            testAllImports();
+        }, 1000);
+    </script>
+</body>
+</html>

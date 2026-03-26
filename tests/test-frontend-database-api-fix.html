@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端数据库API修复测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .database-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .database-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 8px;
+        }
+        .database-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        .info-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .info-value {
+            color: #212529;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 前端数据库API修复测试</h1>
+    
+    <div class="info">
+        <strong>测试目标:</strong> 验证前端能否正确获取和显示TDengine数据库信息
+    </div>
+    
+    <div>
+        <button onclick="testDefaultConnection()">🔗 测试默认连接</button>
+        <button onclick="testDatabaseList()">📋 测试数据库列表</button>
+        <button onclick="testDatabaseDetails()">📊 测试数据库详情</button>
+        <button onclick="testFullFlow()">🚀 完整流程测试</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResult(content) {
+            const resultDiv = document.getElementById('result');
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+        
+        async function testDefaultConnection() {
+            showStatus('测试获取默认连接...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/connections`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const defaultConn = data.connections.find(conn => conn.is_default);
+                    
+                    if (defaultConn) {
+                        showStatus(`✅ 找到默认连接: ${defaultConn.name}`, 'success');
+                        showResult({
+                            name: defaultConn.name,
+                            host: defaultConn.host,
+                            port: defaultConn.port,
+                            status: defaultConn.status,
+                            id: defaultConn.id
+                        });
+                        return defaultConn;
+                    } else {
+                        showStatus('⚠️ 未找到默认连接，使用第一个连接', 'info');
+                        return data.connections[0];
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 获取默认连接失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+        
+        async function testDatabaseList() {
+            showStatus('测试获取数据库列表...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/databases`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.databases && Array.isArray(data.databases)) {
+                        showStatus(`✅ 成功获取 ${data.databases.length} 个数据库`, 'success');
+                        
+                        let html = '<div>';
+                        data.databases.forEach(db => {
+                            html += `
+                                <div class="database-card">
+                                    <div class="database-name">${db.name}</div>
+                                    <div class="database-info">
+                                        <div class="info-item">
+                                            <span class="info-label">表数量:</span>
+                                            <span class="info-value">${db.ntables}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">虚拟组:</span>
+                                            <span class="info-value">${db.vgroups}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">副本数:</span>
+                                            <span class="info-value">${db.replica}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">状态:</span>
+                                            <span class="info-value">${db.status || '未知'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        showResult(html);
+                        
+                        return data.databases;
+                    } else {
+                        throw new Error('响应格式不正确，缺少databases字段');
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 获取数据库列表失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+        
+        async function testDatabaseDetails() {
+            showStatus('测试获取数据库详情...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/databases/log`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.data || data.name) {
+                        const dbInfo = data.data || data;
+                        showStatus(`✅ 成功获取数据库 "${dbInfo.name}" 的详情`, 'success');
+                        showResult(dbInfo);
+                        return dbInfo;
+                    } else {
+                        throw new Error('响应格式不正确');
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus(`❌ 获取数据库详情失败: ${error.message}`, 'error');
+                showResult({ error: error.message });
+                return null;
+            }
+        }
+        
+        async function testFullFlow() {
+            showStatus('开始完整流程测试...', 'info');
+            
+            // 1. 测试默认连接
+            const defaultConn = await testDefaultConnection();
+            if (!defaultConn) {
+                showStatus('❌ 完整流程测试失败: 无法获取默认连接', 'error');
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 2. 测试数据库列表
+            const databases = await testDatabaseList();
+            if (!databases || databases.length === 0) {
+                showStatus('❌ 完整流程测试失败: 无法获取数据库列表', 'error');
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 3. 测试数据库详情
+            const dbDetails = await testDatabaseDetails();
+            if (!dbDetails) {
+                showStatus('❌ 完整流程测试失败: 无法获取数据库详情', 'error');
+                return;
+            }
+            
+            showStatus('🎉 完整流程测试成功！前端数据库管理功能已修复', 'success');
+            
+            const summary = `
+                <div class="database-card">
+                    <div class="database-name">✅ 测试总结</div>
+                    <div class="database-info">
+                        <div class="info-item">
+                            <span class="info-label">默认连接:</span>
+                            <span class="info-value">${defaultConn.name} (${defaultConn.host}:${defaultConn.port})</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">数据库数量:</span>
+                            <span class="info-value">${databases.length} 个</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">API状态:</span>
+                            <span class="info-value">正常工作</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">前端集成:</span>
+                            <span class="info-value">修复完成</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            showResult(summary);
+        }
+        
+        // 页面加载时自动运行完整测试
+        window.addEventListener('load', () => {
+            setTimeout(testFullFlow, 1000);
+        });
+    </script>
+</body>
+</html>

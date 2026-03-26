@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UX Enhancements Test - ProDB Collector</title>
+    <link rel="stylesheet" href="./styles/main.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        
+        .test-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            background-color: var(--color-primary-hover);
+        }
+        
+        button.secondary {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        button.danger {
+            background-color: var(--color-error);
+        }
+        
+        .demo-area {
+            padding: 20px;
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            min-height: 200px;
+            position: relative;
+        }
+        
+        .guide-target {
+            padding: 15px;
+            background-color: var(--color-primary);
+            color: white;
+            border-radius: var(--border-radius);
+            margin: 10px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        
+        .status-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .progress-demo {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>UX Enhancements Test Suite</h1>
+        
+        <div class="test-section">
+            <h2>1. Toast Notifications</h2>
+            <p>Test the feedback system with various notification types</p>
+            <div class="test-controls">
+                <button onclick="showSuccessToast()">Success Toast</button>
+                <button onclick="showErrorToast()">Error Toast</button>
+                <button onclick="showWarningToast()">Warning Toast</button>
+                <button onclick="showInfoToast()">Info Toast</button>
+                <button onclick="showLoadingToast()">Loading Toast</button>
+                <button onclick="showActionToast()">Toast with Actions</button>
+                <button onclick="clearAllToasts()">Clear All</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Confirmation Dialogs</h2>
+            <p>Test confirmation dialogs for various scenarios</p>
+            <div class="test-controls">
+                <button onclick="showBasicConfirm()">Basic Confirm</button>
+                <button onclick="showDestructiveConfirm()" class="danger">Destructive Action</button>
+                <button onclick="showDetailedConfirm()">Confirm with Details</button>
+                <button onclick="showCustomConfirm()">Custom Confirm</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Loading Indicators</h2>
+            <p>Test various loading states and progress indicators</p>
+            <div class="test-controls">
+                <button onclick="showSpinnerLoading()">Spinner Loading</button>
+                <button onclick="showDotsLoading()">Dots Loading</button>
+                <button onclick="showPulseLoading()">Pulse Loading</button>
+                <button onclick="showBarsLoading()">Bars Loading</button>
+                <button onclick="showProgressLoading()">Progress Loading</button>
+                <button onclick="showCancelableLoading()">Cancelable Loading</button>
+            </div>
+            
+            <div class="progress-demo">
+                <h4>Progress Bars:</h4>
+                <div id="progress-container"></div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. Status Indicators</h2>
+            <p>Test status indicators with different states and animations</p>
+            <div class="status-demo" id="status-demo">
+                <!-- Status indicators will be rendered here -->
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. Error Handling</h2>
+            <p>Test error display components and error boundaries</p>
+            <div class="test-controls">
+                <button onclick="showNetworkError()">Network Error</button>
+                <button onclick="showPermissionError()">Permission Error</button>
+                <button onclick="showNotFoundError()">Not Found Error</button>
+                <button onclick="showGenericError()">Generic Error</button>
+                <button onclick="triggerJSError()">Trigger JS Error</button>
+            </div>
+            <div id="error-demo-area" class="demo-area"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>6. User Guide System</h2>
+            <p>Test interactive user guides and tutorials</p>
+            <div class="test-controls">
+                <button onclick="startDashboardGuide()">Dashboard Guide</button>
+                <button onclick="startConfigGuide()">Config Guide</button>
+                <button onclick="startCustomGuide()">Custom Guide</button>
+            </div>
+            <div class="demo-area">
+                <div class="guide-target" data-guide="step1">Guide Target 1</div>
+                <div class="guide-target" data-guide="step2">Guide Target 2</div>
+                <div class="guide-target" data-guide="step3">Guide Target 3</div>
+                <p>Click "Start Guide" buttons to see interactive tutorials highlighting these elements.</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>7. Help System</h2>
+            <p>Test contextual help and documentation system</p>
+            <div class="test-controls">
+                <button onclick="openHelpPanel()">Open Help Panel</button>
+                <button onclick="showContextHelp()">Context Help Example</button>
+            </div>
+            <div class="demo-area">
+                <p>This is a demo area with context help. 
+                    <span id="context-help-demo"></span>
+                </p>
+                <p>The help system provides comprehensive documentation, FAQs, and keyboard shortcuts.</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>8. Keyboard Shortcuts</h2>
+            <p>Test keyboard shortcuts and accessibility features</p>
+            <div class="test-controls">
+                <button onclick="showShortcutsHelp()">Show Shortcuts</button>
+                <button onclick="testKeyboardNavigation()">Test Navigation</button>
+            </div>
+            <div class="demo-area">
+                <p>Press F1 to open help, Escape to close dialogs, or Ctrl+/ to toggle sidebar.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import UX Enhancement Components -->
+    <script type="module">
+        import { html } from 'https://esm.sh/htm/preact';
+        import { render } from 'https://esm.sh/preact';
+        import { useState } from 'https://esm.sh/preact/hooks';
+        
+        // Import UX components
+        import UserGuide, { GUIDE_STEPS, guideManager } from './components/UserGuide.js';
+        import { 
+            Toast, 
+            ConfirmDialog, 
+            LoadingIndicator, 
+            StatusIndicator, 
+            ProgressBar, 
+            feedbackManager 
+        } from './components/FeedbackSystem.js';
+        import { 
+            ErrorBoundary, 
+            ErrorDisplay, 
+            NetworkError, 
+            PermissionError, 
+            NotFoundError 
+        } from './components/ErrorHandler.js';
+        import { HelpPanel, ContextHelp } from './components/HelpSystem.js';
+
+        // Global state for demo
+        let currentGuide = null;
+        let currentDialog = null;
+        let currentLoading = null;
+        let helpPanelOpen = false;
+
+        // Toast notification functions
+        window.showSuccessToast = () => {
+            feedbackManager.success('Operation completed successfully!', {
+                duration: 3000
+            });
+        };
+
+        window.showErrorToast = () => {
+            feedbackManager.error('Something went wrong. Please try again.', {
+                duration: 5000,
+                actions: [{
+                    label: 'Retry',
+                    onClick: () => console.log('Retry clicked')
+                }]
+            });
+        };
+
+        window.showWarningToast = () => {
+            feedbackManager.warning('This action may have unintended consequences.', {
+                duration: 4000
+            });
+        };
+
+        window.showInfoToast = () => {
+            feedbackManager.info('New features are available in the latest update.');
+        };
+
+        window.showLoadingToast = () => {
+            feedbackManager.loading('Processing your request...', {
+                persistent: true
+            });
+        };
+
+        window.showActionToast = () => {
+            feedbackManager.info('Configuration saved successfully', {
+                actions: [
+                    {
+                        label: 'View',
+                        onClick: () => console.log('View clicked')
+                    },
+                    {
+                        label: 'Edit',
+                        onClick: () => console.log('Edit clicked')
+                    }
+                ]
+            });
+        };
+
+        window.clearAllToasts = () => {
+            feedbackManager.clearAllToasts();
+        };
+
+        // Confirmation dialog functions
+        window.showBasicConfirm = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${ConfirmDialog}
+                    isOpen=${true}
+                    title="Confirm Action"
+                    message="Are you sure you want to proceed with this action?"
+                    onConfirm=${() => {
+                        feedbackManager.success('Action confirmed');
+                        document.body.removeChild(container);
+                    }}
+                    onCancel=${() => {
+                        feedbackManager.info('Action cancelled');
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        window.showDestructiveConfirm = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${ConfirmDialog}
+                    isOpen=${true}
+                    title="Delete Configuration"
+                    message="This will permanently delete the selected configuration. This action cannot be undone."
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    destructive=${true}
+                    type="error"
+                    onConfirm=${() => {
+                        feedbackManager.success('Configuration deleted');
+                        document.body.removeChild(container);
+                    }}
+                    onCancel=${() => {
+                        feedbackManager.info('Deletion cancelled');
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        window.showDetailedConfirm = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${ConfirmDialog}
+                    isOpen=${true}
+                    title="Apply Configuration Changes"
+                    message="The following changes will be applied to your system:"
+                    details=${html`
+                        <ul>
+                            <li>Update OPC UA endpoint configuration</li>
+                            <li>Restart data collection services</li>
+                            <li>Clear existing data cache</li>
+                        </ul>
+                    `}
+                    confirmText="Apply Changes"
+                    onConfirm=${() => {
+                        feedbackManager.success('Changes applied successfully');
+                        document.body.removeChild(container);
+                    }}
+                    onCancel=${() => {
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        window.showCustomConfirm = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${ConfirmDialog}
+                    isOpen=${true}
+                    title="Export Data"
+                    message="Choose the export format for your data:"
+                    type="info"
+                    confirmText="Export as JSON"
+                    cancelText="Export as CSV"
+                    onConfirm=${() => {
+                        feedbackManager.success('Exporting as JSON...');
+                        document.body.removeChild(container);
+                    }}
+                    onCancel=${() => {
+                        feedbackManager.success('Exporting as CSV...');
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        // Loading indicator functions
+        window.showSpinnerLoading = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${LoadingIndicator}
+                    message="Loading data..."
+                    type="spinner"
+                    overlay=${true}
+                />
+            `, container);
+            
+            setTimeout(() => {
+                document.body.removeChild(container);
+                feedbackManager.success('Data loaded successfully');
+            }, 3000);
+        };
+
+        window.showDotsLoading = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${LoadingIndicator}
+                    message="Connecting to device..."
+                    type="dots"
+                    overlay=${true}
+                />
+            `, container);
+            
+            setTimeout(() => {
+                document.body.removeChild(container);
+                feedbackManager.success('Connected successfully');
+            }, 2500);
+        };
+
+        window.showPulseLoading = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${LoadingIndicator}
+                    message="Synchronizing..."
+                    type="pulse"
+                    overlay=${true}
+                />
+            `, container);
+            
+            setTimeout(() => {
+                document.body.removeChild(container);
+                feedbackManager.success('Synchronization complete');
+            }, 2000);
+        };
+
+        window.showBarsLoading = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${LoadingIndicator}
+                    message="Processing configuration..."
+                    type="bars"
+                    overlay=${true}
+                />
+            `, container);
+            
+            setTimeout(() => {
+                document.body.removeChild(container);
+                feedbackManager.success('Configuration processed');
+            }, 3500);
+        };
+
+        window.showProgressLoading = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            let progress = 0;
+            
+            const updateProgress = () => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    setTimeout(() => {
+                        document.body.removeChild(container);
+                        feedbackManager.success('Upload complete');
+                    }, 500);
+                    return;
+                }
+                
+                render(html`
+                    <${LoadingIndicator}
+                        message="Uploading files..."
+                        type="spinner"
+                        overlay=${true}
+                        progress=${progress}
+                    />
+                `, container);
+                
+                setTimeout(updateProgress, 200);
+            };
+            
+            updateProgress();
+        };
+
+        window.showCancelableLoading = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${LoadingIndicator}
+                    message="Downloading updates..."
+                    type="spinner"
+                    overlay=${true}
+                    cancelable=${true}
+                    onCancel=${() => {
+                        document.body.removeChild(container);
+                        feedbackManager.warning('Download cancelled');
+                    }}
+                />
+            `, container);
+        };
+
+        // Status indicators demo
+        const renderStatusIndicators = () => {
+            const statusContainer = document.getElementById('status-demo');
+            
+            render(html`
+                <div>
+                    <${StatusIndicator} status="connected" label="OPC UA Server" animated=${true} />
+                    <${StatusIndicator} status="disconnected" label="Modbus Device" />
+                    <${StatusIndicator} status="connecting" label="MQTT Broker" animated=${true} />
+                    <${StatusIndicator} status="error" label="Ethernet/IP" tooltip="Connection timeout" />
+                    <${StatusIndicator} status="warning" label="Data Quality" tooltip="Some values may be stale" />
+                    <${StatusIndicator} status="success" label="System Health" />
+                </div>
+            `, statusContainer);
+        };
+
+        // Progress bars demo
+        const renderProgressBars = () => {
+            const progressContainer = document.getElementById('progress-container');
+            
+            render(html`
+                <div>
+                    <${ProgressBar} value=${75} label="Data Collection" color="primary" />
+                    <${ProgressBar} value=${45} label="Memory Usage" color="warning" />
+                    <${ProgressBar} value=${90} label="Network Bandwidth" color="success" animated=${true} />
+                    <${ProgressBar} value=${30} label="Storage Space" color="info" striped=${true} />
+                </div>
+            `, progressContainer);
+        };
+
+        // Error handling functions
+        window.showNetworkError = () => {
+            const errorArea = document.getElementById('error-demo-area');
+            
+            render(html`
+                <${NetworkError}
+                    message="Unable to connect to the collector service"
+                    onRetry=${() => {
+                        feedbackManager.info('Retrying connection...');
+                        setTimeout(() => {
+                            errorArea.innerHTML = '';
+                            feedbackManager.success('Connection restored');
+                        }, 2000);
+                    }}
+                />
+            `, errorArea);
+        };
+
+        window.showPermissionError = () => {
+            const errorArea = document.getElementById('error-demo-area');
+            
+            render(html`
+                <${PermissionError}
+                    resource="configuration settings"
+                    onLogin=${() => {
+                        feedbackManager.info('Redirecting to login...');
+                        setTimeout(() => {
+                            errorArea.innerHTML = '';
+                            feedbackManager.success('Access granted');
+                        }, 1500);
+                    }}
+                />
+            `, errorArea);
+        };
+
+        window.showNotFoundError = () => {
+            const errorArea = document.getElementById('error-demo-area');
+            
+            render(html`
+                <${NotFoundError}
+                    resource="interface configuration"
+                    onGoHome=${() => {
+                        errorArea.innerHTML = '';
+                        feedbackManager.info('Returning to dashboard');
+                    }}
+                />
+            `, errorArea);
+        };
+
+        window.showGenericError = () => {
+            const errorArea = document.getElementById('error-demo-area');
+            
+            render(html`
+                <${ErrorDisplay}
+                    error=${{ message: 'Unexpected error occurred during data processing', name: 'ProcessingError' }}
+                    title="Processing Error"
+                    showDetails=${true}
+                    onRetry=${() => {
+                        feedbackManager.info('Retrying operation...');
+                        setTimeout(() => {
+                            errorArea.innerHTML = '';
+                            feedbackManager.success('Operation completed');
+                        }, 2000);
+                    }}
+                />
+            `, errorArea);
+        };
+
+        window.triggerJSError = () => {
+            // Intentionally trigger an error to test error boundary
+            throw new Error('This is a test JavaScript error');
+        };
+
+        // User guide functions
+        window.startDashboardGuide = () => {
+            const steps = [
+                {
+                    target: '[data-guide="step1"]',
+                    title: 'Welcome to the Dashboard',
+                    content: 'This is your main control center where you can monitor all system activities.',
+                    position: 'bottom'
+                },
+                {
+                    target: '[data-guide="step2"]',
+                    title: 'Quick Actions',
+                    content: 'Use these buttons to perform common tasks quickly and efficiently.',
+                    position: 'top'
+                },
+                {
+                    target: '[data-guide="step3"]',
+                    title: 'Status Monitoring',
+                    content: 'Keep track of your system status and performance metrics here.',
+                    position: 'left'
+                }
+            ];
+            
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${UserGuide}
+                    steps=${steps}
+                    autoStart=${true}
+                    onComplete=${() => {
+                        document.body.removeChild(container);
+                        feedbackManager.success('Tutorial completed!');
+                    }}
+                    onSkip=${() => {
+                        document.body.removeChild(container);
+                        feedbackManager.info('Tutorial skipped');
+                    }}
+                />
+            `, container);
+        };
+
+        window.startConfigGuide = () => {
+            const steps = GUIDE_STEPS.interfaceConfig;
+            
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${UserGuide}
+                    steps=${steps}
+                    autoStart=${true}
+                    onComplete=${() => {
+                        document.body.removeChild(container);
+                        feedbackManager.success('Configuration guide completed!');
+                    }}
+                />
+            `, container);
+        };
+
+        window.startCustomGuide = () => {
+            const steps = [
+                {
+                    target: 'body',
+                    title: 'Custom Tutorial',
+                    content: html`
+                        <div>
+                            <p>This is a custom tutorial with rich content.</p>
+                            <ul>
+                                <li>Interactive elements</li>
+                                <li>Step-by-step guidance</li>
+                                <li>Progress tracking</li>
+                            </ul>
+                        </div>
+                    `,
+                    position: 'bottom'
+                }
+            ];
+            
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${UserGuide}
+                    steps=${steps}
+                    autoStart=${true}
+                    showProgress=${true}
+                    onComplete=${() => {
+                        document.body.removeChild(container);
+                        feedbackManager.success('Custom tutorial completed!');
+                    }}
+                />
+            `, container);
+        };
+
+        // Help system functions
+        window.openHelpPanel = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${HelpPanel}
+                    isOpen=${true}
+                    context="dashboard"
+                    onClose=${() => {
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+        };
+
+        window.showContextHelp = () => {
+            const helpDemo = document.getElementById('context-help-demo');
+            
+            render(html`
+                <${ContextHelp}
+                    content="This is contextual help that provides information about specific features or functions."
+                    position="top"
+                    trigger="hover"
+                />
+            `, helpDemo);
+        };
+
+        window.showShortcutsHelp = () => {
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${HelpPanel}
+                    isOpen=${true}
+                    context="general"
+                    onClose=${() => {
+                        document.body.removeChild(container);
+                    }}
+                />
+            `, container);
+            
+            // Simulate clicking on shortcuts tab
+            setTimeout(() => {
+                const shortcutsTab = container.querySelector('[data-tab="shortcuts"]');
+                if (shortcutsTab) shortcutsTab.click();
+            }, 100);
+        };
+
+        window.testKeyboardNavigation = () => {
+            feedbackManager.info('Try pressing F1 for help, Escape to close dialogs, or Ctrl+/ for shortcuts');
+        };
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F1') {
+                e.preventDefault();
+                window.openHelpPanel();
+            } else if (e.key === 'Escape') {
+                // Close any open dialogs or panels
+                const overlays = document.querySelectorAll('.help-overlay, .confirm-overlay, .loading-overlay');
+                overlays.forEach(overlay => {
+                    const container = overlay.parentElement;
+                    if (container && container.parentElement === document.body) {
+                        document.body.removeChild(container);
+                    }
+                });
+            } else if (e.ctrlKey && e.key === '/') {
+                e.preventDefault();
+                window.showShortcutsHelp();
+            }
+        });
+
+        // Initialize demos
+        document.addEventListener('DOMContentLoaded', () => {
+            renderStatusIndicators();
+            renderProgressBars();
+            
+            // Show welcome message
+            setTimeout(() => {
+                feedbackManager.info('UX Enhancements Test Suite loaded successfully!', {
+                    duration: 3000
+                });
+            }, 500);
+        });
+
+        // Error boundary for the entire test page
+        window.addEventListener('error', (event) => {
+            console.error('Test page error:', event.error);
+            feedbackManager.error('An error occurred in the test page', {
+                actions: [{
+                    label: 'Reload',
+                    onClick: () => window.location.reload()
+                }]
+            });
+        });
+
+    </script>
+</body>
+</html>

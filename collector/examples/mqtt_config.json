@@ -1,0 +1,213 @@
+{
+  "collector": {
+    "id": "mqtt_collector_001",
+    "name": "MQTT Data Collector",
+    "heartbeat_interval": 60,
+    "data_buffer_size": 1000,
+    "cache_retention_days": 7
+  },
+  "collection_tasks": [
+    {
+      "task_id": "mqtt_basic_sensors",
+      "name": "Basic MQTT Sensors",
+      "protocol": "mqtt",
+      "enabled": true,
+      "schedule": {
+        "interval": 5,
+        "unit": "seconds"
+      },
+      "connection": {
+        "broker": "localhost",
+        "port": 1883,
+        "client_id": "collector_basic",
+        "username": "collector",
+        "password": "password",
+        "keep_alive": 60,
+        "clean_session": true,
+        "auto_reconnect": true,
+        "connect_timeout": 30,
+        "write_timeout": 30,
+        "max_reconnect_delay": 300
+      },
+      "topics": [
+        {
+          "topic": "sensors/temperature",
+          "qos": 1,
+          "data_format": "json",
+          "device_id": "temp_sensor_01",
+          "point_name": "temperature"
+        },
+        {
+          "topic": "sensors/humidity",
+          "qos": 1,
+          "data_format": "json",
+          "device_id": "humidity_sensor_01",
+          "point_name": "humidity"
+        },
+        {
+          "topic": "sensors/pressure",
+          "qos": 2,
+          "data_format": "json",
+          "device_id": "pressure_sensor_01",
+          "point_name": "pressure"
+        }
+      ],
+      "target": {
+        "database": "industrial_data",
+        "super_table": "mqtt_metrics",
+        "tags": {
+          "location": "factory_floor_1",
+          "device_type": "mqtt_sensor",
+          "protocol": "mqtt"
+        }
+      }
+    },
+    {
+      "task_id": "mqtt_wildcard_sensors",
+      "name": "MQTT Wildcard Sensors",
+      "protocol": "mqtt",
+      "enabled": true,
+      "schedule": {
+        "interval": 10,
+        "unit": "seconds"
+      },
+      "connection": {
+        "broker": "mqtt.factory.local",
+        "port": 1883,
+        "client_id": "collector_wildcard",
+        "username": "factory_user",
+        "password": "factory_pass",
+        "keep_alive": 30,
+        "clean_session": false,
+        "auto_reconnect": true
+      },
+      "topics": [
+        {
+          "topic": "factory/+/sensors/+",
+          "qos": 1,
+          "data_format": "json",
+          "json_path": "$.data.value"
+        },
+        {
+          "topic": "factory/floor1/#",
+          "qos": 0,
+          "data_format": "json"
+        }
+      ],
+      "target": {
+        "database": "factory_data",
+        "super_table": "factory_metrics",
+        "tags": {
+          "location": "factory",
+          "device_type": "industrial_sensor",
+          "protocol": "mqtt"
+        }
+      }
+    },
+    {
+      "task_id": "mqtt_secure_connection",
+      "name": "Secure MQTT Connection",
+      "protocol": "mqtt",
+      "enabled": false,
+      "schedule": {
+        "interval": 15,
+        "unit": "seconds"
+      },
+      "connection": {
+        "broker": "secure-mqtt.example.com",
+        "port": 8883,
+        "client_id": "collector_secure",
+        "username": "secure_user",
+        "password": "secure_password",
+        "use_tls": true,
+        "cert_file": "/etc/ssl/certs/mqtt-client.crt",
+        "key_file": "/etc/ssl/private/mqtt-client.key",
+        "ca_file": "/etc/ssl/certs/mqtt-ca.crt",
+        "keep_alive": 60,
+        "clean_session": true,
+        "auto_reconnect": true,
+        "connect_timeout": 60,
+        "write_timeout": 30,
+        "max_reconnect_delay": 600
+      },
+      "topics": [
+        {
+          "topic": "secure/sensors/+",
+          "qos": 2,
+          "data_format": "json",
+          "json_path": "$.measurements.value"
+        },
+        {
+          "topic": "secure/alerts/#",
+          "qos": 1,
+          "data_format": "json"
+        }
+      ],
+      "target": {
+        "database": "secure_data",
+        "super_table": "secure_metrics",
+        "tags": {
+          "location": "secure_facility",
+          "device_type": "secure_sensor",
+          "protocol": "mqtt_tls"
+        }
+      }
+    },
+    {
+      "task_id": "mqtt_mixed_formats",
+      "name": "MQTT Mixed Data Formats",
+      "protocol": "mqtt",
+      "enabled": true,
+      "schedule": {
+        "interval": 20,
+        "unit": "seconds"
+      },
+      "connection": {
+        "broker": "192.168.1.100",
+        "port": 1883,
+        "client_id": "collector_mixed",
+        "keep_alive": 45,
+        "clean_session": true,
+        "auto_reconnect": true
+      },
+      "topics": [
+        {
+          "topic": "data/json_stream",
+          "qos": 1,
+          "data_format": "json",
+          "device_id": "json_device"
+        },
+        {
+          "topic": "data/raw_stream",
+          "qos": 0,
+          "data_format": "raw",
+          "device_id": "raw_device",
+          "point_name": "raw_data"
+        },
+        {
+          "topic": "data/csv_stream",
+          "qos": 1,
+          "data_format": "csv",
+          "device_id": "csv_device"
+        },
+        {
+          "topic": "complex/nested/data",
+          "qos": 2,
+          "data_format": "json",
+          "json_path": "$.payload.sensors[0].readings.temperature",
+          "device_id": "complex_sensor",
+          "point_name": "nested_temperature"
+        }
+      ],
+      "target": {
+        "database": "mixed_data",
+        "super_table": "mixed_metrics",
+        "tags": {
+          "location": "test_lab",
+          "device_type": "mixed_format",
+          "protocol": "mqtt"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全验证功能测试 - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState, useEffect } from 'https://esm.sh/preact/hooks';
+        import ConfigValidator from './components/ConfigValidator.js';
+        import { ProtectedComponent, ProtectedButton, SensitiveDataDisplay, PermissionPanel } from './components/AccessControl.js';
+        import OperationLogger, { SimpleLogViewer } from './components/OperationLogger.js';
+        import securityService from './services/security.js';
+
+        const SecurityTestApp = () => {
+            const [testConfig, setTestConfig] = useState({
+                protocol: 'OPC_UA',
+                endpoint: 'opc.tcp://192.168.1.100:4840',
+                username: 'admin',
+                password: '123456',
+                securityPolicy: 'None'
+            });
+            
+            const [validationResult, setValidationResult] = useState(null);
+            const [showPermissionPanel, setShowPermissionPanel] = useState(false);
+            const [showOperationLog, setShowOperationLog] = useState(false);
+
+            const testSchema = {
+                required: ['endpoint', 'username'],
+                fields: {
+                    endpoint: [
+                        { type: 'required', message: 'OPC UA端点地址是必需的' },
+                        { type: 'url', message: '请输入有效的OPC UA端点地址' }
+                    ],
+                    username: [
+                        { type: 'required', message: '用户名是必需的' },
+                        { type: 'minLength', params: [3], message: '用户名至少3个字符' }
+                    ],
+                    password: [
+                        { type: 'required', message: '密码是必需的' },
+                        { type: 'minLength', params: [6], message: '密码至少6个字符' }
+                    ]
+                }
+            };
+
+            const handleConfigChange = (field, value) => {
+                setTestConfig(prev => ({
+                    ...prev,
+                    [field]: value
+                }));
+            };
+
+            const handleValidationChange = (result) => {
+                setValidationResult(result);
+            };
+
+            const handleProtectedAction = async () => {
+                securityService.logOperation('test_action', 'security_test', {
+                    testType: 'protected_button',
+                    timestamp: new Date().toISOString()
+                });
+                alert('受保护的操作执行成功！');
+            };
+
+            const handleSensitiveOperation = async () => {
+                const confirmed = await securityService.requestSecurityConfirmation(
+                    'sensitive_operation',
+                    'test_resource',
+                    '这是一个敏感操作，确定要继续吗？'
+                );
+                
+                if (confirmed) {
+                    securityService.logOperation('sensitive_operation', 'test_resource', {
+                        confirmed: true,
+                        timestamp: new Date().toISOString()
+                    });
+                    alert('敏感操作执行成功！');
+                }
+            };
+
+            const simulateFailedOperation = () => {
+                securityService.logFailedOperation(
+                    'test_failed_operation',
+                    'test_resource',
+                    new Error('模拟的操作失败'),
+                    { simulatedError: true }
+                );
+                alert('已记录失败操作到日志');
+            };
+
+            return html`
+                <div class="security-test-app">
+                    <header class="test-header">
+                        <h1>🔒 安全验证功能测试</h1>
+                        <p>测试配置验证、访问控制、操作日志等安全功能</p>
+                    </header>
+
+                    <div class="test-sections">
+                        <!-- 配置验证测试 -->
+                        <section class="test-section">
+                            <h2>1. 配置验证测试</h2>
+                            <div class="test-content">
+                                <div class="config-form">
+                                    <h3>测试配置</h3>
+                                    <div class="form-group">
+                                        <label>协议类型:</label>
+                                        <select 
+                                            value=${testConfig.protocol}
+                                            onChange=${(e) => handleConfigChange('protocol', e.target.value)}
+                                        >
+                                            <option value="OPC_UA">OPC UA</option>
+                                            <option value="MODBUS_TCP">Modbus TCP</option>
+                                            <option value="MQTT">MQTT</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>端点地址:</label>
+                                        <input 
+                                            type="text"
+                                            value=${testConfig.endpoint}
+                                            onChange=${(e) => handleConfigChange('endpoint', e.target.value)}
+                                            placeholder="opc.tcp://192.168.1.100:4840"
+                                        />
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>用户名:</label>
+                                        <input 
+                                            type="text"
+                                            value=${testConfig.username}
+                                            onChange=${(e) => handleConfigChange('username', e.target.value)}
+                                            placeholder="输入用户名"
+                                        />
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>密码:</label>
+                                        <input 
+                                            type="password"
+                                            value=${testConfig.password}
+                                            onChange=${(e) => handleConfigChange('password', e.target.value)}
+                                            placeholder="输入密码"
+                                        />
+                                        <div class="sensitive-display-demo">
+                                            <label>敏感信息显示:</label>
+                                            <${SensitiveDataDisplay} 
+                                                data=${testConfig.password}
+                                                fieldName="password"
+                                                showMasked=${true}
+                                                allowReveal=${true}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="validation-results">
+                                    <${ConfigValidator}
+                                        config=${testConfig}
+                                        schema=${testSchema}
+                                        onValidationChange=${handleValidationChange}
+                                        showWarnings=${true}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 访问控制测试 -->
+                        <section class="test-section">
+                            <h2>2. 访问控制测试</h2>
+                            <div class="test-content">
+                                <div class="access-control-demo">
+                                    <h3>权限保护组件</h3>
+                                    
+                                    <div class="protected-content">
+                                        <${ProtectedComponent} requiredPermission="read">
+                                            <div class="protected-info">
+                                                ✅ 您有读取权限，可以看到这个内容
+                                            </div>
+                                        <//>
+                                        
+                                        <${ProtectedComponent} 
+                                            requiredPermission="admin"
+                                            fallback=${html`<div class="no-permission">❌ 需要管理员权限才能查看</div>`}
+                                        >
+                                            <div class="admin-content">
+                                                🔑 管理员专用内容
+                                            </div>
+                                        <//>
+                                    </div>
+
+                                    <div class="protected-buttons">
+                                        <h4>受保护的操作按钮</h4>
+                                        
+                                        <${ProtectedButton}
+                                            requiredPermission="write"
+                                            operation="test_write"
+                                            resource="test_resource"
+                                            onClick=${handleProtectedAction}
+                                            className="btn btn-primary"
+                                        >
+                                            写入操作 (需要写权限)
+                                        <//>
+                                        
+                                        <${ProtectedButton}
+                                            requiredPermission="delete"
+                                            operation="test_delete"
+                                            resource="test_resource"
+                                            confirmMessage="确定要执行删除操作吗？"
+                                            onClick=${handleProtectedAction}
+                                            className="btn btn-error"
+                                        >
+                                            删除操作 (需要删除权限)
+                                        <//>
+                                        
+                                        <button 
+                                            class="btn btn-warning"
+                                            onClick=${handleSensitiveOperation}
+                                        >
+                                            敏感操作 (需要确认)
+                                        </button>
+                                        
+                                        <button 
+                                            class="btn btn-secondary"
+                                            onClick=${simulateFailedOperation}
+                                        >
+                                            模拟失败操作
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 操作日志测试 -->
+                        <section class="test-section">
+                            <h2>3. 操作日志测试</h2>
+                            <div class="test-content">
+                                <div class="log-controls">
+                                    <button 
+                                        class="btn btn-primary"
+                                        onClick=${() => setShowOperationLog(!showOperationLog)}
+                                    >
+                                        ${showOperationLog ? '隐藏' : '显示'} 完整操作日志
+                                    </button>
+                                    
+                                    <button 
+                                        class="btn btn-secondary"
+                                        onClick=${() => setShowPermissionPanel(!showPermissionPanel)}
+                                    >
+                                        ${showPermissionPanel ? '隐藏' : '显示'} 权限面板
+                                    </button>
+                                </div>
+
+                                <div class="recent-logs">
+                                    <h4>最近操作</h4>
+                                    <${SimpleLogViewer} 
+                                        operations=${['test_action', 'sensitive_operation', 'test_failed_operation']}
+                                        maxEntries=${10}
+                                    />
+                                </div>
+
+                                ${showOperationLog && html`
+                                    <div class="full-log">
+                                        <${OperationLogger} 
+                                            showFilters=${true}
+                                            maxEntries=${50}
+                                            autoRefresh=${false}
+                                        />
+                                    </div>
+                                `}
+                            </div>
+                        </section>
+
+                        <!-- 权限管理面板 -->
+                        ${showPermissionPanel && html`
+                            <section class="test-section">
+                                <h2>4. 权限管理面板</h2>
+                                <div class="test-content">
+                                    <${PermissionPanel} />
+                                </div>
+                            </section>
+                        `}
+                    </div>
+
+                    <!-- 测试说明 -->
+                    <footer class="test-footer">
+                        <h3>测试说明</h3>
+                        <ul>
+                            <li><strong>配置验证:</strong> 修改上方配置项，观察实时验证结果和安全建议</li>
+                            <li><strong>访问控制:</strong> 不同权限级别的内容和按钮会根据用户权限显示或隐藏</li>
+                            <li><strong>操作日志:</strong> 所有操作都会被记录，包括成功和失败的操作</li>
+                            <li><strong>敏感信息:</strong> 密码等敏感信息会被脱敏显示，需要权限才能查看完整内容</li>
+                            <li><strong>安全确认:</strong> 危险操作需要用户确认才能执行</li>
+                        </ul>
+                    </footer>
+                </div>
+            `;
+        };
+
+        render(html`<${SecurityTestApp} />`, document.getElementById('app'));
+    </script>
+
+    <style>
+        .security-test-app {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-4);
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: var(--space-8);
+            padding: var(--space-6);
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: var(--border-radius);
+        }
+
+        .test-header h1 {
+            margin: 0 0 var(--space-2) 0;
+            color: var(--text-primary);
+        }
+
+        .test-header p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .test-sections {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+        }
+
+        .test-section {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+        }
+
+        .test-section h2 {
+            margin: 0 0 var(--space-4) 0;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-primary);
+            padding-bottom: var(--space-2);
+        }
+
+        .test-content {
+            display: grid;
+            gap: var(--space-4);
+        }
+
+        .config-form {
+            background-color: var(--bg-secondary);
+            padding: var(--space-4);
+            border-radius: var(--border-radius);
+        }
+
+        .config-form h3 {
+            margin: 0 0 var(--space-3) 0;
+        }
+
+        .form-group {
+            margin-bottom: var(--space-3);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--space-1);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: var(--space-2);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .sensitive-display-demo {
+            margin-top: var(--space-2);
+            padding: var(--space-2);
+            background-color: var(--bg-tertiary);
+            border-radius: var(--border-radius);
+        }
+
+        .sensitive-display-demo label {
+            margin-bottom: var(--space-1);
+        }
+
+        .protected-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+
+        .protected-info,
+        .admin-content {
+            padding: var(--space-3);
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--color-success);
+            border-radius: var(--border-radius);
+            color: var(--color-success);
+        }
+
+        .no-permission {
+            padding: var(--space-3);
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--color-warning);
+            border-radius: var(--border-radius);
+            color: var(--color-warning);
+        }
+
+        .protected-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .protected-buttons h4 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .protected-buttons .btn {
+            align-self: flex-start;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+
+        .recent-logs h4 {
+            margin: 0 0 var(--space-3) 0;
+        }
+
+        .full-log {
+            margin-top: var(--space-4);
+            border-top: 1px solid var(--border-color);
+            padding-top: var(--space-4);
+        }
+
+        .test-footer {
+            margin-top: var(--space-8);
+            padding: var(--space-6);
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+        }
+
+        .test-footer h3 {
+            margin: 0 0 var(--space-3) 0;
+            color: var(--text-primary);
+        }
+
+        .test-footer ul {
+            margin: 0;
+            padding-left: var(--space-4);
+            color: var(--text-secondary);
+        }
+
+        .test-footer li {
+            margin-bottom: var(--space-2);
+        }
+
+        .test-footer strong {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .security-test-app {
+                padding: var(--space-2);
+            }
+            
+            .test-header {
+                padding: var(--space-4);
+            }
+            
+            .test-section {
+                padding: var(--space-4);
+            }
+            
+            .log-controls {
+                flex-direction: column;
+            }
+            
+            .protected-buttons .btn {
+                align-self: stretch;
+            }
+        }
+    </style>
+</body>
+</html>

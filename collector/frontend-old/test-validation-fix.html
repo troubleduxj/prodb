@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .info {
+            background-color: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+        }
+        pre {
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Validation Fix Test</h1>
+    <p>Testing the validation.js module after fixing the duplicate export issue.</p>
+    
+    <div id="test-results"></div>
+    
+    <h2>Manual Tests</h2>
+    <button onclick="testValidation()">Test Validation Module</button>
+    <button onclick="testProtocolValidators()">Test Protocol Validators</button>
+    <button onclick="testFormValidators()">Test Form Validators</button>
+    
+    <h2>Console Output</h2>
+    <pre id="console-output"></pre>
+
+    <script type="module">
+        const resultsDiv = document.getElementById('test-results');
+        const consoleOutput = document.getElementById('console-output');
+        
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsole(type, ...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += `[${type.toUpperCase()}] ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            addToConsole('log', ...args);
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            addToConsole('error', ...args);
+        };
+        
+        console.warn = (...args) => {
+            originalWarn(...args);
+            addToConsole('warn', ...args);
+        };
+        
+        function addResult(type, title, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${title}</strong><br>${message}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        // Test module import
+        async function testModuleImport() {
+            try {
+                console.log('Testing validation module import...');
+                const { Validator, validator, protocolValidators, formValidators } = await import('./utils/validation.js');
+                
+                addResult('success', 'Module Import', 'Successfully imported validation module without errors');
+                console.log('Imported classes:', { Validator, validator, protocolValidators, formValidators });
+                
+                return { Validator, validator, protocolValidators, formValidators };
+            } catch (error) {
+                addResult('error', 'Module Import Failed', error.message);
+                console.error('Import error:', error);
+                return null;
+            }
+        }
+        
+        // Test validation functionality
+        window.testValidation = async function() {
+            const modules = await testModuleImport();
+            if (!modules) return;
+            
+            const { validator } = modules;
+            
+            try {
+                // Test basic validation
+                const result = validator.validateField('email', 'test@example.com', [
+                    { type: 'required' },
+                    { type: 'email' }
+                ]);
+                
+                if (result.valid) {
+                    addResult('success', 'Basic Validation', 'Email validation passed');
+                } else {
+                    addResult('error', 'Basic Validation', `Validation failed: ${result.errors.join(', ')}`);
+                }
+                
+                console.log('Validation result:', result);
+                
+            } catch (error) {
+                addResult('error', 'Validation Test', error.message);
+                console.error('Validation test error:', error);
+            }
+        };
+        
+        // Test protocol validators
+        window.testProtocolValidators = async function() {
+            const modules = await testModuleImport();
+            if (!modules) return;
+            
+            const { protocolValidators } = modules;
+            
+            try {
+                // Test OPC UA endpoint validation
+                const opcuaResult = protocolValidators.opcuaEndpoint('opc.tcp://localhost:4840');
+                
+                if (opcuaResult.valid) {
+                    addResult('success', 'OPC UA Validation', 'OPC UA endpoint validation passed');
+                } else {
+                    addResult('error', 'OPC UA Validation', `Validation failed: ${opcuaResult.errors.join(', ')}`);
+                }
+                
+                console.log('OPC UA validation result:', opcuaResult);
+                
+                // Test Modbus validation
+                const modbusResult = protocolValidators.modbusConfig({
+                    host: '192.168.1.100',
+                    port: 502,
+                    slaveId: 1
+                });
+                
+                if (modbusResult.valid) {
+                    addResult('success', 'Modbus Validation', 'Modbus config validation passed');
+                } else {
+                    addResult('error', 'Modbus Validation', `Validation failed: ${modbusResult.errors.join(', ')}`);
+                }
+                
+                console.log('Modbus validation result:', modbusResult);
+                
+            } catch (error) {
+                addResult('error', 'Protocol Validators Test', error.message);
+                console.error('Protocol validators test error:', error);
+            }
+        };
+        
+        // Test form validators
+        window.testFormValidators = async function() {
+            const modules = await testModuleImport();
+            if (!modules) return;
+            
+            const { formValidators } = modules;
+            
+            try {
+                // Test protocol rules creation
+                const opcuaRules = formValidators.createProtocolRules('OPC_UA');
+                
+                if (opcuaRules && opcuaRules.endpoint) {
+                    addResult('success', 'Form Validators', 'Protocol rules created successfully');
+                    console.log('OPC UA rules:', opcuaRules);
+                } else {
+                    addResult('error', 'Form Validators', 'Failed to create protocol rules');
+                }
+                
+                // Test form validation
+                const formData = {
+                    endpoint: 'opc.tcp://localhost:4840',
+                    securityPolicy: 'None',
+                    securityMode: 'None'
+                };
+                
+                const validationResult = formValidators.validateForm(formData, opcuaRules);
+                
+                if (validationResult.valid) {
+                    addResult('success', 'Form Validation', 'Form validation passed');
+                } else {
+                    addResult('error', 'Form Validation', `Validation failed: ${validationResult.errors.join(', ')}`);
+                }
+                
+                console.log('Form validation result:', validationResult);
+                
+            } catch (error) {
+                addResult('error', 'Form Validators Test', error.message);
+                console.error('Form validators test error:', error);
+            }
+        };
+        
+        // Run initial test
+        console.log('Starting validation fix test...');
+        addResult('info', 'Test Started', 'Running validation module tests...');
+        
+        // Auto-run basic import test
+        testModuleImport().then(() => {
+            addResult('info', 'Ready', 'All tests ready. Click buttons above to run specific tests.');
+        });
+        
+        // Test service worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    addResult('success', 'Service Worker', 'Service Worker registered successfully');
+                    console.log('SW registered:', registration);
+                })
+                .catch(error => {
+                    addResult('error', 'Service Worker', `Registration failed: ${error.message}`);
+                    console.error('SW registration failed:', error);
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Fixed Test - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <style>
+        /* Additional test styles */
+        .test-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .test-section {
+            margin-bottom: var(--space-4);
+        }
+
+        .test-section h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .test-section p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin: var(--space-4) 0;
+        }
+
+        .test-card {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-4);
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .scroll-test {
+            height: 300px;
+            background: linear-gradient(45deg, var(--color-primary), var(--color-success));
+            border-radius: var(--border-radius);
+            margin: var(--space-4) 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: var(--space-4) 0;
+        }
+
+        .feature-list li {
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            color: var(--color-success);
+            font-weight: bold;
+        }
+
+        .status-demo {
+            display: flex;
+            gap: var(--space-3);
+            flex-wrap: wrap;
+            margin: var(--space-4) 0;
+        }
+
+        .demo-status {
+            padding: var(--space-2) var(--space-3);
+            border-radius: 9999px;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .demo-status.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+        }
+
+        .demo-status.warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--color-warning);
+        }
+
+        .demo-status.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--color-error);
+        }
+
+        .demo-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState } from 'https://esm.sh/preact/hooks';
+        import LayoutFixed from './components/LayoutFixed.js';
+
+        // Mock navigation function
+        const mockNavigate = (path) => {
+            console.log('Navigating to:', path);
+            // In a real app, this would update the route
+        };
+
+        // Test App Component
+        const TestApp = () => {
+            const [currentPath, setCurrentPath] = useState('/');
+
+            const navigateTo = (path) => {
+                setCurrentPath(path);
+                mockNavigate(path);
+            };
+
+            return html`
+                <${LayoutFixed} 
+                    currentPath=${currentPath} 
+                    navigateTo=${navigateTo}
+                >
+                    <!-- Test Content -->
+                    <div class="test-content">
+                        <div class="test-section">
+                            <h3>🎯 Layout Fixed - Header布局修复测试</h3>
+                            <p>这个页面测试修复后的Layout组件，重点验证header布局的各项改进。</p>
+                        </div>
+
+                        <div class="test-section">
+                            <h3>✨ 主要修复内容</h3>
+                            <ul class="feature-list">
+                                <li><span class="feature-icon">✓</span> 修复了桌面端content-header的sticky定位问题</li>
+                                <li><span class="feature-icon">✓</span> 优化了header actions的布局和对齐</li>
+                                <li><span class="feature-icon">✓</span> 改进了breadcrumbs的显示和响应式行为</li>
+                                <li><span class="feature-icon">✓</span> 修复了sidebar折叠时header的适配问题</li>
+                                <li><span class="feature-icon">✓</span> 增强了移动端header的布局稳定性</li>
+                                <li><span class="feature-icon">✓</span> 添加了backdrop-filter效果提升视觉体验</li>
+                                <li><span class="feature-icon">✓</span> 优化了auto-refresh控件的响应式显示</li>
+                            </ul>
+                        </div>
+
+                        <div class="test-section">
+                            <h3>🧪 测试功能</h3>
+                            <p>请测试以下功能来验证修复效果：</p>
+                            <div class="test-grid">
+                                <div class="test-card">
+                                    <h4>侧边栏折叠</h4>
+                                    <p>点击侧边栏的折叠按钮或使用Ctrl+B快捷键</p>
+                                </div>
+                                <div class="test-card">
+                                    <h4>响应式布局</h4>
+                                    <p>调整浏览器窗口大小测试不同断点</p>
+                                </div>
+                                <div class="test-card">
+                                    <h4>移动端菜单</h4>
+                                    <p>在移动端测试hamburger菜单和overlay</p>
+                                </div>
+                                <div class="test-card">
+                                    <h4>Sticky Header</h4>
+                                    <p>滚动页面测试header的粘性定位</p>
+                                </div>
+                                <div class="test-card">
+                                    <h4>主题切换</h4>
+                                    <p>测试深色/浅色主题切换功能</p>
+                                </div>
+                                <div class="test-card">
+                                    <h4>自动刷新</h4>
+                                    <p>测试自动刷新控件的交互</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h3>📊 状态演示</h3>
+                            <p>以下是各种状态指示器的演示：</p>
+                            <div class="status-demo">
+                                <div class="demo-status success">连接正常</div>
+                                <div class="demo-status warning">连接中断</div>
+                                <div class="demo-status error">连接错误</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scroll Test Content -->
+                    <div class="test-content">
+                        <h3>📜 滚动测试区域</h3>
+                        <p>以下内容用于测试header的sticky效果，当你滚动页面时，header应该始终保持在顶部可见。</p>
+                        
+                        <div class="scroll-test">
+                            滚动测试区域 1
+                        </div>
+                        
+                        <div class="test-section">
+                            <h3>🔧 技术特性</h3>
+                            <ul class="feature-list">
+                                <li><span class="feature-icon">✓</span> 使用Flexbox布局确保header高度一致</li>
+                                <li><span class="feature-icon">✓</span> Sticky定位配合z-index层级管理</li>
+                                <li><span class="feature-icon">✓</span> CSS Grid用于header内部元素对齐</li>
+                                <li><span class="feature-icon">✓</span> 响应式断点处理不同屏幕尺寸</li>
+                                <li><span class="feature-icon">✓</span> 平滑过渡动画提升用户体验</li>
+                                <li><span class="feature-icon">✓</span> 无障碍访问支持键盘导航</li>
+                            </ul>
+                        </div>
+
+                        <div class="scroll-test" style="background: linear-gradient(135deg, var(--color-warning), var(--color-error));">
+                            滚动测试区域 2
+                        </div>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>🎨 视觉改进</h3>
+                        <p>新的header布局包含以下视觉改进：</p>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">✓</span> 毛玻璃效果 (backdrop-filter) 增强层次感</li>
+                            <li><span class="feature-icon">✓</span> 微妙的阴影效果提升深度感知</li>
+                            <li><span class="feature-icon">✓</span> 一致的间距和对齐规范</li>
+                            <li><span class="feature-icon">✓</span> 优化的颜色对比度确保可读性</li>
+                            <li><span class="feature-icon">✓</span> 流畅的hover和focus状态反馈</li>
+                        </ul>
+
+                        <div class="scroll-test" style="background: linear-gradient(225deg, var(--color-info), var(--color-primary));">
+                            滚动测试区域 3
+                        </div>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>📱 移动端优化</h3>
+                        <p>移动端header经过特别优化：</p>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">✓</span> 固定高度60px确保触摸友好</li>
+                            <li><span class="feature-icon">✓</span> 最小触摸目标44px符合无障碍标准</li>
+                            <li><span class="feature-icon">✓</span> 简化的breadcrumbs适应小屏幕</li>
+                            <li><span class="feature-icon">✓</span> 自动隐藏非关键控件节省空间</li>
+                            <li><span class="feature-icon">✓</span> 优化的hamburger菜单动画</li>
+                        </ul>
+
+                        <div class="scroll-test" style="background: linear-gradient(315deg, var(--color-success), var(--color-info));">
+                            最后的滚动测试区域
+                        </div>
+                    </div>
+
+                    <div class="test-content">
+                        <h3>🎯 测试完成</h3>
+                        <p>如果你能看到这个区域，说明滚动功能正常。请确保：</p>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">✓</span> Header在滚动时保持在顶部</li>
+                            <li><span class="feature-icon">✓</span> 侧边栏折叠时header正确适配</li>
+                            <li><span class="feature-icon">✓</span> 移动端header布局稳定</li>
+                            <li><span class="feature-icon">✓</span> 所有交互元素响应正常</li>
+                        </ul>
+                        <p style="margin-top: var(--space-4); padding: var(--space-4); background-color: var(--color-success); color: white; border-radius: var(--border-radius); text-align: center; font-weight: var(--font-weight-bold);">
+                            🎉 Header Layout Fix 测试完成！
+                        </p>
+                    </div>
+                </>
+            `;
+        };
+
+        // Render the app
+        render(html`<${TestApp} />`, document.getElementById('app'));
+
+        // Add some console logging for debugging
+        console.log('Layout Fixed Test loaded successfully!');
+        console.log('Testing features:');
+        console.log('- Fixed sticky header positioning');
+        console.log('- Improved header actions layout');
+        console.log('- Enhanced breadcrumbs display');
+        console.log('- Better mobile responsiveness');
+        console.log('- Sidebar collapse adaptation');
+    </script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Manager Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .info {
+            background-color: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+        }
+        pre {
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Offline Manager Fix Test</h1>
+    <p>Testing the offline-manager.js module after fixing the syntax error.</p>
+    
+    <div id="test-results"></div>
+    
+    <h2>Manual Tests</h2>
+    <button onclick="testOfflineManager()">Test Offline Manager</button>
+    <button onclick="testCacheManager()">Test Cache Manager</button>
+    <button onclick="testNetworkManager()">Test Network Manager</button>
+    
+    <h2>Console Output</h2>
+    <pre id="console-output"></pre>
+
+    <script type="module">
+        const resultsDiv = document.getElementById('test-results');
+        const consoleOutput = document.getElementById('console-output');
+        
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsole(type, ...args) {
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += `[${type.toUpperCase()}] ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            addToConsole('log', ...args);
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            addToConsole('error', ...args);
+        };
+        
+        console.warn = (...args) => {
+            originalWarn(...args);
+            addToConsole('warn', ...args);
+        };
+        
+        function addResult(type, title, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${title}</strong><br>${message}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        // Test offline manager import
+        async function testOfflineManagerImport() {
+            try {
+                console.log('Testing offline manager import...');
+                const { offlineManager } = await import('./services/offline-manager.js');
+                
+                addResult('success', 'Module Import', 'Successfully imported offline-manager module without errors');
+                console.log('Imported offline manager:', offlineManager);
+                
+                return offlineManager;
+            } catch (error) {
+                addResult('error', 'Module Import Failed', error.message);
+                console.error('Import error:', error);
+                return null;
+            }
+        }
+        
+        // Test offline manager functionality
+        window.testOfflineManager = async function() {
+            const offlineManager = await testOfflineManagerImport();
+            if (!offlineManager) return;
+            
+            try {
+                // Test basic functionality
+                console.log('Testing offline manager functionality...');
+                
+                // Test queue operation
+                offlineManager.queueOperation({
+                    type: 'api_call',
+                    url: '/api/v1/test',
+                    options: { method: 'GET' }
+                });
+                
+                addResult('success', 'Queue Operation', 'Successfully queued operation');
+                console.log('Queue length:', offlineManager.offlineQueue.length);
+                
+                // Test network status
+                const isOnline = offlineManager.isOnline;
+                addResult('info', 'Network Status', `Online: ${isOnline}`);
+                console.log('Network status:', isOnline);
+                
+            } catch (error) {
+                addResult('error', 'Offline Manager Test', error.message);
+                console.error('Offline manager test error:', error);
+            }
+        };
+        
+        // Test cache manager
+        window.testCacheManager = async function() {
+            try {
+                console.log('Testing cache manager...');
+                const { offlineManager } = await import('./services/offline-manager.js');
+                
+                if (offlineManager.cacheManager) {
+                    addResult('success', 'Cache Manager', 'Cache manager is available');
+                    console.log('Cache manager:', offlineManager.cacheManager);
+                } else {
+                    addResult('warning', 'Cache Manager', 'Cache manager not initialized');
+                }
+                
+            } catch (error) {
+                addResult('error', 'Cache Manager Test', error.message);
+                console.error('Cache manager test error:', error);
+            }
+        };
+        
+        // Test network manager
+        window.testNetworkManager = async function() {
+            try {
+                console.log('Testing network manager...');
+                const { offlineManager } = await import('./services/offline-manager.js');
+                
+                if (offlineManager.networkManager) {
+                    addResult('success', 'Network Manager', 'Network manager is available');
+                    console.log('Network manager:', offlineManager.networkManager);
+                    
+                    // Test optimized fetch
+                    try {
+                        const response = await offlineManager.networkManager.optimizedFetch('/api/v1/status');
+                        addResult('info', 'Network Test', 'Optimized fetch executed (may fail due to no backend)');
+                    } catch (fetchError) {
+                        addResult('info', 'Network Test', 'Optimized fetch failed as expected (no backend)');
+                    }
+                } else {
+                    addResult('warning', 'Network Manager', 'Network manager not initialized');
+                }
+                
+            } catch (error) {
+                addResult('error', 'Network Manager Test', error.message);
+                console.error('Network manager test error:', error);
+            }
+        };
+        
+        // Run initial test
+        console.log('Starting offline manager fix test...');
+        addResult('info', 'Test Started', 'Running offline manager module tests...');
+        
+        // Auto-run basic import test
+        testOfflineManagerImport().then((offlineManager) => {
+            if (offlineManager) {
+                addResult('info', 'Ready', 'All tests ready. Click buttons above to run specific tests.');
+            }
+        });
+        
+        // Test service worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    addResult('success', 'Service Worker', 'Service Worker registered successfully');
+                    console.log('SW registered:', registration);
+                })
+                .catch(error => {
+                    addResult('error', 'Service Worker', `Registration failed: ${error.message}`);
+                    console.error('SW registration failed:', error);
+                });
+        }
+    </script>
+</body>
+</html>

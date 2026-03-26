@@ -1,0 +1,34 @@
+{
+  "collector_id": "opcua-test-collector",
+  "name": "OPC UA测试采集器",
+  "description": "用于测试OPC UA数据采集的采集器",
+  "version": "1.0.0",
+  "location": "测试环境",
+  "environment": "development",
+  "secret_key": "test-secret-key-123",
+  "protocols": [
+    {
+      "protocol": "opcua",
+      "enabled": true,
+      "version": "1.04",
+      "capabilities": {
+        "max_connections": 10,
+        "supports_subscriptions": true,
+        "supports_security": false,
+        "max_nodes_per_subscription": 1000
+      }
+    }
+  ],
+  "tags": {
+    "department": "engineering",
+    "project": "prodb",
+    "environment": "test"
+  },
+  "capabilities": {
+    "max_data_points": 1000,
+    "buffer_size": "10MB",
+    "compression": true,
+    "encryption": false,
+    "batch_processing": true
+  }
+}

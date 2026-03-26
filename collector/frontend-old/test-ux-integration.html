@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UX Integration Test - ProDB Collector</title>
+    <link rel="stylesheet" href="./styles/main.css">
+    <link rel="stylesheet" href="./styles/ux-enhancements.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .integration-test {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+        
+        .test-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            background-color: var(--color-primary-hover);
+        }
+        
+        .demo-interface {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .interface-card {
+            padding: 20px;
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .guide-target {
+            padding: 15px;
+            background-color: var(--color-primary);
+            color: white;
+            border-radius: var(--border-radius);
+            margin: 10px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        
+        .help-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="integration-test">
+        <h1>UX Integration Test Suite</h1>
+        <p>This test verifies that all UX enhancement components work together seamlessly.</p>
+        
+        <div class="test-section">
+            <h2>Integrated User Experience Demo</h2>
+            <p>This simulates a real user workflow with integrated UX enhancements.</p>
+            
+            <div class="test-controls">
+                <button onclick="startWelcomeTour()">Start Welcome Tour</button>
+                <button onclick="simulateWorkflow()">Simulate User Workflow</button>
+                <button onclick="testErrorRecovery()">Test Error Recovery</button>
+                <button onclick="showIntegratedHelp()">Show Contextual Help</button>
+            </div>
+            
+            <div class="demo-interface">
+                <div class="interface-card" id="dashboard-demo">
+                    <h3>Dashboard Overview 
+                        <span class="help-trigger" id="dashboard-help"></span>
+                    </h3>
+                    <div class="status-grid" id="status-indicators">
+                        <!-- Status indicators will be rendered here -->
+                    </div>
+                    <button onclick="refreshDashboard()" id="refresh-btn">Refresh Data</button>
+                </div>
+                
+                <div class="interface-card" id="config-demo">
+                    <h3>Interface Configuration 
+                        <span class="help-trigger" id="config-help"></span>
+                    </h3>
+                    <div>
+                        <button onclick="addInterface()" id="add-interface-btn">Add Interface</button>
+                        <button onclick="testConnection()" id="test-connection-btn">Test Connection</button>
+                        <button onclick="saveConfig()" id="save-config-btn">Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h3>Interactive Guide Targets</h3>
+                <div class="guide-target" data-guide="step1">Dashboard Feature</div>
+                <div class="guide-target" data-guide="step2">Configuration Panel</div>
+                <div class="guide-target" data-guide="step3">Status Monitor</div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Keyboard Shortcuts Test</h2>
+            <p>Test keyboard navigation and shortcuts:</p>
+            <ul>
+                <li>Press <kbd>F1</kbd> to open help</li>
+                <li>Press <kbd>Escape</kbd> to close dialogs</li>
+                <li>Press <kbd>Ctrl+/</kbd> to show shortcuts</li>
+                <li>Press <kbd>Alt+D</kbd> for dashboard navigation</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>Accessibility Test</h2>
+            <p>Test accessibility features:</p>
+            <div class="test-controls">
+                <button onclick="testTabNavigation()">Test Tab Navigation</button>
+                <button onclick="testScreenReader()">Test Screen Reader</button>
+                <button onclick="testHighContrast()">Test High Contrast</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { html } from 'https://esm.sh/htm/preact';
+        import { render } from 'https://esm.sh/preact';
+        
+        // Import UX components
+        import { UXProvider, tourManager, smartNotifications } from './components/UXIntegration.js';
+        import { feedbackManager, StatusIndicator } from './components/FeedbackSystem.js';
+        import { ContextHelp } from './components/HelpSystem.js';
+        import UserGuide from './components/UserGuide.js';
+
+        // Initialize UX system
+        let isInitialized = false;
+
+        const initializeUX = () => {
+            if (isInitialized) return;
+            
+            // Render status indicators
+            const statusContainer = document.getElementById('status-indicators');
+            render(html`
+                <div>
+                    <${StatusIndicator} status="connected" label="OPC UA" animated=${true} />
+                    <${StatusIndicator} status="disconnected" label="Modbus" />
+                    <${StatusIndicator} status="warning" label="MQTT" />
+                    <${StatusIndicator} status="success" label="System" />
+                </div>
+            `, statusContainer);
+            
+            // Add contextual help
+            const dashboardHelp = document.getElementById('dashboard-help');
+            render(html`
+                <${ContextHelp}
+                    content="The dashboard provides real-time monitoring of all your data collection interfaces and system status."
+                    position="bottom"
+                    trigger="hover"
+                />
+            `, dashboardHelp);
+            
+            const configHelp = document.getElementById('config-help');
+            render(html`
+                <${ContextHelp}
+                    content="Configure your data collection interfaces here. You can add new connections, test them, and save configurations."
+                    position="bottom"
+                    trigger="hover"
+                />
+            `, configHelp);
+            
+            isInitialized = true;
+            smartNotifications.success('UX Integration Test initialized successfully!');
+        };
+
+        // Test functions
+        window.startWelcomeTour = () => {
+            const welcomeSteps = [
+                {
+                    target: '#dashboard-demo',
+                    title: 'Welcome to ProDB Collector',
+                    content: html`
+                        <div>
+                            <p>Welcome! Let's take a quick tour of the key features.</p>
+                            <p>This is your dashboard where you monitor system status and performance.</p>
+                        </div>
+                    `,
+                    position: 'bottom'
+                },
+                {
+                    target: '#config-demo',
+                    title: 'Configuration Panel',
+                    content: 'Here you can configure your data collection interfaces and test connections.',
+                    position: 'top'
+                },
+                {
+                    target: '[data-guide="step1"]',
+                    title: 'Interactive Elements',
+                    content: 'These elements provide quick access to important features and actions.',
+                    position: 'right'
+                }
+            ];
+            
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            render(html`
+                <${UserGuide}
+                    steps=${welcomeSteps}
+                    autoStart=${true}
+                    onComplete=${() => {
+                        document.body.removeChild(container);
+                        smartNotifications.success('Welcome tour completed! You\'re ready to start using the collector.');
+                    }}
+                    onSkip=${() => {
+                        document.body.removeChild(container);
+                        smartNotifications.info('Tour skipped. Press F1 anytime for help.');
+                    }}
+                />
+            `, container);
+        };
+
+        window.simulateWorkflow = async () => {
+            smartNotifications.info('Starting simulated user workflow...');
+            
+            // Step 1: Check system status
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            smartNotifications.info('Checking system status...');
+            
+            // Step 2: Add interface
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const loadingId = feedbackManager.loading('Adding new interface...');
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            feedbackManager.removeToast(loadingId);
+            smartNotifications.success('Interface added successfully');
+            
+            // Step 3: Test connection
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            smartNotifications.warning('Testing connection... This may take a moment');
+            
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            smartNotifications.success('Connection test passed! Interface is ready for data collection.');
+            
+            // Step 4: Save configuration
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            smartNotifications.success('Configuration saved. Workflow completed successfully!');
+        };
+
+        window.testErrorRecovery = () => {
+            // Simulate network error
+            smartNotifications.error('Connection to server lost', {
+                actions: [{
+                    label: 'Retry',
+                    onClick: () => {
+                        smartNotifications.info('Retrying connection...');
+                        setTimeout(() => {
+                            smartNotifications.success('Connection restored successfully');
+                        }, 2000);
+                    }
+                }, {
+                    label: 'Offline Mode',
+                    onClick: () => {
+                        smartNotifications.warning('Switched to offline mode. Some features may be limited.');
+                    }
+                }]
+            });
+        };
+
+        window.showIntegratedHelp = () => {
+            // This would normally open the help panel
+            smartNotifications.info('Contextual help is available throughout the interface. Hover over the ? icons to see help tooltips.');
+        };
+
+        // Individual action functions
+        window.refreshDashboard = () => {
+            const loadingId = feedbackManager.loading('Refreshing dashboard data...');
+            setTimeout(() => {
+                feedbackManager.removeToast(loadingId);
+                smartNotifications.success('Dashboard refreshed');
+                
+                // Update status indicators to show new data
+                const statusContainer = document.getElementById('status-indicators');
+                render(html`
+                    <div>
+                        <${StatusIndicator} status="connected" label="OPC UA" animated=${true} />
+                        <${StatusIndicator} status="connected" label="Modbus" />
+                        <${StatusIndicator} status="connected" label="MQTT" />
+                        <${StatusIndicator} status="success" label="System" />
+                    </div>
+                `, statusContainer);
+            }, 1500);
+        };
+
+        window.addInterface = () => {
+            smartNotifications.info('Opening interface configuration wizard...', {
+                actions: [{
+                    label: 'Start Wizard',
+                    onClick: () => {
+                        smartNotifications.success('Interface wizard started');
+                    }
+                }]
+            });
+        };
+
+        window.testConnection = () => {
+            const loadingId = feedbackManager.loading('Testing connection...');
+            setTimeout(() => {
+                feedbackManager.removeToast(loadingId);
+                const success = Math.random() > 0.3; // 70% success rate
+                
+                if (success) {
+                    smartNotifications.success('Connection test successful');
+                } else {
+                    smartNotifications.error('Connection test failed', {
+                        actions: [{
+                            label: 'Retry',
+                            onClick: () => window.testConnection()
+                        }, {
+                            label: 'Check Settings',
+                            onClick: () => smartNotifications.info('Opening connection settings...')
+                        }]
+                    });
+                }
+            }, 2000);
+        };
+
+        window.saveConfig = () => {
+            const loadingId = feedbackManager.loading('Saving configuration...');
+            setTimeout(() => {
+                feedbackManager.removeToast(loadingId);
+                smartNotifications.success('Configuration saved successfully');
+            }, 1000);
+        };
+
+        // Accessibility test functions
+        window.testTabNavigation = () => {
+            smartNotifications.info('Tab navigation test: Use Tab key to navigate through interactive elements');
+        };
+
+        window.testScreenReader = () => {
+            smartNotifications.info('Screen reader test: All elements have proper ARIA labels and descriptions');
+        };
+
+        window.testHighContrast = () => {
+            document.body.classList.toggle('high-contrast');
+            smartNotifications.info('High contrast mode toggled');
+        };
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F1') {
+                e.preventDefault();
+                smartNotifications.info('Help system would open here (F1 pressed)');
+            } else if (e.key === 'Escape') {
+                feedbackManager.clearAllToasts();
+                smartNotifications.info('Dialogs closed (Escape pressed)');
+            } else if (e.ctrlKey && e.key === '/') {
+                e.preventDefault();
+                smartNotifications.info('Keyboard shortcuts help would open here (Ctrl+/ pressed)');
+            } else if (e.altKey && e.key === 'd') {
+                e.preventDefault();
+                smartNotifications.info('Would navigate to Dashboard (Alt+D pressed)');
+            }
+        });
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeUX, 500);
+        });
+
+        // Error handling
+        window.addEventListener('error', (event) => {
+            console.error('Integration test error:', event.error);
+            smartNotifications.error('An error occurred in the integration test');
+        });
+
+    </script>
+</body>
+</html>

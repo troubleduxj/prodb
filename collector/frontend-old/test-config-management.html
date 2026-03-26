@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置模板和备份系统测试 - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/themes.css">
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState } from 'https://esm.sh/preact/hooks';
+        import ConfigPage from './pages/ConfigPage.js';
+
+        const TestApp = () => {
+            return html`
+                <div class="app">
+                    <${ConfigPage} />
+                </div>
+            `;
+        };
+
+        render(html`<${TestApp} />`, document.getElementById('app'));
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .app {
+            min-height: 100vh;
+            padding: var(--space-4);
+        }
+
+        /* Test-specific styles */
+        .test-info {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .test-info h2 {
+            margin-bottom: var(--space-2);
+            color: var(--color-primary);
+        }
+
+        .test-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-3);
+            margin-top: var(--space-3);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2);
+            background-color: var(--bg-card);
+            border-radius: var(--border-radius);
+        }
+
+        .feature-icon {
+            font-size: 1.2em;
+        }
+
+        .feature-text {
+            font-size: var(--font-size-sm);
+        }
+    </style>
+
+    <!-- Test Information Panel -->
+    <div class="test-info" style="position: fixed; top: 20px; right: 20px; width: 300px; z-index: 1000;">
+        <h2>🧪 配置管理测试</h2>
+        <p>测试配置模板和备份系统的功能</p>
+        
+        <div class="test-features">
+            <div class="feature-item">
+                <span class="feature-icon">📋</span>
+                <span class="feature-text">配置模板管理</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">💾</span>
+                <span class="feature-text">自动备份系统</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📜</span>
+                <span class="feature-text">变更历史记录</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📁</span>
+                <span class="feature-text">多格式导入导出</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🔄</span>
+                <span class="feature-text">一键回滚功能</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🎯</span>
+                <span class="feature-text">影响范围分析</span>
+            </div>
+        </div>
+
+        <div style="margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border-color);">
+            <h3 style="margin-bottom: var(--space-2);">测试步骤:</h3>
+            <ol style="font-size: var(--font-size-sm); line-height: 1.6;">
+                <li>点击"模板"按钮测试模板管理</li>
+                <li>点击"备份"按钮测试备份功能</li>
+                <li>点击"历史"按钮查看变更记录</li>
+                <li>点击"导入导出"测试文件操作</li>
+                <li>创建/编辑接口测试自动备份</li>
+                <li>验证配置验证和影响分析</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

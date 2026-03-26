@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Management Test - ProDB Collector</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/themes.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .test-section {
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        
+        .navigation-test {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .nav-button {
+            padding: 0.5rem 1rem;
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-button:hover {
+            background-color: var(--color-primary-hover);
+        }
+        
+        .nav-button.active {
+            background-color: var(--color-success);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Driver Management Test</h1>
+            <p>Testing the driver management functionality for ProDB Collector</p>
+        </div>
+
+        <div class="navigation-test">
+            <a href="index.html" class="nav-button">Dashboard</a>
+            <a href="test-protocol-testers.html" class="nav-button">Protocol Testing</a>
+            <a href="test-batch-operations.html" class="nav-button">Batch Operations</a>
+            <a href="test-config-management.html" class="nav-button">Config Management</a>
+            <a href="test-security-validation.html" class="nav-button">Security</a>
+            <a href="test-driver-management.html" class="nav-button active">Driver Management</a>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 Driver Management Page Test</h2>
+            <p>Click the button below to navigate to the driver management page:</p>
+            <button id="testDriversPage" class="btn btn-primary">
+                📦 Open Driver Management
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Driver Statistics Display</h2>
+            <div id="driverStatsTest"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Driver Scanner Test</h2>
+            <div id="driverScannerTest"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📦 Driver Card Test</h2>
+            <div id="driverCardTest"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>⚙️ Driver Service Test</h2>
+            <div id="driverServiceTest"></div>
+            <button id="testDriverService" class="btn btn-secondary">
+                Test Driver Service
+            </button>
+        </div>
+    </div>
+
+    <!-- App Container for Testing -->
+    <div id="app" style="display: none;"></div>
+
+    <script type="module">
+        import { render, h } from 'https://esm.sh/preact?no-require';
+        import htm from 'https://esm.sh/htm?no-require';
+        import { useState, useEffect } from 'https://esm.sh/preact/hooks';
+        
+        // Import components
+        import DriverCard from './components/DriverCard.js';
+        import DriverScanner from './components/DriverScanner.js';
+        import { driverService } from './services/drivers.js';
+        
+        const html = htm.bind(h);
+
+        // Test navigation to drivers page
+        document.getElementById('testDriversPage').addEventListener('click', () => {
+            window.location.href = 'index.html#/drivers';
+        });
+
+        // Test driver statistics
+        const DriversStatsTest = () => {
+            const [stats, setStats] = useState(null);
+
+            useEffect(() => {
+                // Initialize driver service and get stats
+                driverService.initialize().then(() => {
+                    const driverStats = driverService.getDriverStats();
+                    setStats(driverStats);
+                }).catch(error => {
+                    console.error('Failed to initialize driver service:', error);
+                    setStats({ error: error.message });
+                });
+            }, []);
+
+            if (!stats) {
+                return html`<div class="loading">Loading driver statistics...</div>`;
+            }
+
+            if (stats.error) {
+                return html`<div class="error">Error: ${stats.error}</div>`;
+            }
+
+            return html`
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.loaded || 0}</div>
+                        <div class="stat-label">已加载驱动</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.available || 0}</div>
+                        <div class="stat-label">可用驱动</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.total || 0}</div>
+                        <div class="stat-label">总计驱动</div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // Test driver scanner
+        const DriverScannerTest = () => {
+            const [scanResults, setScanResults] = useState([]);
+
+            const handleScanComplete = (results) => {
+                setScanResults(results);
+                console.log('Scan completed:', results);
+            };
+
+            return html`
+                <div>
+                    <${DriverScanner} 
+                        onScanComplete=${handleScanComplete}
+                        autoScan=${false}
+                    />
+                    ${scanResults.length > 0 && html`
+                        <div style="margin-top: 1rem;">
+                            <h4>Scan Results (${scanResults.length}):</h4>
+                            <pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--border-radius); overflow-x: auto;">
+                                ${JSON.stringify(scanResults, null, 2)}
+                            </pre>
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+
+        // Test driver card
+        const DriverCardTest = () => {
+            const mockDriver = {
+                id: 'test-opcua-driver',
+                name: 'OPC UA Test Driver',
+                version: '1.2.3',
+                protocol: 'OPC_UA',
+                description: 'Test OPC UA protocol driver for demonstration',
+                author: 'ProDB Team',
+                lastUpdated: new Date().toISOString(),
+                supportedFeatures: ['read', 'write', 'subscribe', 'browse'],
+                configSchema: {
+                    properties: {
+                        endpoint: { type: 'string', description: 'OPC UA server endpoint' },
+                        securityPolicy: { type: 'string', description: 'Security policy' },
+                        username: { type: 'string', description: 'Username for authentication' }
+                    }
+                },
+                filePath: '/drivers/opcua-driver.js',
+                fileSize: 45678
+            };
+
+            const handleToggle = () => {
+                console.log('Toggle driver:', mockDriver.id);
+                alert('Driver toggle action triggered');
+            };
+
+            const handleConfigure = () => {
+                console.log('Configure driver:', mockDriver.id);
+                alert('Driver configuration action triggered');
+            };
+
+            return html`
+                <div style="max-width: 400px;">
+                    <${DriverCard}
+                        driver=${mockDriver}
+                        isLoaded=${true}
+                        isOperating=${false}
+                        onToggle=${handleToggle}
+                        onConfigure=${handleConfigure}
+                        showExtendedInfo=${true}
+                    />
+                </div>
+            `;
+        };
+
+        // Test driver service
+        document.getElementById('testDriverService').addEventListener('click', async () => {
+            const testResults = document.getElementById('driverServiceTest');
+            testResults.innerHTML = '<div class="loading">Testing driver service...</div>';
+
+            try {
+                // Test driver service methods
+                await driverService.initialize();
+                
+                const loadedDrivers = driverService.getLoadedDrivers();
+                const availableDrivers = driverService.getAvailableDrivers();
+                const stats = driverService.getDriverStats();
+
+                const results = {
+                    initialized: true,
+                    loadedDrivers: loadedDrivers.length,
+                    availableDrivers: availableDrivers.length,
+                    stats,
+                    timestamp: new Date().toISOString()
+                };
+
+                testResults.innerHTML = `
+                    <h4>Driver Service Test Results:</h4>
+                    <pre style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--border-radius); overflow-x: auto;">${JSON.stringify(results, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                testResults.innerHTML = `
+                    <div class="error">
+                        <h4>Driver Service Test Failed:</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+
+        // Render test components
+        render(html`<${DriversStatsTest} />`, document.getElementById('driverStatsTest'));
+        render(html`<${DriverScannerTest} />`, document.getElementById('driverScannerTest'));
+        render(html`<${DriverCardTest} />`, document.getElementById('driverCardTest'));
+
+        console.log('Driver management test page loaded successfully');
+    </script>
+</body>
+</html>

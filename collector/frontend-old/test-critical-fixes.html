@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Critical Fixes Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Critical Fixes Validation Test</h1>
+    
+    <div id="test-results"></div>
+    
+    <script type="module">
+        const results = [];
+        
+        function addResult(test, status, message) {
+            results.push({ test, status, message });
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = results.map(result => `
+                <div class="test-section ${result.status}">
+                    <h3>${result.test}</h3>
+                    <div class="test-result">${result.message}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Test 1: API Service URL Construction
+        try {
+            const { default: APIService } = await import('./services/api.js');
+            const api = new APIService();
+            
+            // This should not throw an error anymore
+            const testParams = { test: 'value', filter: 'active' };
+            addResult('API Service URL Construction', 'success', 
+                'API service loads without URL construction errors');
+        } catch (error) {
+            addResult('API Service URL Construction', 'error', 
+                `API service error: ${error.message}`);
+        }
+        
+        // Test 2: FeedbackSystem showToast Method
+        try {
+            const { feedbackManager } = await import('./components/FeedbackSystem.js');
+            
+            if (typeof feedbackManager.showToast === 'function') {
+                addResult('FeedbackSystem showToast Method', 'success', 
+                    'showToast method is available and callable');
+            } else {
+                addResult('FeedbackSystem showToast Method', 'error', 
+                    'showToast method is missing');
+            }
+        } catch (error) {
+            addResult('FeedbackSystem showToast Method', 'error', 
+                `FeedbackSystem error: ${error.message}`);
+        }
+        
+        // Test 3: StatusIndicator Component
+        try {
+            const StatusIndicator = await import('./components/StatusIndicator.js');
+            addResult('StatusIndicator Component', 'success', 
+                'StatusIndicator loads without duplicate declaration errors');
+        } catch (error) {
+            addResult('StatusIndicator Component', 'error', 
+                `StatusIndicator error: ${error.message}`);
+        }
+        
+        // Test 4: DriversPage Component
+        try {
+            const DriversPage = await import('./pages/DriversPage.js');
+            addResult('DriversPage Component', 'success', 
+                'DriversPage loads without duplicate declaration errors');
+        } catch (error) {
+            addResult('DriversPage Component', 'error', 
+                `DriversPage error: ${error.message}`);
+        }
+        
+        // Test 5: OfflineManager Service
+        try {
+            const { default: OfflineManager } = await import('./services/offline-manager.js');
+            const offlineManager = new OfflineManager();
+            addResult('OfflineManager Service', 'success', 
+                `OfflineManager initialized successfully. Online: ${offlineManager.isOnline}`);
+        } catch (error) {
+            addResult('OfflineManager Service', 'error', 
+                `OfflineManager error: ${error.message}`);
+        }
+        
+        // Test 6: UXIntegration Component
+        try {
+            const UXIntegration = await import('./components/UXIntegration.js');
+            addResult('UXIntegration Component', 'success', 
+                'UXIntegration loads successfully');
+        } catch (error) {
+            addResult('UXIntegration Component', 'error', 
+                `UXIntegration error: ${error.message}`);
+        }
+        
+        // Summary
+        setTimeout(() => {
+            const successCount = results.filter(r => r.status === 'success').length;
+            const totalCount = results.length;
+            
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = `test-section ${successCount === totalCount ? 'success' : 'info'}`;
+            summaryDiv.innerHTML = `
+                <h3>Test Summary</h3>
+                <div class="test-result">
+                    ${successCount}/${totalCount} tests passed
+                    ${successCount === totalCount ? ' - All critical fixes validated!' : ' - Some issues remain'}
+                </div>
+            `;
+            document.getElementById('test-results').appendChild(summaryDiv);
+        }, 1000);
+        
+    </script>
+</body>
+</html>

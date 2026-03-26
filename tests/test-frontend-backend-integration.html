@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前后端集成测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #cce7ff; color: #004085; border: 1px solid #b3d7ff; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 前后端集成测试</h1>
+    <div class="info">
+        <strong>目标:</strong> 验证前端能否正确调用后端API并获取表数据
+    </div>
+    
+    <div class="step">
+        <h3>步骤1: 测试后端API</h3>
+        <button onclick="testBackendAPI()">测试后端API</button>
+        <div id="backend-status"></div>
+        <div id="backend-result"></div>
+    </div>
+    
+    <div class="step">
+        <h3>步骤2: 模拟前端API调用</h3>
+        <button onclick="testFrontendAPI()">模拟前端调用</button>
+        <div id="frontend-status"></div>
+        <div id="frontend-result"></div>
+    </div>
+    
+    <div class="step">
+        <h3>步骤3: 测试数据转换</h3>
+        <button onclick="testDataConversion()">测试数据转换</button>
+        <div id="conversion-status"></div>
+        <div id="conversion-result"></div>
+    </div>
+    
+    <div class="step">
+        <h3>步骤4: 完整流程测试</h3>
+        <button onclick="testFullFlow()">完整流程测试</button>
+        <div id="full-status"></div>
+        <div id="full-result"></div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        
+        function showStatus(elementId, message, type = 'info') {
+            const statusDiv = document.getElementById(elementId);
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function showResult(elementId, content) {
+            const resultDiv = document.getElementById(elementId);
+            if (typeof content === 'object') {
+                resultDiv.innerHTML = `<div class="result">${JSON.stringify(content, null, 2)}</div>`;
+            } else {
+                resultDiv.innerHTML = content;
+            }
+        }
+        
+        async function testBackendAPI() {
+            showStatus('backend-status', '测试后端API...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/tables?database=test`);
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('backend-status', '✅ 后端API正常工作', 'success');
+                    showResult('backend-result', data);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus('backend-status', `❌ 后端API失败: ${error.message}`, 'error');
+                showResult('backend-result', { error: error.message });
+                return null;
+            }
+        }
+        
+        async function testFrontendAPI() {
+            showStatus('frontend-status', '模拟前端API调用...', 'info');
+            try {
+                // 模拟前端的API调用方式
+                const params = { database: 'test' };
+                const queryString = new URLSearchParams(params).toString();
+                const response = await fetch(`${API_BASE}/database/tables?${queryString}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('frontend-status', '✅ 前端API调用成功', 'success');
+                    showResult('frontend-result', data);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus('frontend-status', `❌ 前端API调用失败: ${error.message}`, 'error');
+                showResult('frontend-result', { error: error.message });
+                return null;
+            }
+        }
+        
+        async function testDataConversion() {
+            showStatus('conversion-status', '测试数据转换...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/database/tables?database=test`);
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.data && data.data.tables) {
+                    const apiTables = data.data.tables;
+                    
+                    // 模拟前端的数据转换逻辑
+                    const convertedTables = apiTables.map((table) => ({
+                        name: table.name,
+                        type: table.type === 'SUPER_TABLE' ? 'super_table' : 
+                              table.type === 'CHILD_TABLE' ? 'child_table' : 'normal_table',
+                        created_time: table.created_time,
+                        columns: table.columns,
+                        rows: table.rows,
+                        size: table.size,
+                        super_table: table.super_table,
+                        tags: table.tags,
+                    }));
+                    
+                    showStatus('conversion-status', '✅ 数据转换成功', 'success');
+                    showResult('conversion-result', {
+                        original: apiTables,
+                        converted: convertedTables
+                    });
+                    return convertedTables;
+                } else {
+                    throw new Error('API响应格式不正确');
+                }
+            } catch (error) {
+                showStatus('conversion-status', `❌ 数据转换失败: ${error.message}`, 'error');
+                showResult('conversion-result', { error: error.message });
+                return null;
+            }
+        }
+        
+        async function testFullFlow() {
+            showStatus('full-status', '开始完整流程测试...', 'info');
+            
+            // 1. 测试后端API
+            const backendData = await testBackendAPI();
+            if (!backendData) {
+                showStatus('full-status', '❌ 完整流程失败: 后端API不可用', 'error');
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // 2. 测试前端API调用
+            const frontendData = await testFrontendAPI();
+            if (!frontendData) {
+                showStatus('full-status', '❌ 完整流程失败: 前端API调用失败', 'error');
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // 3. 测试数据转换
+            const convertedData = await testDataConversion();
+            if (!convertedData) {
+                showStatus('full-status', '❌ 完整流程失败: 数据转换失败', 'error');
+                return;
+            }
+            
+            showStatus('full-status', '🎉 完整流程测试成功！', 'success');
+            
+            const summary = `
+                <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                    <h4>✅ 测试总结</h4>
+                    <ul>
+                        <li>✅ 后端API正常工作</li>
+                        <li>✅ 前端可以成功调用API</li>
+                        <li>✅ 数据转换逻辑正确</li>
+                        <li>✅ 获取到 ${convertedData.length} 个表</li>
+                    </ul>
+                    <h4>📋 表列表:</h4>
+                    <ul>
+                        ${convertedData.map(table => `
+                            <li><strong>${table.name}</strong> (${table.type}) - ${table.rows} 行, ${table.size}</li>
+                        `).join('')}
+                    </ul>
+                    <h4>🔧 前端集成状态:</h4>
+                    <p>后端API和数据转换都正常工作。如果前端页面没有显示数据，可能的原因：</p>
+                    <ul>
+                        <li>前端开发服务器没有运行</li>
+                        <li>前端API基础URL配置不正确</li>
+                        <li>CORS问题</li>
+                        <li>前端组件状态管理问题</li>
+                    </ul>
+                </div>
+            `;
+            showResult('full-result', summary);
+        }
+        
+        // 页面加载时自动运行测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testBackendAPI();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

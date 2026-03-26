@@ -1,0 +1,60 @@
+{
+  "name": "Standard OPC-UA Template",
+  "description": "Standard template for OPC-UA data collection from industrial servers",
+  "protocol": "opcua",
+  "template_config": {
+    "server_url": "{{server_url}}",
+    "security_mode": "{{security_mode}}",
+    "security_policy": "{{security_policy}}",
+    "authentication": {
+      "type": "{{auth_type}}",
+      "username": "{{username}}",
+      "password": "{{password}}"
+    },
+    "connection": {
+      "timeout": 30000,
+      "keep_alive_interval": 10000,
+      "max_reconnect_attempts": 5,
+      "reconnect_interval": 5000
+    },
+    "subscription": {
+      "publishing_interval": 1000,
+      "max_notifications": 0,
+      "priority": 0,
+      "lifetime_count": 1200,
+      "max_keep_alive_count": 3
+    },
+    "data_points": [
+      {
+        "node_id": "{{node_id}}",
+        "name": "{{point_name}}",
+        "sampling_interval": 1000,
+        "queue_size": 1,
+        "discard_oldest": true,
+        "data_change_trigger": "StatusValue",
+        "deadband_type": "Absolute",
+        "deadband_value": 0.1
+      }
+    ],
+    "target": {
+      "database": "industrial_data",
+      "super_table": "opcua_metrics",
+      "tags": {
+        "collector_id": "{{collector_id}}",
+        "server_uri": "{{server_url}}",
+        "namespace": "{{namespace}}",
+        "location": "{{location}}",
+        "device_type": "opcua_server",
+        "protocol": "opcua"
+      }
+    },
+    "certificate": {
+      "application_uri": "{{application_uri}}",
+      "application_name": "{{application_name}}",
+      "certificate_path": "{{certificate_path}}",
+      "private_key_path": "{{private_key_path}}"
+    }
+  },
+  "version": "1.0.0",
+  "tags": ["opcua", "industrial", "automation", "server"]
+}

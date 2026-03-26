@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Force Refresh Test - ProDB Collector</title>
+    <!-- Force cache refresh with timestamp -->
+    <link rel="stylesheet" href="styles/main.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="styles/components.css?v=<?php echo time(); ?>">
+    <style>
+        .cache-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(37, 99, 235, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+        }
+
+        .test-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin: var(--space-6);
+        }
+
+        .test-content h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .test-content p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-3);
+        }
+
+        .demo-area {
+            height: 200px;
+            background: linear-gradient(45deg, var(--color-primary), var(--color-success));
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            margin: var(--space-4) 0;
+        }
+
+        .debug-info {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--space-4);
+            margin: var(--space-4) 0;
+            font-family: monospace;
+            font-size: var(--font-size-sm);
+        }
+
+        .debug-info h4 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .debug-info pre {
+            color: var(--text-secondary);
+            margin: 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="cache-info">
+        Cache Buster: <span id="timestamp"></span><br>
+        Page Load: <span id="loadTime"></span>
+    </div>
+
+    <div id="app"></div>
+
+    <script>
+        // Display cache busting info
+        const timestamp = Date.now();
+        document.getElementById('timestamp').textContent = timestamp;
+        document.getElementById('loadTime').textContent = new Date().toLocaleTimeString();
+    </script>
+
+    <script type="module">
+        import { html, render } from 'https://esm.sh/htm/preact';
+        import { useState, useEffect } from 'https://esm.sh/preact/hooks';
+        
+        // Force cache refresh for Layout.js
+        const cacheBuster = Date.now();
+        const Layout = await import(`./components/Layout.js?v=${cacheBuster}`).then(m => m.default);
+
+        // Debug component to show current styles
+        const DebugInfo = () => {
+            const [debugData, setDebugData] = useState({});
+
+            useEffect(() => {
+                setTimeout(() => {
+                    const appHeader = document.querySelector('.app-header');
+                    const headerContainer = document.querySelector('.header-container');
+                    const headerControls = document.querySelectorAll('.header-control');
+                    
+                    const data = {
+                        appHeaderExists: !!appHeader,
+                        headerContainerExists: !!headerContainer,
+                        headerContainerHeight: headerContainer ? headerContainer.offsetHeight : 'N/A',
+                        controlCount: headerControls.length,
+                        controlHeights: Array.from(headerControls).map(el => el.offsetHeight),
+                        controlClasses: Array.from(headerControls).map(el => el.className),
+                        timestamp: cacheBuster
+                    };
+                    
+                    setDebugData(data);
+                }, 100);
+            }, []);
+
+            return html`
+                <div class="debug-info">
+                    <h4>Debug Information</h4>
+                    <pre>${JSON.stringify(debugData, null, 2)}</pre>
+                </div>
+            `;
+        };
+
+        // Test App Component
+        const TestApp = () => {
+            const [currentPath, setCurrentPath] = useState('/');
+
+            const navigateTo = (path) => {
+                setCurrentPath(path);
+                console.log('Navigating to:', path);
+            };
+
+            return html`
+                <${Layout} 
+                    currentPath=${currentPath} 
+                    navigateTo=${navigateTo}
+                >
+                    <div class="test-content">
+                        <h3>🔄 Force Refresh Test</h3>
+                        <p>这个页面强制刷新了所有缓存，确保使用最新的Layout.js文件。</p>
+                        
+                        <h4 style="color: var(--text-primary); margin-top: var(--space-4);">检查要点：</h4>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>Header应该使用.app-header类名</li>
+                            <li>Header容器高度应该是64px</li>
+                            <li>所有控件应该使用.header-control类</li>
+                            <li>控件高度应该统一为36px</li>
+                            <li>控件应该完美垂直居中对齐</li>
+                        </ul>
+
+                        <div class="demo-area">
+                            强制刷新测试区域 - Cache Buster: ${cacheBuster}
+                        </div>
+
+                        <${DebugInfo} />
+                    </div>
+
+                    <div class="test-content">
+                        <h3>🛠️ 故障排除</h3>
+                        <p>如果header仍然没有正确显示，可能的原因：</p>
+                        <ul style="color: var(--text-secondary); margin-left: 20px;">
+                            <li>浏览器强缓存 - 尝试无痕模式</li>
+                            <li>CSS优先级冲突 - 检查components.css</li>
+                            <li>JavaScript模块缓存 - 重启浏览器</li>
+                            <li>文件保存问题 - 确认Layout.js已保存</li>
+                        </ul>
+
+                        <div class="demo-area" style="background: linear-gradient(135deg, var(--color-warning), var(--color-error));">
+                            滚动测试区域 - 验证sticky效果
+                        </div>
+                    </div>
+                </>
+            `;
+        };
+
+        // Render the app
+        render(html`<${TestApp} />`, document.getElementById('app'));
+
+        console.log('Force Refresh Test loaded with cache buster:', cacheBuster);
+        console.log('Layout.js loaded from:', `./components/Layout.js?v=${cacheBuster}`);
+    </script>
+</body>
+</html>

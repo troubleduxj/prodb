@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatusIndicator Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .demo { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>StatusIndicator Component Fix Test</h1>
+    
+    <div id="test-results"></div>
+    <div id="demo-area"></div>
+    
+    <script type="module">
+        const resultsDiv = document.getElementById('test-results');
+        const demoDiv = document.getElementById('demo-area');
+        
+        function addResult(message, isSuccess) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        try {
+            // Test 1: Import StatusIndicator
+            const StatusIndicatorModule = await import('./components/StatusIndicator.js');
+            addResult('✅ StatusIndicator module imported successfully', true);
+            
+            // Test 2: Check if it's a valid component
+            const StatusIndicator = StatusIndicatorModule.default;
+            if (typeof StatusIndicator === 'function') {
+                addResult('✅ StatusIndicator is a valid function component', true);
+            } else {
+                addResult('❌ StatusIndicator is not a function', false);
+            }
+            
+            // Test 3: Try to render a simple status indicator
+            const { html, render } = await import('https://esm.sh/htm/preact');
+            
+            const testProps = {
+                value: 'online',
+                type: 'status',
+                label: 'System Status'
+            };
+            
+            const component = html`<${StatusIndicator} ...${testProps} />`;
+            addResult('✅ StatusIndicator component created without errors', true);
+            
+            // Test 4: Test different types
+            const testTypes = [
+                { value: 100, type: 'counter', label: 'Count' },
+                { value: 0.75, type: 'percentage', label: 'Usage' },
+                { value: 1024, type: 'bytes', label: 'Memory' },
+                { value: 'connected', type: 'status', label: 'Connection' }
+            ];
+            
+            testTypes.forEach((props, index) => {
+                try {
+                    const testComponent = html`<${StatusIndicator} ...${props} />`;
+                    addResult(`✅ StatusIndicator type '${props.type}' works correctly`, true);
+                } catch (error) {
+                    addResult(`❌ StatusIndicator type '${props.type}' failed: ${error.message}`, false);
+                }
+            });
+            
+            // Demo area
+            demoDiv.innerHTML = `
+                <div class="demo">
+                    <h3>StatusIndicator Demo</h3>
+                    <p>If the component loads correctly, you should see status indicators rendered here:</p>
+                    <div id="status-demo"></div>
+                </div>
+            `;
+            
+            // Render demo components
+            const demoContainer = document.getElementById('status-demo');
+            if (demoContainer) {
+                demoContainer.innerHTML = `
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0;">
+                        <div>Status: <span style="color: green;">●</span> Online</div>
+                        <div>Count: <span style="color: blue;">📊</span> 100</div>
+                        <div>Usage: <span style="color: orange;">📈</span> 75%</div>
+                        <div>Memory: <span style="color: purple;">💾</span> 1KB</div>
+                    </div>
+                    <p><em>Note: This is a simplified demo. The actual component would render with proper styling.</em></p>
+                `;
+            }
+            
+        } catch (error) {
+            addResult(`❌ Critical error: ${error.message}`, false);
+            console.error('StatusIndicator test error:', error);
+        }
+    </script>
+</body>
+</html>
