@@ -352,22 +352,25 @@ export const RealtimeLive: React.FC = () => {
 
   // 查询实时数据
   const fetchRealtimeData = useCallback(async () => {
-    if (!selectedDb || (!selectedSuperTable && !selectedSubTable)) return;
-    
-    const tableName = selectedSubTable || selectedSuperTable;
+    // 必须选择数据库和具体的子表才能查询
+    if (!selectedDb || !selectedSubTable) {
+      console.log('[RealtimeLive] No subtable selected, skipping query');
+      return;
+    }
     
     try {
       setDataLoading(true);
       setError(null);
       
-      // 构建查询SQL - 获取最近的数据点
-      const sql = `
-        SELECT * FROM ${selectedDb}.${tableName} 
-        ORDER BY ${timestampColumn} DESC 
-        LIMIT ${maxPoints}
-      `;
+      // 构建查询SQL - 查询子表获取最近的数据点
+      // 注意：TDengine中超级表不能直接查询，必须查询子表
+      const sql = `SELECT * FROM \`${selectedDb}\`.\`${selectedSubTable}\` ORDER BY \`${timestampColumn}\` DESC LIMIT ${maxPoints}`;
+      
+      console.log('[RealtimeLive] Executing SQL:', sql);
       
       const result = await api.tdengine.query(sql);
+      
+      console.log('[RealtimeLive] Query result:', result);
       
       if (result.success && result.data) {
         const queryData: QueryResult = result.data.data || result.data;
@@ -401,7 +404,7 @@ export const RealtimeLive: React.FC = () => {
     } finally {
       setDataLoading(false);
     }
-  }, [selectedDb, selectedSuperTable, selectedSubTable, timestampColumn]);
+  }, [selectedDb, selectedSubTable, timestampColumn]);
 
   // 初始化：加载数据库列表
   useEffect(() => {
@@ -692,10 +695,15 @@ export const RealtimeLive: React.FC = () => {
 
         {/* 图表区域 */}
         <div className={"flex-1 min-h-[350px] rounded-xl border p-4 relative overflow-hidden flex flex-col " + getBgClass()}>
-          {!selectedDb || !selectedSuperTable ? (
+          {!selectedDb ? (
             <div className={"flex-1 flex flex-col items-center justify-center " + getSubTextClass()}>
               <Database className="w-16 h-16 mb-4 opacity-20" />
-              <p>{t('realtime.selectDatabaseHint', 'Select a database and table to view real-time data.')}</p>
+              <p>{t('realtime.selectDatabaseHint', 'Select a database to view real-time data.')}</p>
+            </div>
+          ) : !selectedSubTable ? (
+            <div className={"flex-1 flex flex-col items-center justify-center " + getSubTextClass()}>
+              <Table className="w-16 h-16 mb-4 opacity-20" />
+              <p>{t('realtime.selectSubTableHint', 'Please select a sub-table to query data. Super tables cannot be queried directly.')}</p>
             </div>
           ) : dataPoints.length === 0 ? (
             <div className={"flex-1 flex flex-col items-center justify-center " + getSubTextClass()}>
