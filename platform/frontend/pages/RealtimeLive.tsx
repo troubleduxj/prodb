@@ -259,8 +259,8 @@ export const RealtimeLive: React.FC = () => {
     }
   }, []);
 
-  // 获取表结构 - 始终使用 DESCRIBE 查询，不依赖外部状态
-  const fetchTableSchema = useCallback(async (dbName: string, tableName: string, isSubTable: boolean = false) => {
+  // 获取表结构 - 不使用 useCallback 避免闭包问题
+  const fetchTableSchema = async (dbName: string, tableName: string, isSubTable: boolean = false) => {
     if (!dbName || !tableName) return;
     
     console.log('[RealtimeLive] fetchTableSchema called:', { dbName, tableName, isSubTable });
@@ -307,9 +307,13 @@ export const RealtimeLive: React.FC = () => {
               setTimestampColumn('ts');
             }
             
-            // 生成字段配置
+            // 生成字段配置（直接设置，不通过 generateFieldConfigs 避免闭包问题）
             console.log('[RealtimeLive] Generating field configs from subtable...');
-            generateFieldConfigs(parsedCols);
+            const configs = createFieldConfigs(parsedCols);
+            console.log('[RealtimeLive] Generated field configs:', configs);
+            setFieldConfigs(configs);
+            // 默认显示前4个字段
+            setVisibleFields(configs.slice(0, 4).map(f => f.key));
           } else {
             console.warn('[RealtimeLive] No columns returned from DESCRIBE');
           }
@@ -343,8 +347,12 @@ export const RealtimeLive: React.FC = () => {
               setTimestampColumn('ts');
             }
             
-            // 生成字段配置
-            generateFieldConfigs(cols);
+            // 生成字段配置（直接设置，避免闭包问题）
+            const configs2 = createFieldConfigs(cols);
+            console.log('[RealtimeLive] Generated field configs from super table:', configs2);
+            setFieldConfigs(configs2);
+            // 默认显示前4个字段
+            setVisibleFields(configs2.slice(0, 4).map(f => f.key));
           }
         } else {
           console.warn('[RealtimeLive] Failed to get super table schema:', result.error);
@@ -353,7 +361,7 @@ export const RealtimeLive: React.FC = () => {
     } catch (err) {
       console.error('[RealtimeLive] Failed to fetch schema:', err);
     }
-  }, []);
+  };
 
   // 生成字段配置
   // 从TableColumn生成字段配置（仅返回配置，不设置状态）
@@ -390,12 +398,12 @@ export const RealtimeLive: React.FC = () => {
   };
   
   // 生成字段配置并设置状态（用于表结构获取后）
-  const generateFieldConfigs = (cols: TableColumn[]) => {
+  const generateFieldConfigs = useCallback((cols: TableColumn[]) => {
     const configs = createFieldConfigs(cols);
     setFieldConfigs(configs);
     // 默认显示前4个字段
     setVisibleFields(configs.slice(0, 4).map(f => f.key));
-  };
+  }, []);
 
   // 查询实时数据
   const fetchRealtimeData = useCallback(async () => {
@@ -490,10 +498,62 @@ export const RealtimeLive: React.FC = () => {
 
   // 子表改变时查询表结构（使用 DESCRIBE）
   useEffect(() => {
-    if (selectedDb && selectedSubTable) {
-      fetchTableSchema(selectedDb, selectedSubTable, true);
-    }
-  }, [selectedSubTable, selectedDb, fetchTableSchema]);
+    const loadSchema = async () => {
+      if (!selectedDb || !selectedSubTable) return;
+      
+      console.log('[RealtimeLive] Loading schema for subtable:', selectedSubTable);
+      
+      try {
+        const describeSql = `DESCRIBE \`${selectedDb}\`.\`${selectedSubTable}\``;
+        console.log('[RealtimeLive] DESCRIBE SQL:', describeSql);
+        
+        const queryResult = await api.tdengine.query(describeSql);
+        console.log('[RealtimeLive] DESCRIBE result:', queryResult);
+        
+        if (queryResult.success && queryResult.data) {
+          const responseData = queryResult.data.data || queryResult.data;
+          const cols = responseData.rows || responseData.data || responseData;
+          
+          console.log('[RealtimeLive] DESCRIBE columns raw:', cols);
+          
+          if (cols && Array.isArray(cols) && cols.length > 0) {
+            const parsedCols: TableColumn[] = cols.map((col: any) => ({
+              name: col.name || col.Field || col[0],
+              type: col.type || col.Type || col[1],
+              length: col.length || col.Length || col[2] || 0,
+              note: col.note || col.Note || col[3] || ''
+            }));
+            
+            console.log('[RealtimeLive] Parsed columns:', parsedCols);
+            setColumns(parsedCols);
+            
+            // 找到时间戳列
+            const tsCol = parsedCols.find((c: TableColumn) =>
+              c && c.type && c.type.toLowerCase().includes('timestamp')
+            );
+            if (tsCol) {
+              console.log('[RealtimeLive] Found timestamp column:', tsCol.name);
+              setTimestampColumn(tsCol.name);
+            } else {
+              console.warn('[RealtimeLive] No timestamp column found, using "ts" as default');
+              setTimestampColumn('ts');
+            }
+            
+            // 生成字段配置
+            const configs = createFieldConfigs(parsedCols);
+            console.log('[RealtimeLive] Generated field configs:', configs);
+            setFieldConfigs(configs);
+            setVisibleFields(configs.slice(0, 4).map(f => f.key));
+          }
+        }
+      } catch (err) {
+        console.error('[RealtimeLive] Failed to load schema:', err);
+      }
+    };
+    
+    loadSchema();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSubTable, selectedDb]);
 
   // 当表结构加载完成后，立即查询一次数据
   useEffect(() => {
@@ -604,7 +664,11 @@ export const RealtimeLive: React.FC = () => {
               </label>
               <select
                 value={selectedSubTable}
-                onChange={(e) => setSelectedSubTable(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  console.log('[RealtimeLive] Subtable selected:', value);
+                  setSelectedSubTable(value);
+                }}
                 disabled={tableLoading}
                 className={"w-full border rounded text-sm p-2 outline-none " + (isDark ? "bg-gray-900 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-700")}
               >
