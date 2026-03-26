@@ -271,28 +271,43 @@ export const RealtimeLive: React.FC = () => {
   const fetchTableSchema = useCallback(async (dbName: string, tableName: string) => {
     if (!dbName || !tableName) return;
     
+    console.log('[RealtimeLive] fetchTableSchema called:', { dbName, tableName, selectedSubTable });
+    
     try {
       // 尝试获取超级表schema
       let result = await api.tdengine.getSuperTableSchema(dbName, tableName);
       
+      console.log('[RealtimeLive] SuperTable schema result:', result);
+      
       if (!result.success && selectedSubTable) {
+        console.log('[RealtimeLive] SuperTable query failed, trying DESCRIBE for subtable...');
         // 如果是子表，使用子表查询
-        const queryResult = await api.tdengine.query(`
-          DESCRIBE ${dbName}.${tableName}
-        `);
+        const describeSql = `DESCRIBE \`${dbName}\`.\`${tableName}\``;
+        console.log('[RealtimeLive] DESCRIBE SQL:', describeSql);
+        
+        const queryResult = await api.tdengine.query(describeSql);
+        
+        console.log('[RealtimeLive] DESCRIBE result:', queryResult);
         
         if (queryResult.success && queryResult.data) {
-          const cols = queryResult.data.data || [];
-          const parsedCols = cols.map((col: any) => ({
+          const responseData = queryResult.data.data || queryResult.data;
+          const cols = responseData.data || responseData;
+          
+          console.log('[RealtimeLive] DESCRIBE columns raw:', cols);
+          
+          const parsedCols: TableColumn[] = cols.map((col: any) => ({
             name: col[0] || col.name,
             type: col[1] || col.type,
-            length: col[2] || col.length,
-            note: col[3] || col.note
+            length: col[2] || col.length || 0,
+            note: col[3] || col.note || ''
           }));
+          
+          console.log('[RealtimeLive] Parsed columns:', parsedCols);
+          
           setColumns(parsedCols);
           
           // 找到时间戳列
-          const tsCol = parsedCols.find((c: TableColumn) => 
+          const tsCol = parsedCols.find((c: TableColumn) =>
             c.type.toLowerCase().includes('timestamp')
           );
           if (tsCol) {
@@ -300,15 +315,21 @@ export const RealtimeLive: React.FC = () => {
           }
           
           // 生成字段配置
+          console.log('[RealtimeLive] Generating field configs from parsed columns...');
           generateFieldConfigs(parsedCols);
+        } else {
+          console.warn('[RealtimeLive] DESCRIBE query failed:', queryResult.error);
         }
       } else if (result.success && result.data) {
         const schema = result.data.schema || result.data;
         const cols = schema.columns || [];
+        
+        console.log('[RealtimeLive] SuperTable schema columns:', cols);
+        
         setColumns(cols);
         
         // 找到时间戳列
-        const tsCol = cols.find((c: TableColumn) => 
+        const tsCol = cols.find((c: TableColumn) =>
           c.type.toLowerCase().includes('timestamp')
         );
         if (tsCol) {
@@ -408,7 +429,7 @@ export const RealtimeLive: React.FC = () => {
             setFieldConfigs(configs);
             
             // 默认显示所有字段
-            setVisibleFields(new Set(configs.map(f => f.key)));
+            setVisibleFields(configs.map(f => f.key));
           }
           
           // 转换数据格式
