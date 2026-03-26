@@ -5,10 +5,6 @@ import { useTheme } from '../src/contexts/ThemeContext';
 import { api } from '../src/services/api';
 import { generateSqlFromNaturalLanguage, explainQueryPlan } from '../services/geminiService';
 import { toast } from '../src/hooks/use-toast';
-import CodeMirror from '@uiw/react-codemirror';
-import { sql } from '@codemirror/lang-sql';
-import { oneDark } from '@codemirror/theme-one-dark';
-import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 import {
   Play,
   Sparkles,
@@ -76,55 +72,6 @@ const SAMPLE_TEMPLATES = [
   { name: 'Device Status', sql: 'SELECT last(*) FROM meters WHERE device_id = "{{deviceId}}";' },
   { name: 'Top 10 Values', sql: 'SELECT TOP 10 * FROM meters ORDER BY voltage DESC;' },
 ];
-
-// SQL Keywords for autocompletion
-const SQL_KEYWORDS = [
-  'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER',
-  'TABLE', 'DATABASE', 'INDEX', 'VIEW', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'OUTER',
-  'ON', 'GROUP', 'BY', 'ORDER', 'HAVING', 'LIMIT', 'OFFSET', 'UNION', 'ALL',
-  'DISTINCT', 'AS', 'AND', 'OR', 'NOT', 'NULL', 'IS', 'IN', 'BETWEEN', 'LIKE',
-  'EXISTS', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'IF', 'ELSEIF', 'WHILE',
-  'BEGIN', 'COMMIT', 'ROLLBACK', 'TRANSACTION'
-];
-
-// TDengine specific keywords and functions
-const TDENGINE_KEYWORDS = [
-  // Functions
-  'AVG', 'SUM', 'COUNT', 'MAX', 'MIN', 'FIRST', 'LAST', 'LEASTSQUARES',
-  'PERCENTILE', 'APERCENTILE', 'INTERP', 'DERIVATIVE', 'DIFF', 'SPREAD',
-  'STDDEV', 'LEASTSQUARES', 'HISTOGRAM', 'HYPERLOGLOG',
-  // Time functions
-  'NOW', 'TODAY', 'TIMEZONE', 'TO_ISO8601', 'TO_UNIXTIMESTAMP',
-  // TDengine specific
-  'STABLE', 'TAGS', 'TS', 'TBNAME', 'TBINDEX', 'VGROUP',
-  // Keywords
-  'SLIDING', 'FILL', 'INTERVAL', 'SESSION', 'STATE_WINDOW', 'EVENT_WINDOW',
-  'PARTITION', 'LIMIT', 'OFFSET', 'DESC', 'ASC'
-];
-
-// Create custom SQL completion function
-const sqlCompletions = (context: CompletionContext) => {
-  const word = context.matchBefore(/\w*/);
-  if (!word || (word.from === word.to && !context.explicit)) return null;
-  
-  const sqlOptions = SQL_KEYWORDS.map(kw => ({
-    label: kw,
-    type: 'keyword',
-    boost: 99
-  }));
-  
-  const tdOptions = TDENGINE_KEYWORDS.map(kw => ({
-    label: kw,
-    type: 'function',
-    boost: 98
-  }));
-  
-  return {
-    from: word.from,
-    options: [...sqlOptions, ...tdOptions],
-    validFor: /^\w*$/
-  };
-};
 
 // --- Query Result Table Component ---
 interface QueryResultTableProps {
@@ -222,6 +169,7 @@ export const QueryWorkbench: React.FC = () => {
   const { resolvedTheme } = useTheme();
   const location = useLocation();
   const isDark = resolvedTheme === 'dark';
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Editor state
   const [query, setQuery] = useState(location.state?.sql || 'SELECT avg(voltage) FROM meters \nWHERE $last_24h \nAND device_group = {{groupId}} \nGROUP BY $interval(1h);');
@@ -753,36 +701,14 @@ export const QueryWorkbench: React.FC = () => {
             {/* Editor Content */}
             <div className="flex flex-1 min-h-0">
               <div className="flex-1 relative">
-                <CodeMirror
+                <textarea
+                  ref={textareaRef}
                   value={query}
-                  height="100%"
-                  theme={isDark ? oneDark : 'light'}
-                  extensions={[
-                    sql(),
-                    autocompletion({
-                      override: [sqlCompletions],
-                      defaultKeymap: true,
-                    })
-                  ]}
-                  onChange={(value) => setQuery(value)}
-                  onKeyDown={(e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                      e.preventDefault();
-                      handleExecute();
-                    }
-                  }}
-                  basicSetup={{
-                    lineNumbers: true,
-                    highlightActiveLineGutter: true,
-                    highlightActiveLine: true,
-                    foldGutter: true,
-                    indentOnInput: true,
-                    bracketMatching: true,
-                    closeBrackets: true,
-                    autocompletion: true,
-                    syntaxHighlighting: true,
-                  }}
-                  placeholder="Enter your SQL query here..."
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-full bg-[#1e1e1e] text-gray-300 font-mono p-4 text-sm resize-none focus:outline-none leading-relaxed"
+                  spellCheck={false}
+                  placeholder="Enter your SQL query here...&#10;Press Ctrl+Enter to execute"
                   style={{ minHeight: '300px' }}
                 />
               </div>
