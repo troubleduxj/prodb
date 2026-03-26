@@ -390,7 +390,7 @@ export const RealtimeLive: React.FC = () => {
       
       return {
         key: col.name,
-        label: `${col.name} (${col.type})`,
+        label: col.name,
         color: colorPalette[index % colorPalette.length],
         icon
       };
@@ -523,7 +523,7 @@ export const RealtimeLive: React.FC = () => {
           
           if (cols && Array.isArray(cols) && cols.length > 0) {
             const parsedCols: TableColumn[] = cols.map((col: any) => ({
-              name: col.name || col.Field || col[0],
+              name: col.name || col.field || col[0],
               type: col.type || col.Type || col[1],
               length: col.length || col.Length || col[2] || 0,
               note: col.note || col.Note || col[3] || ''
