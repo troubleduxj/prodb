@@ -478,8 +478,10 @@ export const api = {
     listDatabases: async () => {
       try {
         const response = await apiClient.get('/tdengine/databases');
+        console.log('[API] listDatabases response:', response.data);
         return { success: true, data: response.data };
       } catch (error) {
+        console.error('[API] listDatabases error:', error);
         return { success: false, error: getErrorMessage(error as AxiosError) };
       }
     },
