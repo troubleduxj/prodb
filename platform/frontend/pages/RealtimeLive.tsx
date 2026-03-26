@@ -182,18 +182,18 @@ export const RealtimeLive: React.FC = () => {
       
       if (result.success && result.data) {
         let stList: SuperTable[] = [];
-        const responseData = result.data.data || result.data;
         
-        if (responseData.supertables && Array.isArray(responseData.supertables)) {
-          stList = responseData.supertables.map((st: any) => ({
-            name: st.name || st.stable_name,
-            stable_name: st.stable_name || st.name,
-            database: dbName
-          }));
-        } else if (Array.isArray(responseData)) {
-          stList = responseData.map((st: any) => ({
-            name: st.name || st.stable_name,
-            stable_name: st.stable_name || st.name,
+        // 处理嵌套的 data 结构 - 参考 useTreeData.ts 的实现
+        const responseData = result.data.data || result.data;
+        const stData = responseData.supertables || responseData.data?.supertables || [];
+        
+        console.log('[RealtimeLive] SuperTable responseData:', responseData);
+        console.log('[RealtimeLive] SuperTable stData:', stData);
+        
+        if (Array.isArray(stData)) {
+          stList = stData.map((st: any) => ({
+            name: st.name || st.stable_name || st.Name,
+            stable_name: st.stable_name || st.name || st.Name,
             database: dbName
           }));
         }
@@ -231,21 +231,27 @@ export const RealtimeLive: React.FC = () => {
       setTableLoading(true);
       const result = await api.tdengine.listSubTables(dbName, superTableName);
       
+      console.log('[RealtimeLive] SubTable API result:', result);
+      
       if (result.success && result.data) {
         let subList: SuperTable[] = [];
-        if (result.data.subtables && Array.isArray(result.data.subtables)) {
-          subList = result.data.subtables.map((st: any) => ({
-            name: st.name || st.table_name,
-            stable_name: superTableName,
-            database: dbName
-          }));
-        } else if (Array.isArray(result.data)) {
-          subList = result.data.map((st: any) => ({
-            name: st.name || st.table_name,
+        
+        // 处理嵌套的 data 结构 - 参考 useTreeData.ts 的实现
+        const responseData = result.data.data || result.data;
+        const subData = responseData.subtables || responseData.data?.subtables || [];
+        
+        console.log('[RealtimeLive] SubTable responseData:', responseData);
+        console.log('[RealtimeLive] SubTable subData:', subData);
+        
+        if (Array.isArray(subData)) {
+          subList = subData.map((st: any) => ({
+            name: st.name || st.table_name || st,
             stable_name: superTableName,
             database: dbName
           }));
         }
+        
+        console.log('[RealtimeLive] Parsed sub tables:', subList);
         
         setSubTables(subList);
         if (subList.length > 0) {
@@ -530,22 +536,33 @@ export const RealtimeLive: React.FC = () => {
           </div>
 
           {/* 子表选择 */}
-          {subTables.length > 0 && (
+          {selectedSuperTable && (
             <div className="space-y-1">
               <label className={"text-xs font-medium " + getSubTextClass()}>
-                {t('realtime.subTable', 'Sub Table')} ({t('realtime.optional', 'optional')})
+                {t('realtime.subTable', 'Sub Table')} <span className="text-red-500">*</span>
               </label>
-              <select 
+              <select
                 value={selectedSubTable}
                 onChange={(e) => setSelectedSubTable(e.target.value)}
                 disabled={tableLoading}
                 className={"w-full border rounded text-sm p-2 outline-none " + (isDark ? "bg-gray-900 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-700")}
               >
-                <option value="">{t('realtime.allSubTables', 'All Sub Tables')}</option>
+                <option value="">{t('realtime.selectSubTable', '-- Select Sub Table --')}</option>
                 {subTables.map(st => (
                   <option key={st.name} value={st.name}>{st.name}</option>
                 ))}
               </select>
+              {tableLoading && (
+                <div className="flex items-center gap-1 text-xs text-blue-500">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  {t('realtime.loadingSubTables', 'Loading sub tables...')}
+                </div>
+              )}
+              {!tableLoading && subTables.length === 0 && (
+                <div className={"text-xs " + (isDark ? "text-yellow-400" : "text-yellow-600")}>
+                  {t('realtime.noSubTables', 'No sub tables found for this super table')}
+                </div>
+              )}
             </div>
           )}
 
