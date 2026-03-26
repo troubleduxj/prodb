@@ -139,9 +139,7 @@ export const RealtimeLive: React.FC = () => {
         console.log('[RealtimeLive] Parsed dbList:', dbList);
         
         setDatabases(dbList);
-        if (dbList.length > 0 && !selectedDb) {
-          setSelectedDb(dbList[0].name);
-        }
+        // 不自动选择第一个数据库，让用户自己选择
         
         // 如果后端返回了mock数据，显示警告
         if (result.data.mock || responseData.mock) {
@@ -201,12 +199,9 @@ export const RealtimeLive: React.FC = () => {
         console.log('[RealtimeLive] Parsed super tables:', stList);
         
         setSuperTables(stList);
-        if (stList.length > 0) {
-          setSelectedSuperTable(stList[0].name);
-        } else {
-          setSelectedSuperTable('');
-          setSubTables([]);
-        }
+        // 不自动选择第一个超级表，让用户自己选择
+        setSelectedSuperTable('');
+        setSubTables([]);
       } else {
         const errorMsg = result.error || 'Failed to load super tables';
         toast({
@@ -254,11 +249,8 @@ export const RealtimeLive: React.FC = () => {
         console.log('[RealtimeLive] Parsed sub tables:', subList);
         
         setSubTables(subList);
-        if (subList.length > 0) {
-          setSelectedSubTable(subList[0].name);
-        } else {
-          setSelectedSubTable('');
-        }
+        // 不自动选择第一个子表，让用户自己选择
+        setSelectedSubTable('');
       }
     } catch (err) {
       console.error('[RealtimeLive] Failed to fetch sub tables:', err);
