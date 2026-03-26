@@ -116,10 +116,7 @@ export const RealtimeLive: React.FC = () => {
         let dbList: Database[] = [];
         
         // 处理嵌套的 data 结构
-        let responseData = result.data;
-        if (responseData.data) {
-          responseData = responseData.data;
-        }
+        let responseData = result.data.data || result.data;
         
         console.log('[RealtimeLive] Processed responseData:', responseData);
         
@@ -145,8 +142,24 @@ export const RealtimeLive: React.FC = () => {
         if (dbList.length > 0 && !selectedDb) {
           setSelectedDb(dbList[0].name);
         }
+        
+        // 如果后端返回了mock数据，显示警告
+        if (result.data.mock || responseData.mock) {
+          toast({
+            title: 'Warning',
+            description: 'Using mock data - TDengine connection failed',
+            variant: 'warning'
+          });
+        }
       } else {
-        setError('Failed to load databases');
+        // API 返回了错误
+        const errorMsg = result.error || 'Failed to load databases';
+        setError(errorMsg);
+        toast({
+          title: 'Error',
+          description: errorMsg,
+          variant: 'destructive'
+        });
       }
     } catch (err) {
       console.error('[RealtimeLive] Failed to fetch databases:', err);
@@ -165,21 +178,27 @@ export const RealtimeLive: React.FC = () => {
       setError(null);
       const result = await api.tdengine.listSuperTables(dbName);
       
+      console.log('[RealtimeLive] SuperTable API result:', result);
+      
       if (result.success && result.data) {
         let stList: SuperTable[] = [];
-        if (result.data.supertables && Array.isArray(result.data.supertables)) {
-          stList = result.data.supertables.map((st: any) => ({
+        const responseData = result.data.data || result.data;
+        
+        if (responseData.supertables && Array.isArray(responseData.supertables)) {
+          stList = responseData.supertables.map((st: any) => ({
             name: st.name || st.stable_name,
             stable_name: st.stable_name || st.name,
             database: dbName
           }));
-        } else if (Array.isArray(result.data)) {
-          stList = result.data.map((st: any) => ({
+        } else if (Array.isArray(responseData)) {
+          stList = responseData.map((st: any) => ({
             name: st.name || st.stable_name,
             stable_name: st.stable_name || st.name,
             database: dbName
           }));
         }
+        
+        console.log('[RealtimeLive] Parsed super tables:', stList);
         
         setSuperTables(stList);
         if (stList.length > 0) {
@@ -188,6 +207,13 @@ export const RealtimeLive: React.FC = () => {
           setSelectedSuperTable('');
           setSubTables([]);
         }
+      } else {
+        const errorMsg = result.error || 'Failed to load super tables';
+        toast({
+          title: 'Error',
+          description: errorMsg,
+          variant: 'destructive'
+        });
       }
     } catch (err) {
       console.error('[RealtimeLive] Failed to fetch super tables:', err);
