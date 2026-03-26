@@ -458,12 +458,13 @@ export const RealtimeLive: React.FC = () => {
             <label className={"text-xs font-medium " + getSubTextClass()}>
               {t('realtime.database', 'Database')}
             </label>
-            <select 
+            <select
               value={selectedDb}
               onChange={(e) => setSelectedDb(e.target.value)}
               disabled={dbLoading}
               className={"w-full border rounded text-sm p-2 outline-none " + (isDark ? "bg-gray-900 border-gray-600 text-gray-200" : "bg-white border-gray-300 text-gray-700")}
             >
+              <option value="">{t('realtime.selectDatabase', '-- Select Database --')}</option>
               {databases.map(db => (
                 <option key={db.name} value={db.name}>{db.name}</option>
               ))}
@@ -472,6 +473,11 @@ export const RealtimeLive: React.FC = () => {
               <div className="flex items-center gap-1 text-xs text-blue-500">
                 <RefreshCw className="w-3 h-3 animate-spin" />
                 {t('realtime.loadingDatabases', 'Loading databases...')}
+              </div>
+            )}
+            {!dbLoading && databases.length === 0 && (
+              <div className={"text-xs " + (isDark ? "text-yellow-400" : "text-yellow-600")}>
+                {t('realtime.noDatabases', 'No databases found')}
               </div>
             )}
           </div>
