@@ -514,7 +514,12 @@ export const RealtimeLive: React.FC = () => {
           const responseData = queryResult.data.data || queryResult.data;
           const cols = responseData.rows || responseData.data || responseData;
           
+          console.log('[RealtimeLive] DESCRIBE full response:', queryResult.data);
           console.log('[RealtimeLive] DESCRIBE columns raw:', cols);
+          if (cols.length > 0) {
+            console.log('[RealtimeLive] First column:', cols[0]);
+            console.log('[RealtimeLive] First column keys:', Object.keys(cols[0]));
+          }
           
           if (cols && Array.isArray(cols) && cols.length > 0) {
             const parsedCols: TableColumn[] = cols.map((col: any) => ({
@@ -525,6 +530,7 @@ export const RealtimeLive: React.FC = () => {
             }));
             
             console.log('[RealtimeLive] Parsed columns:', parsedCols);
+            console.log('[RealtimeLive] First parsed column:', parsedCols[0]);
             setColumns(parsedCols);
             
             // 找到时间戳列
