@@ -1007,6 +1007,69 @@ export const api = {
       }
     },
   },
+
+  // ========== 数据摄取 ==========
+  data: {
+    /**
+     * 接收单个数据点
+     */
+    receive: async (dataPoint: any) => {
+      try {
+        const response = await apiClient.post('/data/receive', dataPoint);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    /**
+     * 接收批量数据
+     */
+    receiveBatch: async (batch: any) => {
+      try {
+        const response = await apiClient.post('/data/batch', batch);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    /**
+     * 获取接收的数据
+     */
+    getReceived: async () => {
+      try {
+        const response = await apiClient.get('/data/received');
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    /**
+     * 获取实时数据
+     */
+    getRealtime: async (collectorId: string) => {
+      try {
+        const response = await apiClient.get(`/data/realtime/${collectorId}`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    /**
+     * 获取数据统计
+     */
+    getStatistics: async () => {
+      try {
+        const response = await apiClient.get('/data/statistics');
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+  },
 };
 
 // ==================== 降级处理工具函数 ====================
