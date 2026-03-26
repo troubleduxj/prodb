@@ -324,14 +324,15 @@ export const RealtimeLive: React.FC = () => {
   }, [selectedSubTable]);
 
   // 生成字段配置
-  const generateFieldConfigs = (cols: TableColumn[]) => {
-    const numericCols = cols.filter(c => 
-      ['float', 'double', 'int', 'bigint', 'smallint', 'tinyint'].some(t => 
+  // 从TableColumn生成字段配置（仅返回配置，不设置状态）
+  const createFieldConfigs = (cols: TableColumn[]): FieldConfig[] => {
+    const numericCols = cols.filter(c =>
+      ['float', 'double', 'int', 'bigint', 'smallint', 'tinyint'].some(t =>
         c.type.toLowerCase().includes(t)
       ) && !c.type.toLowerCase().includes('timestamp')
     );
     
-    const configs: FieldConfig[] = numericCols.map((col, index) => {
+    return numericCols.map((col, index) => {
       const lowerName = col.name.toLowerCase();
       let icon = iconMap.default;
       
@@ -350,7 +351,11 @@ export const RealtimeLive: React.FC = () => {
         icon
       };
     });
-    
+  };
+  
+  // 生成字段配置并设置状态（用于表结构获取后）
+  const generateFieldConfigs = (cols: TableColumn[]) => {
+    const configs = createFieldConfigs(cols);
     setFieldConfigs(configs);
     // 默认显示前4个字段
     setVisibleFields(configs.slice(0, 4).map(f => f.key));
@@ -381,7 +386,31 @@ export const RealtimeLive: React.FC = () => {
       if (result.success && result.data) {
         const queryData: QueryResult = result.data.data || result.data;
         
+        console.log('[RealtimeLive] Query columns:', queryData.columns);
+        console.log('[RealtimeLive] Query data rows:', queryData.data?.length);
+        
         if (queryData.data && Array.isArray(queryData.data)) {
+          // 从查询结果生成字段配置
+          if (queryData.columns && queryData.columns.length > 0) {
+            // 将列名转换为 TableColumn 格式
+            const columnsFromQuery: TableColumn[] = queryData.columns.map((colName: string) => ({
+              name: colName,
+              type: colName === 'ts' ? 'TIMESTAMP' : 'FLOAT',
+              length: 0
+            }));
+            
+            console.log('[RealtimeLive] Generating field configs from query columns:', columnsFromQuery);
+            
+            // 生成字段配置
+            const configs = createFieldConfigs(columnsFromQuery);
+            console.log('[RealtimeLive] Generated field configs:', configs);
+            
+            setFieldConfigs(configs);
+            
+            // 默认显示所有字段
+            setVisibleFields(new Set(configs.map(f => f.key)));
+          }
+          
           // 转换数据格式
           const formattedData = queryData.data.map((row: any) => {
             const point: any = {};
@@ -432,19 +461,24 @@ export const RealtimeLive: React.FC = () => {
     }
   }, [selectedDb, selectedSuperTable, fetchSubTables, fetchTableSchema]);
 
-  // 子表改变时更新
+  // 子表改变时更新表结构
   useEffect(() => {
     if (selectedDb && selectedSubTable) {
       fetchTableSchema(selectedDb, selectedSubTable);
     }
   }, [selectedSubTable, selectedDb, fetchTableSchema]);
 
+  // 当表结构加载完成后，立即查询一次数据
+  useEffect(() => {
+    if (selectedDb && selectedSubTable && columns.length > 0 && timestampColumn) {
+      console.log('[RealtimeLive] Schema loaded, fetching initial data...');
+      fetchRealtimeData();
+    }
+  }, [selectedDb, selectedSubTable, columns.length, timestampColumn, fetchRealtimeData]);
+
   // 定时刷新数据
   useEffect(() => {
     if (isPaused) return;
-    
-    // 立即执行一次
-    fetchRealtimeData();
     
     const interval = setInterval(() => {
       fetchRealtimeData();
