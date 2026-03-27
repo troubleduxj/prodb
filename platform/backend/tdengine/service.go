@@ -394,7 +394,7 @@ func (s *TDengineService) GetDatabaseInfo(ctx context.Context, name string) (*Da
 	}
 
 	// 尝试从 information_schema.ins_databases 获取详细信息 (TDengine 3.x)
-	query := fmt.Sprintf("SELECT * FROM information_schema.ins_databases WHERE name = '%s'", name)
+	query := fmt.Sprintf("SELECT * FROM information_schema.ins_databases WHERE name = `%s`", name)
 	rows, err := s.manager.ExecuteQuery(ctx, query)
 	if err != nil {
 		// 如果失败，回退到原来的方法
