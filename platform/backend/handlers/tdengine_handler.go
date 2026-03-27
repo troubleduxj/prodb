@@ -2317,3 +2317,274 @@ func (h *TDengineHandler) UpdateSubTableTag(c *gin.Context) {
 		},
 	})
 }
+
+// GetDatabaseConfig returns the configuration of a database
+// GET /api/v1/tdengine/databases/:database/config
+func (h *TDengineHandler) GetDatabaseConfig(c *gin.Context) {
+	dbName := c.Param("database")
+
+	if dbName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database name is required",
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	config, err := h.service.GetDatabaseConfig(ctx, dbName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to get database config",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   config,
+	})
+}
+
+// UpdateDatabaseConfig updates the configuration of a database
+// PUT /api/v1/tdengine/databases/:database/config
+func (h *TDengineHandler) UpdateDatabaseConfig(c *gin.Context) {
+	dbName := c.Param("database")
+
+	if dbName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database name is required",
+		})
+		return
+	}
+
+	var config tdengine.DatabaseConfig
+	if err := c.ShouldBindJSON(&config); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := h.service.UpdateDatabaseConfig(ctx, dbName, &config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to update database config",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Database config updated successfully",
+	})
+}
+
+// GetSuperTablePreview returns preview data for a super table
+// GET /api/v1/tdengine/db/:database/supertables/:supertable/preview
+func (h *TDengineHandler) GetSuperTablePreview(c *gin.Context) {
+	dbName := c.Param("database")
+	stName := c.Param("supertable")
+
+	if dbName == "" || stName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database and super table names are required",
+		})
+		return
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
+	if limit <= 0 || limit > 1000 {
+		limit = 100
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	preview, err := h.service.GetSuperTablePreview(ctx, dbName, stName, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to get super table preview",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   preview,
+	})
+}
+
+// GetSubTablePreview returns preview data for a sub table
+// GET /api/v1/tdengine/db/:database/subtables/:subtable/preview
+func (h *TDengineHandler) GetSubTablePreview(c *gin.Context) {
+	dbName := c.Param("database")
+	subTableName := c.Param("subtable")
+
+	if dbName == "" || subTableName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database and sub table names are required",
+		})
+		return
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
+	if limit <= 0 || limit > 1000 {
+		limit = 100
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	preview, err := h.service.GetSubTablePreview(ctx, dbName, subTableName, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to get sub table preview",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   preview,
+	})
+}
+
+// BulkUpdateSubTableTags updates multiple tag values for a sub table
+// PUT /api/v1/tdengine/db/:database/subtables/:subtable/tags
+func (h *TDengineHandler) BulkUpdateSubTableTags(c *gin.Context) {
+	dbName := c.Param("database")
+	subTableName := c.Param("subtable")
+
+	if dbName == "" || subTableName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database and sub table names are required",
+		})
+		return
+	}
+
+	var request struct {
+		Tags map[string]interface{} `json:"tags" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := h.service.BulkUpdateSubTableTags(ctx, dbName, subTableName, request.Tags); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to update tags",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Tags updated successfully",
+		"data": gin.H{
+			"database": dbName,
+			"subtable": subTableName,
+			"tags":     request.Tags,
+		},
+	})
+}
+
+// AlterSuperTableSchema modifies super table schema
+// POST /api/v1/tdengine/db/:database/supertables/:supertable/schema
+func (h *TDengineHandler) AlterSuperTableSchema(c *gin.Context) {
+	dbName := c.Param("database")
+	stName := c.Param("supertable")
+
+	if dbName == "" || stName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database and super table names are required",
+		})
+		return
+	}
+
+	var request tdengine.SchemaAlterRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := h.service.AlterSuperTableSchema(ctx, dbName, stName, &request); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to alter schema",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Schema altered successfully",
+	})
+}
+
+// AnalyzeDataQuality performs data quality analysis on a table
+// GET /api/v1/tdengine/db/:database/tables/:table/quality
+func (h *TDengineHandler) AnalyzeDataQuality(c *gin.Context) {
+	dbName := c.Param("database")
+	tableName := c.Param("table")
+
+	if dbName == "" || tableName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database and table names are required",
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	metrics, err := h.service.AnalyzeDataQuality(ctx, dbName, tableName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to analyze data quality",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   metrics,
+	})
+}

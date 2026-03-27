@@ -632,6 +632,75 @@ export const api = {
         return { success: false, error: getErrorMessage(error as AxiosError) };
       }
     },
+
+    // OperationsData API - Database Config
+    getDatabaseConfig: async (database: string) => {
+      try {
+        const response = await apiClient.get(`/tdengine/databases/${encodeURIComponent(database)}/config`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    updateDatabaseConfig: async (database: string, config: any) => {
+      try {
+        const response = await apiClient.put(`/tdengine/databases/${encodeURIComponent(database)}/config`, config);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    // OperationsData API - Super Table Preview
+    getSuperTablePreview: async (database: string, supertable: string, limit: number = 100) => {
+      try {
+        const response = await apiClient.get(`/tdengine/db/${encodeURIComponent(database)}/supertables/${encodeURIComponent(supertable)}/preview?limit=${limit}`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    // OperationsData API - Sub Table Preview
+    getSubTablePreview: async (database: string, subtable: string, limit: number = 100) => {
+      try {
+        const response = await apiClient.get(`/tdengine/db/${encodeURIComponent(database)}/subtables/${encodeURIComponent(subtable)}/preview?limit=${limit}`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    // OperationsData API - Bulk Update Tags
+    bulkUpdateSubTableTags: async (database: string, subtable: string, tags: Record<string, any>) => {
+      try {
+        const response = await apiClient.put(`/tdengine/db/${encodeURIComponent(database)}/subtables/${encodeURIComponent(subtable)}/tags`, { tags });
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    // OperationsData API - Alter Super Table Schema
+    alterSuperTableSchema: async (database: string, supertable: string, data: { action: string; column?: { name: string; type: string; length?: number }; tag?: { name: string; type: string; length?: number } }) => {
+      try {
+        const response = await apiClient.post(`/tdengine/db/${encodeURIComponent(database)}/supertables/${encodeURIComponent(supertable)}/schema`, data);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
+
+    // OperationsData API - Data Quality Analysis
+    analyzeDataQuality: async (database: string, table: string) => {
+      try {
+        const response = await apiClient.get(`/tdengine/db/${encodeURIComponent(database)}/tables/${encodeURIComponent(table)}/quality`);
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
   },
 
   // ========== 告警规则 ==========

@@ -495,6 +495,8 @@ func main() {
 					databaseRoutes.DELETE("/:database", tdengineHandler.DropDatabase)          // Drop database
 					databaseRoutes.GET("/:database/exists", tdengineHandler.CheckDatabaseExists) // Check existence
 					databaseRoutes.GET("/:database/statistics", tdengineHandler.GetDatabaseStatistics) // Get statistics
+					databaseRoutes.GET("/:database/config", tdengineHandler.GetDatabaseConfig)    // Get database config
+					databaseRoutes.PUT("/:database/config", tdengineHandler.UpdateDatabaseConfig) // Update database config
 				} else {
 					databaseRoutes.GET("", handlers.TDengineUnavailableHandler)
 					databaseRoutes.POST("", handlers.TDengineUnavailableHandler)
@@ -502,6 +504,8 @@ func main() {
 					databaseRoutes.DELETE("/:database", handlers.TDengineUnavailableHandler)
 					databaseRoutes.GET("/:database/exists", handlers.TDengineUnavailableHandler)
 					databaseRoutes.GET("/:database/statistics", handlers.TDengineUnavailableHandler)
+					databaseRoutes.GET("/:database/config", handlers.TDengineUnavailableHandler)
+					databaseRoutes.PUT("/:database/config", handlers.TDengineUnavailableHandler)
 				}
 			}
 			
@@ -524,6 +528,8 @@ func main() {
 					superTableRoutes.GET("/:supertable/exists", tdengineHandler.CheckSuperTableExists) // Check existence
 					superTableRoutes.GET("/:supertable/schema", tdengineHandler.GetSuperTableSchema)   // Get schema
 					superTableRoutes.GET("/:supertable/statistics", tdengineHandler.GetSuperTableStatistics) // Get statistics
+					superTableRoutes.GET("/:supertable/preview", tdengineHandler.GetSuperTablePreview)  // Get data preview
+					superTableRoutes.POST("/:supertable/schema", tdengineHandler.AlterSuperTableSchema) // Alter schema (add/drop columns/tags)
 				} else {
 					superTableRoutes.GET("", handlers.TDengineUnavailableHandler)
 					superTableRoutes.POST("", handlers.TDengineUnavailableHandler)
@@ -533,6 +539,8 @@ func main() {
 					superTableRoutes.GET("/:supertable/exists", handlers.TDengineUnavailableHandler)
 					superTableRoutes.GET("/:supertable/schema", handlers.TDengineUnavailableHandler)
 					superTableRoutes.GET("/:supertable/statistics", handlers.TDengineUnavailableHandler)
+					superTableRoutes.GET("/:supertable/preview", handlers.TDengineUnavailableHandler)
+					superTableRoutes.POST("/:supertable/schema", handlers.TDengineUnavailableHandler)
 				}
 			}
 			
@@ -561,7 +569,9 @@ func main() {
 					subTableRoutes.GET("/subtables/:subtable", tdengineHandler.GetSubTableInfo)                                // Get sub-table info
 					subTableRoutes.DELETE("/subtables/:subtable", tdengineHandler.DropSubTable)                                // Drop sub-table
 					subTableRoutes.GET("/subtables/:subtable/exists", tdengineHandler.CheckSubTableExists)                     // Check existence
-					subTableRoutes.PUT("/subtables/:subtable/tags/:tag", tdengineHandler.UpdateSubTableTag)                   // Update tag value
+					subTableRoutes.PUT("/subtables/:subtable/tags/:tag", tdengineHandler.UpdateSubTableTag)				// Update tag value
+					subTableRoutes.GET("/subtables/:subtable/preview", tdengineHandler.GetSubTablePreview)				// Get data preview
+					subTableRoutes.PUT("/subtables/:subtable/tags", tdengineHandler.BulkUpdateSubTableTags)				// Bulk update tags
 				} else {
 					subTableRoutes.POST("/supertables/:supertable/subtables", handlers.TDengineUnavailableHandler)
 					subTableRoutes.GET("/supertables/:supertable/subtables", handlers.TDengineUnavailableHandler)
