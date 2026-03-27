@@ -619,6 +619,19 @@ export const api = {
         return { success: false, error: getErrorMessage(error as AxiosError) };
       }
     },
+
+    updateSubTableTag: async (database: string, subTableName: string, tagName: string, value: any) => {
+      try {
+        // Backend route: PUT /tdengine/db/:database/subtables/:subtable/tags/:tag
+        const response = await apiClient.put(
+          `/tdengine/db/${encodeURIComponent(database)}/subtables/${encodeURIComponent(subTableName)}/tags/${encodeURIComponent(tagName)}`,
+          { value }
+        );
+        return { success: true, data: response.data };
+      } catch (error) {
+        return { success: false, error: getErrorMessage(error as AxiosError) };
+      }
+    },
   },
 
   // ========== 告警规则 ==========

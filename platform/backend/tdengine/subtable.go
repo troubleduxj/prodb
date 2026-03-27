@@ -856,6 +856,53 @@ func (s *TDengineService) getSubTableStats(ctx context.Context, database, subTab
 	return count, lastUpdate, nil
 }
 
+// UpdateSubTableTag updates a single tag value for a sub-table
+// Uses TDengine syntax: ALTER TABLE db.table SET TAG tagName = value
+func (s *TDengineService) UpdateSubTableTag(ctx context.Context, database, subTableName, tagName string, value interface{}) error {
+	if database == "" {
+		return fmt.Errorf("database name cannot be empty")
+	}
+	if subTableName == "" {
+		return fmt.Errorf("sub-table name cannot be empty")
+	}
+	if tagName == "" {
+		return fmt.Errorf("tag name cannot be empty")
+	}
+
+	// Format the value according to its type
+	var formattedValue string
+	switch v := value.(type) {
+	case string:
+		// Escape single quotes in string values
+		escaped := strings.ReplaceAll(v, "'", "''")
+		formattedValue = fmt.Sprintf("'%s'", escaped)
+	case bool:
+		if v {
+			formattedValue = "true"
+		} else {
+			formattedValue = "false"
+		}
+	case nil:
+		formattedValue = "NULL"
+	default:
+		// For numeric types
+		formattedValue = fmt.Sprintf("%v", v)
+	}
+
+	// Build the ALTER TABLE statement
+	// Use backticks to properly quote identifiers
+	query := fmt.Sprintf("ALTER TABLE `%s`.`%s` SET TAG `%s` = %s",
+		database, subTableName, tagName, formattedValue)
+
+	// Execute the query
+	_, err := s.manager.ExecuteQuery(ctx, query)
+	if err != nil {
+		return fmt.Errorf("failed to update tag value: %w", err)
+	}
+
+	return nil
+}
+
 // archiveSubTableData archives sub-table data before deletion
 func (s *TDengineService) archiveSubTableData(ctx context.Context, database, subTableName string) error {
 	// This is a placeholder implementation

@@ -23,7 +23,7 @@ import { TaskRuntimeStatus } from './pages/TaskRuntimeStatus';
 
 // Realtime Pages
 import { RealtimeLive } from './pages/RealtimeLive';
-import { RealtimeTables } from './pages/RealtimeTables/index';
+import { RealtimeTables } from './pages/RealtimeTables';
 import { RealtimeDevices } from './pages/RealtimeDevices';
 import { RealtimeHistory } from './pages/RealtimeHistory';
 

@@ -16,11 +16,13 @@ export const useDataPreview = (selectedNode: TreeNode | null) => {
     try {
       let sql = '';
       if (selectedNode.type === 'STABLE' && selectedNode.dbName) {
-        sql = `SELECT * FROM \`${selectedNode.dbName}\`.\`${selectedNode.name}\` LIMIT 100`;
+        // Super table: query with ORDER BY ts DESC to get latest data
+        sql = `SELECT * FROM \`${selectedNode.dbName}\`.\`${selectedNode.name}\` ORDER BY ts DESC LIMIT 100`;
       } else if (selectedNode.type === 'TABLE') {
         const dbName = selectedNode.dbName;
         if (dbName) {
-          sql = `SELECT * FROM \`${dbName}\`.\`${selectedNode.name}\` LIMIT 100`;
+          // Sub table: query with ORDER BY ts DESC to get latest data
+          sql = `SELECT * FROM \`${dbName}\`.\`${selectedNode.name}\` ORDER BY ts DESC LIMIT 100`;
         }
       }
 

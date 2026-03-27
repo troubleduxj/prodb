@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -211,82 +210,12 @@ func (h *TDengineHandler) GetDatabases(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Try to get databases from service, fallback to mock data if service is not available
 	databases, err := h.service.ListDatabases(ctx)
 	if err != nil {
-		// Return mock databases for frontend development
-		mockDatabases := []map[string]interface{}{
-			{
-				"name":        "industrial_data",
-				"created_time": "2024-01-15 10:30:00",
-				"ntables":     5,
-				"vgroups":     2,
-				"replica":     1,
-				"quorum":      1,
-				"days":        10,
-				"keep":        "3650",
-				"cache":       16,
-				"blocks":      6,
-				"minrows":     100,
-				"maxrows":     4096,
-				"wallevel":    1,
-				"fsync":       3000,
-				"comp":        2,
-				"cachelast":   0,
-				"precision":   "ms",
-				"update":      0,
-				"status":      "ready",
-			},
-			{
-				"name":        "sensor_data",
-				"created_time": "2024-01-20 14:15:00",
-				"ntables":     3,
-				"vgroups":     1,
-				"replica":     1,
-				"quorum":      1,
-				"days":        10,
-				"keep":        "3650",
-				"cache":       16,
-				"blocks":      6,
-				"minrows":     100,
-				"maxrows":     4096,
-				"wallevel":    1,
-				"fsync":       3000,
-				"comp":        2,
-				"cachelast":   0,
-				"precision":   "ms",
-				"update":      0,
-				"status":      "ready",
-			},
-			{
-				"name":        "test_db",
-				"created_time": "2024-01-25 09:00:00",
-				"ntables":     1,
-				"vgroups":     1,
-				"replica":     1,
-				"quorum":      1,
-				"days":        10,
-				"keep":        "3650",
-				"cache":       16,
-				"blocks":      6,
-				"minrows":     100,
-				"maxrows":     4096,
-				"wallevel":    1,
-				"fsync":       3000,
-				"comp":        2,
-				"cachelast":   0,
-				"precision":   "ms",
-				"update":      0,
-				"status":      "ready",
-			},
-		}
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status": "success",
-			"data": gin.H{
-				"databases": mockDatabases,
-				"count":     len(mockDatabases),
-			},
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to connect to TDengine",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -537,32 +466,20 @@ func (h *TDengineHandler) GetSuperTables(c *gin.Context) {
 	// Try to use the specified database and query super tables
 	_, err := manager.ExecuteNonQuery(ctx, "USE "+dbName)
 	if err != nil {
-		// Return mock super tables for frontend development
-		mockSuperTables := getMockSuperTables(dbName)
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status": "success",
-			"data": gin.H{
-				"database":     dbName,
-				"supertables": mockSuperTables,
-				"count":       len(mockSuperTables),
-			},
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to use database",
+			"error":   err.Error(),
 		})
 		return
 	}
 
 	rows, err := manager.ExecuteQuery(ctx, "SHOW STABLES")
 	if err != nil {
-		// Return mock super tables for frontend development
-		mockSuperTables := getMockSuperTables(dbName)
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status": "success",
-			"data": gin.H{
-				"database":     dbName,
-				"supertables": mockSuperTables,
-				"count":       len(mockSuperTables),
-			},
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to query super tables",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -599,175 +516,6 @@ func (h *TDengineHandler) GetSuperTables(c *gin.Context) {
 	})
 }
 
-// getMockSuperTables returns mock super tables for development
-func getMockSuperTables(dbName string) []map[string]interface{} {
-	switch dbName {
-	case "industrial_data":
-		return []map[string]interface{}{
-			{
-				"name":         "sensors",
-				"created_time": "2024-01-15 10:35:00",
-				"columns":      4,
-				"tags":         2,
-				"tables":       10,
-			},
-			{
-				"name":         "flow_meters",
-				"created_time": "2024-01-15 11:00:00",
-				"columns":      3,
-				"tags":         2,
-				"tables":       5,
-			},
-			{
-				"name":         "power_meters",
-				"created_time": "2024-01-15 11:30:00",
-				"columns":      5,
-				"tags":         3,
-				"tables":       8,
-			},
-		}
-	case "sensor_data":
-		return []map[string]interface{}{
-			{
-				"name":         "temperature_sensors",
-				"created_time": "2024-01-20 14:20:00",
-				"columns":      3,
-				"tags":         2,
-				"tables":       6,
-			},
-			{
-				"name":         "humidity_sensors",
-				"created_time": "2024-01-20 14:25:00",
-				"columns":      3,
-				"tags":         2,
-				"tables":       4,
-			},
-		}
-	case "test_db":
-		return []map[string]interface{}{
-			{
-				"name":         "test_table",
-				"created_time": "2024-01-25 09:05:00",
-				"columns":      2,
-				"tags":         1,
-				"tables":       1,
-			},
-		}
-	case "hlzg_db":
-		return []map[string]interface{}{
-			{
-				"name":         "welding_record_his",
-				"created_time": "2024-01-15 10:35:00",
-				"columns":      10,
-				"tags":         3,
-				"tables":       5,
-			},
-		}
-	default:
-		return []map[string]interface{}{}
-	}
-}
-
-// getMockSubTables returns mock sub-tables for development
-func getMockSubTables(dbName string, superTable string) []map[string]interface{} {
-	if dbName == "hlzg_db" && superTable == "welding_record_his" {
-		return []map[string]interface{}{
-			{
-				"name":         "welding_device_001",
-				"created_time": "2024-01-15T10:40:00Z",
-				"tags": map[string]interface{}{
-					"device_id":  "WD001",
-					"station_id": "ST01",
-					"line_id":    "LINE01",
-				},
-			},
-			{
-				"name":         "welding_device_002",
-				"created_time": "2024-01-15T10:45:00Z",
-				"tags": map[string]interface{}{
-					"device_id":  "WD002",
-					"station_id": "ST01",
-					"line_id":    "LINE01",
-				},
-			},
-			{
-				"name":         "welding_device_003",
-				"created_time": "2024-01-15T10:50:00Z",
-				"tags": map[string]interface{}{
-					"device_id":  "WD003",
-					"station_id": "ST02",
-					"line_id":    "LINE01",
-				},
-			},
-			{
-				"name":         "welding_device_004",
-				"created_time": "2024-01-15T10:55:00Z",
-				"tags": map[string]interface{}{
-					"device_id":  "WD004",
-					"station_id": "ST02",
-					"line_id":    "LINE02",
-				},
-			},
-			{
-				"name":         "welding_device_005",
-				"created_time": "2024-01-15T11:00:00Z",
-				"tags": map[string]interface{}{
-					"device_id":  "WD005",
-					"station_id": "ST03",
-					"line_id":    "LINE02",
-				},
-			},
-		}
-	}
-	return []map[string]interface{}{}
-}
-
-// getMockSuperTablesDetailed returns detailed mock super tables for development
-func getMockSuperTablesDetailed(dbName string) []map[string]interface{} {
-	switch dbName {
-	case "hlzg_db":
-		return []map[string]interface{}{
-			{
-				"name":            "welding_record_his",
-				"created_time":    "2024-01-15T10:35:00Z",
-				"columns":         []map[string]interface{}{
-					{"name": "ts", "type": "TIMESTAMP"},
-					{"name": "temperature", "type": "FLOAT"},
-					{"name": "pressure", "type": "FLOAT"},
-					{"name": "voltage", "type": "FLOAT"},
-					{"name": "current", "type": "FLOAT"},
-					{"name": "speed", "type": "FLOAT"},
-					{"name": "position_x", "type": "FLOAT"},
-					{"name": "position_y", "type": "FLOAT"},
-					{"name": "position_z", "type": "FLOAT"},
-					{"name": "status", "type": "INT"},
-				},
-				"tags": []map[string]interface{}{
-					{"name": "device_id", "type": "NCHAR(50)"},
-					{"name": "station_id", "type": "NCHAR(50)"},
-					{"name": "line_id", "type": "NCHAR(50)"},
-				},
-				"subtables_count": 5,
-				"data_size":       "1.2 MB",
-			},
-		}
-	default:
-		// Convert simple mock to detailed format
-		simpleMocks := getMockSuperTables(dbName)
-		detailedMocks := make([]map[string]interface{}, len(simpleMocks))
-		for i, sm := range simpleMocks {
-			detailedMocks[i] = map[string]interface{}{
-				"name":            sm["name"],
-				"created_time":    sm["created_time"],
-				"columns":         []map[string]interface{}{},
-				"tags":            []map[string]interface{}{},
-				"subtables_count": sm["tables"],
-				"data_size":       "0 B",
-			}
-		}
-		return detailedMocks
-	}
-}
 
 // ValidateDatabaseName validates database name according to TDengine rules
 func (h *TDengineHandler) ValidateDatabaseName(c *gin.Context) {
@@ -1172,16 +920,10 @@ func (h *TDengineHandler) ListSuperTablesDetailed(c *gin.Context) {
 
 	superTables, err := h.service.ListSuperTables(ctx, dbName)
 	if err != nil {
-		// Return mock super tables for frontend development
-		mockSuperTables := getMockSuperTablesDetailed(dbName)
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status": "success",
-			"data": gin.H{
-				"database":     dbName,
-				"supertables": mockSuperTables,
-				"count":       len(mockSuperTables),
-			},
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to list super tables",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -1966,22 +1708,10 @@ func (h *TDengineHandler) ListSubTables(c *gin.Context) {
 	// List sub-tables
 	result, err := h.service.ListSubTables(ctx, dbName, stName, filter, page, size)
 	if err != nil {
-		// Log the error for debugging
-		fmt.Printf("Error listing sub-tables for %s.%s: %v\n", dbName, stName, err)
-		
-		// Return mock sub-tables for frontend development
-		mockSubTables := getMockSubTables(dbName, stName)
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status": "success",
-			"data": gin.H{
-				"database":    dbName,
-				"supertable":  stName,
-				"subtables":   mockSubTables,
-				"total":       len(mockSubTables),
-				"page":        page,
-				"size":        size,
-			},
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to list sub tables",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -2515,6 +2245,75 @@ func (h *TDengineHandler) GetTables(c *gin.Context) {
 			"tables":  tables,
 			"total":   len(tables),
 			"database": database,
+		},
+	})
+}
+
+// UpdateSubTableTag updates a tag value for a sub-table
+// PUT /api/v1/tdengine/db/:database/subtables/:subtable/tags/:tag
+func (h *TDengineHandler) UpdateSubTableTag(c *gin.Context) {
+	dbName := c.Param("database")
+	subTableName := c.Param("subtable")
+	tagName := c.Param("tag")
+
+	if dbName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Database name is required",
+		})
+		return
+	}
+
+	if subTableName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Sub-table name is required",
+		})
+		return
+	}
+
+	if tagName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Tag name is required",
+		})
+		return
+	}
+
+	var request struct {
+		Value interface{} `json:"value" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Update the tag value
+	err := h.service.UpdateSubTableTag(ctx, dbName, subTableName, tagName, request.Value)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to update tag value",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Tag value updated successfully",
+		"data": gin.H{
+			"database":   dbName,
+			"subtable":   subTableName,
+			"tag":        tagName,
+			"value":      request.Value,
 		},
 	})
 }

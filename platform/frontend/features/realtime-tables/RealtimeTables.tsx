@@ -60,7 +60,15 @@ export const RealtimeTables: React.FC = () => {
   // Schema and data preview hooks
   const { schema, setSchema, loading: schemaLoading } = useSchema(selectedNode);
   const { dataPreview, loading: dataPreviewLoading } = useDataPreview(selectedNode);
-  const { tagValues: subTableTagValues } = useSubTableTags(selectedNode);
+  const {
+    effectiveTagValues: subTableTagValues,
+    loading: tagsLoading,
+    stageTagValueChange,
+    commitPendingChanges,
+    clearPendingChanges,
+    hasPendingChanges,
+    getModifiedTags
+  } = useSubTableTags(selectedNode);
 
   // Handle node selection
   const handleSelectNode = useCallback((node: TreeNode, tab: 'data' | 'manage') => {
@@ -115,12 +123,12 @@ export const RealtimeTables: React.FC = () => {
     });
   }, [setSchema, t]);
 
-  // Handle add tag - opens the tag editing form
+  // Handle add tag - opens the tag editing form (super table only)
   const handleAddTag = useCallback(() => {
-    if (!selectedNode || (selectedNode.type !== 'STABLE' && selectedNode.type !== 'TABLE')) {
+    if (!selectedNode || selectedNode.type !== 'STABLE') {
       toast({
         title: t('common.error', 'Error'),
-        description: t('realtimeTables.selectSuperTable', 'Please select a super table first'),
+        description: t('realtimeTables.selectSuperTableForTag', 'Please select a super table to manage tags'),
         variant: 'destructive',
       });
       return;
@@ -276,6 +284,105 @@ export const RealtimeTables: React.FC = () => {
     }
   }, [editMode, selectedNode, setSchema, t]);
 
+  // Handle update tag value for sub-table (stages changes locally)
+  const handleUpdateTagValue = useCallback((tagName: string, value: any) => {
+    if (!selectedNode || selectedNode.type !== 'TABLE') {
+      toast({
+        title: t('common.error', 'Error'),
+        description: t('realtimeTables.selectSubTable', 'Please select a sub table first'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!editMode) {
+      toast({
+        title: t('common.info', 'Info'),
+        description: t('realtimeTables.enableEditMode', 'Please enable edit mode first'),
+      });
+      return;
+    }
+
+    // Stage the change locally (don't call backend yet)
+    stageTagValueChange(tagName, value);
+  }, [editMode, selectedNode, stageTagValueChange, t]);
+
+  // Handle saving all pending tag value changes to backend
+  const handleSavePendingChanges = useCallback(async () => {
+    if (!selectedNode || selectedNode.type !== 'TABLE') return;
+    
+    const dbName = selectedNode.dbName;
+    if (!dbName) {
+      toast({
+        title: t('common.error', 'Error'),
+        description: t('realtimeTables.noDatabase', 'No database selected'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Get only the tags that have been modified
+    const modifiedTags = getModifiedTags();
+
+    if (modifiedTags.length === 0) {
+      // No pending changes, just exit edit mode
+      setEditMode(false);
+      return;
+    }
+
+    // Update all modified tags
+    const results = [];
+    const errors = [];
+
+    for (const { name: tagName, value } of modifiedTags) {
+      try {
+        const result = await api.tdengine.updateSubTableTag(dbName, selectedNode.name, tagName, value);
+        if (result.success) {
+          results.push(tagName);
+        } else {
+          errors.push({ tag: tagName, error: result.error || 'Unknown error' });
+        }
+      } catch (error) {
+        errors.push({ tag: tagName, error: error instanceof Error ? error.message : 'Unknown error' });
+      }
+    }
+
+    if (errors.length === 0) {
+      // All updates successful
+      commitPendingChanges();
+      setEditMode(false);
+      toast({
+        title: t('common.success', 'Success'),
+        description: t('realtimeTables.tagValuesUpdated', '{{count}} tag values updated successfully', { count: results.length }),
+      });
+    } else if (results.length > 0) {
+      // Partial success
+      commitPendingChanges();
+      setEditMode(false);
+      toast({
+        title: t('common.warning', 'Partial Success'),
+        description: t('realtimeTables.tagValuesPartiallyUpdated', '{{success}} updated, {{failed}} failed', {
+          success: results.length,
+          failed: errors.length
+        }),
+        variant: 'destructive',
+      });
+    } else {
+      // All failed
+      toast({
+        title: t('common.error', 'Error'),
+        description: t('realtimeTables.tagValuesUpdateFailed', 'Failed to update any tag values'),
+        variant: 'destructive',
+      });
+    }
+  }, [selectedNode, getModifiedTags, commitPendingChanges, t]);
+
+  // Handle canceling edit mode
+  const handleCancelEdit = useCallback(() => {
+    clearPendingChanges();
+    setEditMode(false);
+  }, [clearPendingChanges]);
+
   // Render content based on selected node type for Manage tab
   const renderManageContent = () => {
     if (!selectedNode) {
@@ -300,6 +407,15 @@ export const RealtimeTables: React.FC = () => {
       );
     }
 
+    // Determine edit permissions based on node type
+    const isSubTable = selectedNode.type === 'TABLE';
+    const isSuperTable = selectedNode.type === 'STABLE';
+    
+    // Sub tables: can only edit tag values, cannot add/delete columns or tags
+    // Super tables: can add/delete columns and tags
+    const canEditStructure = editMode && isSuperTable;
+    const canEditTagValues = editMode && isSubTable;
+
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
@@ -308,10 +424,10 @@ export const RealtimeTables: React.FC = () => {
               {selectedNode.name}
             </h3>
             <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              {selectedNode.type === 'STABLE'
+              {isSuperTable
                 ? t('realtimeTables.superTableSchema', 'Super Table Schema')
-                : selectedNode.type === 'TABLE'
-                ? t('realtimeTables.subTableSchema', 'Sub Table Schema (Inherited from Super Table)')
+                : isSubTable
+                ? t('realtimeTables.subTableSchema', 'Sub Table Schema (Inherited from Super Table) - Can only edit tag values')
                 : ''}
             </p>
           </div>
@@ -340,8 +456,8 @@ export const RealtimeTables: React.FC = () => {
               {t('realtimeTables.queryStudio', 'Query Studio')}
             </button>
             {editMode && (
-              <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-yellow-600/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
-                {t('realtimeTables.editMode', 'Edit Mode')}
+              <span className={`text-xs px-2 py-1 rounded ${isSubTable ? (isDark ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-100 text-blue-700') : (isDark ? 'bg-yellow-600/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700')}`}>
+                {isSubTable ? t('realtimeTables.editTagValuesMode', 'Edit Tag Values Mode') : t('realtimeTables.editMode', 'Edit Mode')}
               </span>
             )}
           </div>
@@ -350,17 +466,20 @@ export const RealtimeTables: React.FC = () => {
         <SchemaEditor
           columns={schema.columns}
           tags={schema.tags}
-          tagValues={selectedNode.type === 'TABLE' ? subTableTagValues : undefined}
+          tagValues={isSubTable ? subTableTagValues : undefined}
           isDark={isDark}
           readOnly={!editMode}
-          onAddColumn={() => setIsEditingColumns(true)}
-          onAddTag={handleAddTag}
-          onDeleteColumn={handleDeleteColumn}
-          onDeleteTag={handleDeleteTag}
+          canEditStructure={canEditStructure}
+          canEditTagValues={canEditTagValues}
+          onAddColumn={isSuperTable ? () => setIsEditingColumns(true) : undefined}
+          onAddTag={isSuperTable ? handleAddTag : undefined}
+          onDeleteColumn={isSuperTable ? handleDeleteColumn : undefined}
+          onDeleteTag={isSuperTable ? handleDeleteTag : undefined}
+          onUpdateTagValue={isSubTable ? handleUpdateTagValue : undefined}
         />
 
-        {/* Add Tag Form */}
-        {isEditingTags && editMode && (
+        {/* Add Tag Form - Only for super tables */}
+        {isEditingTags && canEditStructure && (
           <TagEditor
             newTag={newTag}
             isDark={isDark}
@@ -372,8 +491,8 @@ export const RealtimeTables: React.FC = () => {
           />
         )}
 
-        {/* Add Column Form */}
-        {isEditingColumns && editMode && (
+        {/* Add Column Form - Only for super tables */}
+        {isEditingColumns && canEditStructure && (
           <div className={`mt-6 p-4 rounded-lg border ${isDark ? 'bg-gray-900/50 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
             <h4 className={`text-sm font-medium mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               {t('realtimeTables.addNewColumn', 'Add New Column')}
@@ -519,8 +638,33 @@ export const RealtimeTables: React.FC = () => {
           {/* Edit Mode Toggle */}
           {activeTab === 'manage' && selectedNode && (selectedNode.type === 'STABLE' || selectedNode.type === 'TABLE') && (
             <div className="ml-auto flex items-center gap-2">
+              {editMode && selectedNode.type === 'TABLE' && (
+                <button
+                  onClick={handleCancelEdit}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded transition-colors ${
+                    isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                  {t('common.cancel', 'Cancel')}
+                </button>
+              )}
               <button
-                onClick={() => setEditMode(!editMode)}
+                onClick={() => {
+                  if (editMode) {
+                    // Done button clicked
+                    if (selectedNode.type === 'TABLE') {
+                      // For sub-tables, save pending changes
+                      handleSavePendingChanges();
+                    } else {
+                      // For super tables, just exit edit mode
+                      setEditMode(false);
+                    }
+                  } else {
+                    // Edit button clicked - enter edit mode
+                    setEditMode(true);
+                  }
+                }}
                 className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded transition-colors ${
                   editMode
                     ? 'bg-green-600/20 text-green-400 border border-green-600/30'

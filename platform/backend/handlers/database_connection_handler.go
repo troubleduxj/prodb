@@ -1079,16 +1079,10 @@ func GetTDengineSuperTables(c *gin.Context) {
 	service, err := getTDengineServiceWithTimeout(&connection, 10*time.Second)
 	if err != nil {
 		log.Printf("[GetTDengineSuperTables] Failed to get TDengine service: %v", err)
-		// Return mock super tables for development
-		mockSuperTables := getMockSuperTablesForDatabase(dbName)
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status":      "success",
-			"supertables": mockSuperTables,
-			"total":       len(mockSuperTables),
-			"database":    dbName,
-			"mock":        true,
-			"error":       err.Error(),
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to connect to TDengine",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -1100,14 +1094,10 @@ func GetTDengineSuperTables(c *gin.Context) {
 
 	superTables, err := service.ListSuperTables(ctx, dbName)
 	if err != nil {
-		// Return mock super tables for development
-		mockSuperTables := getMockSuperTablesForDatabase(dbName)
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status":      "success",
-			"supertables": mockSuperTables,
-			"total":       len(mockSuperTables),
-			"database":    dbName,
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to list super tables",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -1120,120 +1110,6 @@ func GetTDengineSuperTables(c *gin.Context) {
 	})
 }
 
-// getMockSuperTablesForDatabase returns mock super tables for development
-func getMockSuperTablesForDatabase(dbName string) []SuperTableInfo {
-	switch dbName {
-	case "industrial_data":
-		return []SuperTableInfo{
-			{
-				Name:        "sensors",
-				CreatedTime: time.Date(2024, 1, 15, 10, 35, 0, 0, time.UTC),
-				Columns: []Column{
-					{Name: "ts", Type: "timestamp", IsPrimary: true},
-					{Name: "temperature", Type: "float"},
-					{Name: "humidity", Type: "float"},
-					{Name: "pressure", Type: "float"},
-				},
-				Tags: []Tag{
-					{Name: "location", Type: "nchar(50)"},
-					{Name: "device_id", Type: "int"},
-				},
-				SubtablesCount: 10,
-				DataSize:       "2.5MB",
-				Database:       dbName,
-			},
-			{
-				Name:        "flow_meters",
-				CreatedTime: time.Date(2024, 1, 15, 11, 0, 0, 0, time.UTC),
-				Columns: []Column{
-					{Name: "ts", Type: "timestamp", IsPrimary: true},
-					{Name: "flow_rate", Type: "float"},
-					{Name: "total_volume", Type: "bigint"},
-				},
-				Tags: []Tag{
-					{Name: "meter_id", Type: "nchar(32)"},
-					{Name: "pipeline", Type: "nchar(64)"},
-				},
-				SubtablesCount: 5,
-				DataSize:       "1.8MB",
-				Database:       dbName,
-			},
-			{
-				Name:        "power_meters",
-				CreatedTime: time.Date(2024, 1, 15, 11, 30, 0, 0, time.UTC),
-				Columns: []Column{
-					{Name: "ts", Type: "timestamp", IsPrimary: true},
-					{Name: "voltage", Type: "float"},
-					{Name: "current", Type: "float"},
-					{Name: "power", Type: "float"},
-					{Name: "energy", Type: "bigint"},
-				},
-				Tags: []Tag{
-					{Name: "meter_id", Type: "nchar(32)"},
-					{Name: "phase", Type: "tinyint"},
-					{Name: "location", Type: "nchar(50)"},
-				},
-				SubtablesCount: 8,
-				DataSize:       "3.2MB",
-				Database:       dbName,
-			},
-		}
-	case "sensor_data":
-		return []SuperTableInfo{
-			{
-				Name:        "temperature_sensors",
-				CreatedTime: time.Date(2024, 1, 20, 14, 20, 0, 0, time.UTC),
-				Columns: []Column{
-					{Name: "ts", Type: "timestamp", IsPrimary: true},
-					{Name: "temperature", Type: "float"},
-					{Name: "status", Type: "tinyint"},
-				},
-				Tags: []Tag{
-					{Name: "sensor_id", Type: "nchar(32)"},
-					{Name: "room", Type: "nchar(32)"},
-				},
-				SubtablesCount: 6,
-				DataSize:       "1.2MB",
-				Database:       dbName,
-			},
-			{
-				Name:        "humidity_sensors",
-				CreatedTime: time.Date(2024, 1, 20, 14, 25, 0, 0, time.UTC),
-				Columns: []Column{
-					{Name: "ts", Type: "timestamp", IsPrimary: true},
-					{Name: "humidity", Type: "float"},
-					{Name: "status", Type: "tinyint"},
-				},
-				Tags: []Tag{
-					{Name: "sensor_id", Type: "nchar(32)"},
-					{Name: "room", Type: "nchar(32)"},
-				},
-				SubtablesCount: 4,
-				DataSize:       "0.9MB",
-				Database:       dbName,
-			},
-		}
-	case "test_db":
-		return []SuperTableInfo{
-			{
-				Name:        "test_table",
-				CreatedTime: time.Date(2024, 1, 25, 9, 5, 0, 0, time.UTC),
-				Columns: []Column{
-					{Name: "ts", Type: "timestamp", IsPrimary: true},
-					{Name: "value", Type: "float"},
-				},
-				Tags: []Tag{
-					{Name: "tag1", Type: "nchar(16)"},
-				},
-				SubtablesCount: 1,
-				DataSize:       "0.1MB",
-				Database:       dbName,
-			},
-		}
-	default:
-		return []SuperTableInfo{}
-	}
-}
 
 // CreateTDengineSuperTable creates a new super table
 func CreateTDengineSuperTable(c *gin.Context) {
@@ -1556,126 +1432,37 @@ func GetTDengineTables(c *gin.Context) {
 	// Get TDengine service
 	service, err := getTDengineService(&connection)
 	if err != nil {
-		// Return mock tables for development
-		mockTables := getMockTablesForDatabase(dbName)
-		
-		c.JSON(http.StatusOK, gin.H{
-			"status": "success",
-			"data": gin.H{
-				"database": dbName,
-				"tables":   mockTables,
-				"total":    len(mockTables),
-			},
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to connect to TDengine",
+			"error":   err.Error(),
 		})
 		return
 	}
 	defer service.GetManager().Stop()
 
-	// For now, return mock data as the service might not have the ListTables method
-	mockTables := getMockTablesForDatabase(dbName)
-	
+	// Query actual tables from TDengine
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	tables, err := service.ListTables(ctx, dbName)
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Failed to list tables",
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
 		"data": gin.H{
 			"database": dbName,
-			"tables":   mockTables,
-			"total":    len(mockTables),
+			"tables":   tables,
+			"total":    len(tables),
 		},
 	})
-}
-
-// getMockTablesForDatabase returns mock tables for development
-func getMockTablesForDatabase(dbName string) []map[string]interface{} {
-	switch dbName {
-	case "industrial_data":
-		return []map[string]interface{}{
-			{
-				"name":         "sensor_001",
-				"type":         "CHILD_TABLE",
-				"super_table":  "sensors",
-				"created_time": "2024-01-15 10:40:00",
-				"columns":      4,
-				"rows":         1250,
-				"size":         "125KB",
-				"tags": map[string]interface{}{
-					"location":  "Workshop A",
-					"device_id": 1,
-				},
-			},
-			{
-				"name":         "sensor_002",
-				"type":         "CHILD_TABLE",
-				"super_table":  "sensors",
-				"created_time": "2024-01-15 10:45:00",
-				"columns":      4,
-				"rows":         1180,
-				"size":         "118KB",
-				"tags": map[string]interface{}{
-					"location":  "Workshop B",
-					"device_id": 2,
-				},
-			},
-			{
-				"name":         "flow_meter_001",
-				"type":         "CHILD_TABLE",
-				"super_table":  "flow_meters",
-				"created_time": "2024-01-15 11:05:00",
-				"columns":      3,
-				"rows":         890,
-				"size":         "89KB",
-				"tags": map[string]interface{}{
-					"meter_id": "FM001",
-					"pipeline": "Main Supply Line",
-				},
-			},
-		}
-	case "sensor_data":
-		return []map[string]interface{}{
-			{
-				"name":         "temp_sensor_room1",
-				"type":         "CHILD_TABLE",
-				"super_table":  "temperature_sensors",
-				"created_time": "2024-01-20 14:30:00",
-				"columns":      3,
-				"rows":         720,
-				"size":         "72KB",
-				"tags": map[string]interface{}{
-					"sensor_id": "TEMP001",
-					"room":      "Room 1",
-				},
-			},
-			{
-				"name":         "humidity_sensor_room1",
-				"type":         "CHILD_TABLE",
-				"super_table":  "humidity_sensors",
-				"created_time": "2024-01-20 14:35:00",
-				"columns":      3,
-				"rows":         680,
-				"size":         "68KB",
-				"tags": map[string]interface{}{
-					"sensor_id": "HUM001",
-					"room":      "Room 1",
-				},
-			},
-		}
-	case "test_db":
-		return []map[string]interface{}{
-			{
-				"name":         "test_child_table",
-				"type":         "CHILD_TABLE",
-				"super_table":  "test_table",
-				"created_time": "2024-01-25 09:10:00",
-				"columns":      2,
-				"rows":         100,
-				"size":         "10KB",
-				"tags": map[string]interface{}{
-					"tag1": "test_value",
-				},
-			},
-		}
-	default:
-		return []map[string]interface{}{}
-	}
 }
 
 // GetTDengineDatabase returns information about a specific database
