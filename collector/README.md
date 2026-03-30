@@ -1,105 +1,105 @@
-# ProDB Collector
+# ProDB 采集器
 
-The ProDB Collector is a modular data collection agent that supports multiple industrial protocols and provides reliable data collection with store-and-forward capabilities.
+ProDB 采集器是一个模块化的数据采集代理，支持多种工业协议，并提供可靠的数据采集以及存储转发功能。
 
-## Architecture
+## 架构
 
-The collector is built with a pluggable architecture consisting of the following core components:
+采集器采用可插拔架构构建，包含以下核心组件：
 
-### Core Components
+### 核心组件
 
-- **Collector Core** (`internal/core`): Main collector orchestration and lifecycle management
-- **Configuration Management** (`internal/config`): Centralized configuration loading and validation
-- **Logging System** (`internal/logger`): Structured logging with configurable outputs
-- **Protocol Manager** (`internal/protocol`): Pluggable protocol implementations
-- **Data Buffer** (`internal/buffer`): In-memory data buffering and batching
-- **Storage Cache** (`internal/storage`): SQLite-based store-and-forward mechanism
-- **Authentication** (`internal/auth`): JWT-based authentication with the platform
-- **Communication** (`internal/communication`): HTTP client for platform communication
+- **采集器核心** (`internal/core`)：采集器的主要编排和生命周期管理
+- **配置管理** (`internal/config`)：集中式配置加载和验证
+- **日志系统** (`internal/logger`)：结构化日志记录，支持可配置的输出
+- **协议管理器** (`internal/protocol`)：可插拔的协议实现
+- **数据缓冲** (`internal/buffer`)：内存数据缓冲和批量处理
+- **存储缓存** (`internal/storage`)：基于 SQLite 的存储转发机制
+- **身份验证** (`internal/auth`)：基于 JWT 的平台身份验证
+- **通信** (`internal/communication`)：用于平台通信的 HTTP 客户端
 
-### Supported Protocols
+### 支持的协议
 
-- **Modbus TCP**: Industrial Ethernet-based Modbus communication
-- **Modbus RTU**: Serial-based Modbus communication
-- **OPC-UA**: OPC Unified Architecture protocol
-- **MQTT**: Message Queuing Telemetry Transport protocol
+- **Modbus TCP**：基于工业以太网的 Modbus 通信
+- **Modbus RTU**：基于串口的 Modbus 通信
+- **OPC-UA**：OPC 统一架构协议
+- **MQTT**：消息队列遥测传输协议
 
-## Configuration
+## 配置
 
-The collector can be configured through:
+采集器可以通过以下方式进行配置：
 
-1. **JSON Configuration File**: Comprehensive configuration with all options
-2. **Environment Variables**: Basic configuration for containerized deployments
-3. **Platform Sync**: Dynamic configuration updates from the management platform
+1. **JSON 配置文件**：包含所有选项的完整配置
+2. **环境变量**：适用于容器化部署的基础配置
+3. **平台同步**：来自管理平台的动态配置更新
 
-### Environment Variables
+### 环境变量
 
-Required environment variables:
-- `COLLECTOR_ID`: Unique identifier for the collector
-- `SECRET_KEY`: Authentication secret key
-- `PLATFORM_API_ENDPOINT`: Platform API endpoint URL
+必需的环境变量：
+- `COLLECTOR_ID`：采集器的唯一标识符
+- `SECRET_KEY`：身份验证密钥
+- `PLATFORM_API_ENDPOINT`：平台 API 端点 URL
 
-Optional environment variables:
-- `COLLECTOR_NAME`: Human-readable collector name
-- `LOG_LEVEL`: Logging level (debug, info, warn, error)
-- `LOCAL_DB_PATH`: Path to SQLite cache database
-- `HEARTBEAT_INTERVAL`: Heartbeat interval in seconds
+可选的环境变量：
+- `COLLECTOR_NAME`：采集器的可读名称
+- `LOG_LEVEL`：日志级别（debug、info、warn、error）
+- `LOCAL_DB_PATH`：SQLite 缓存数据库路径
+- `HEARTBEAT_INTERVAL`：心跳间隔（秒）
 
-### Configuration File
+### 配置文件
 
-See `config.example.json` for a complete configuration example.
+完整配置示例请参阅 `config.example.json`。
 
-## Features
+## 功能特性
 
-### Store-and-Forward
-- Local SQLite cache for offline data storage
-- Automatic retry with exponential backoff
-- Configurable retention policies
-- Disk space management
+### 存储转发
+- 本地 SQLite 缓存，用于离线数据存储
+- 自动重试，采用指数退避策略
+- 可配置的保留策略
+- 磁盘空间管理
 
-### Authentication & Security
-- JWT-based authentication
-- Automatic token refresh
-- Secure communication with HTTPS
-- Configurable retry policies
+### 身份验证与安全
+- 基于 JWT 的身份验证
+- 自动令牌刷新
+- 使用 HTTPS 的安全通信
+- 可配置的重试策略
 
-### Data Collection
-- Multi-protocol support with pluggable architecture
-- Configurable collection intervals
-- Data validation and quality control
-- Batch processing for efficiency
+### 数据采集
+- 支持多协议的可插拔架构
+- 可配置的采集间隔
+- 数据验证和质量控制
+- 批量处理以提高效率
 
-### Monitoring & Observability
-- Structured logging with multiple outputs
-- Performance metrics collection
-- Health monitoring and heartbeat
-- Real-time status reporting
+### 监控与可观测性
+- 支持多输出的结构化日志
+- 性能指标收集
+- 健康监控和心跳检测
+- 实时状态报告
 
-## Usage
+## 使用方法
 
-### Basic Usage
+### 基础用法
 
-1. Set required environment variables:
+1. 设置必需的环境变量：
 ```bash
 export COLLECTOR_ID="your-collector-id"
 export SECRET_KEY="your-secret-key"
 export PLATFORM_API_ENDPOINT="http://your-platform:8088"
 ```
 
-2. Run the collector:
+2. 运行采集器：
 ```bash
 ./collector
 ```
 
-### Using Configuration File
+### 使用配置文件
 
-1. Create a configuration file based on `config.example.json`
-2. Run with configuration file:
+1. 基于 `config.example.json` 创建配置文件
+2. 使用配置文件运行：
 ```bash
 COLLECTOR_CONFIG="./config.json" ./collector
 ```
 
-### Docker Usage
+### Docker 用法
 
 ```bash
 docker run -d \
@@ -110,95 +110,95 @@ docker run -d \
   prodb/collector
 ```
 
-## Development
+## 开发
 
-### Building
+### 构建
 
 ```bash
 go build -o collector .
 ```
 
-### Testing
+### 测试
 
 ```bash
 go test ./...
 ```
 
-### Adding New Protocols
+### 添加新协议
 
-1. Implement the `Protocol` interface in `internal/protocol`
-2. Register the protocol in `registerBuiltinProtocols()`
-3. Add protocol-specific configuration validation
+1. 在 `internal/protocol` 中实现 `Protocol` 接口
+2. 在 `registerBuiltinProtocols()` 中注册协议
+3. 添加协议特定的配置验证
 
-## API Endpoints
+## API 端点
 
-The collector exposes a web interface on port 8093 for configuration management:
+采集器在 8093 端口暴露 Web 接口用于配置管理：
 
-- `GET /`: Configuration web interface
-- `POST /save`: Save configuration
-- `POST /shutdown`: Graceful shutdown
+- `GET /`：配置 Web 界面
+- `POST /save`：保存配置
+- `POST /shutdown`：优雅关闭
 
-## Logging
+## 日志
 
-The collector supports structured logging with the following levels:
-- `debug`: Detailed debugging information
-- `info`: General information messages
-- `warn`: Warning messages
-- `error`: Error messages
+采集器支持结构化日志，提供以下级别：
+- `debug`：详细的调试信息
+- `info`：一般信息消息
+- `warn`：警告消息
+- `error`：错误消息
 
-Logs can be output to:
-- `stdout`: Standard output (default)
-- `file`: Log file with rotation support
+日志可以输出到：
+- `stdout`：标准输出（默认）
+- `file`：支持轮转的日志文件
 
-## Metrics
+## 指标
 
-The collector collects and reports various metrics:
+采集器收集和报告各种指标：
 
-### System Metrics
-- CPU usage
-- Memory usage
-- Disk usage
-- Network statistics
+### 系统指标
+- CPU 使用率
+- 内存使用率
+- 磁盘使用率
+- 网络统计
 
-### Collection Metrics
-- Data points collected per second
-- Collection success/failure rates
-- Protocol connection status
-- Buffer utilization
+### 采集指标
+- 每秒采集的数据点数
+- 采集成功/失败率
+- 协议连接状态
+- 缓冲区利用率
 
-### Storage Metrics
-- Cache size and utilization
-- Upload success/failure rates
-- Retry counts
-- Data retention statistics
+### 存储指标
+- 缓存大小和利用率
+- 上传成功/失败率
+- 重试次数
+- 数据保留统计
 
-## Troubleshooting
+## 故障排除
 
-### Common Issues
+### 常见问题
 
-1. **Authentication Failures**
-   - Verify COLLECTOR_ID and SECRET_KEY
-   - Check platform connectivity
-   - Review authentication logs
+1. **身份验证失败**
+   - 验证 COLLECTOR_ID 和 SECRET_KEY
+   - 检查平台连接
+   - 查看身份验证日志
 
-2. **Protocol Connection Issues**
-   - Verify network connectivity to devices
-   - Check protocol-specific configuration
-   - Review firewall settings
+2. **协议连接问题**
+   - 验证到设备的网络连接
+   - 检查协议特定的配置
+   - 检查防火墙设置
 
-3. **Storage Issues**
-   - Check disk space availability
-   - Verify database file permissions
-   - Review cache configuration
+3. **存储问题**
+   - 检查磁盘空间可用性
+   - 验证数据库文件权限
+   - 查看缓存配置
 
-### Log Analysis
+### 日志分析
 
-Enable debug logging for detailed troubleshooting:
+启用调试日志以进行详细故障排除：
 ```bash
 export LOG_LEVEL="debug"
 ./collector
 ```
 
-## License
+## 许可证
 
-This project is part of the ProDB platform.
+本项目是 ProDB 平台的一部分。
